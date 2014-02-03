@@ -153,7 +153,7 @@ id(X) -> X.
 'deocde_capnp::namespace::Field::ordinal::implicit'(_, _) ->
 	{{0, implicit}, void}.
 'deocde_capnp::namespace::Field::ordinal::explicit'(<<_:96/bitstring, Explicit:?UInt16, _/bitstring>>, _) ->
-	{{0, explicit}, Explicit}.
+	{{1, explicit}, Explicit}.
 
 'decode_capnp::namespace::Enumerant'(#struct{data= <<
 		CodeOrder:?UInt16,
@@ -200,41 +200,41 @@ id(X) -> X.
 'decode_capnp::namespace::Type::void'(_, _) ->
 	{{0, void}, void}.
 'decode_capnp::namespace::Type::bool'(_, _) ->
-	{{0, bool}, void}.
+	{{1, bool}, void}.
 'decode_capnp::namespace::Type::int8'(_, _) ->
-	{{0, int8}, void}.
+	{{2, int8}, void}.
 'decode_capnp::namespace::Type::int16'(_, _) ->
-	{{0, int16}, void}.
+	{{3, int16}, void}.
 'decode_capnp::namespace::Type::int32'(_, _) ->
-	{{0, int32}, void}.
+	{{4, int32}, void}.
 'decode_capnp::namespace::Type::int64'(_, _) ->
-	{{0, int64}, void}.
+	{{5, int64}, void}.
 'decode_capnp::namespace::Type::uint8'(_, _) ->
-	{{0, uint8}, void}.
+	{{6, uint8}, void}.
 'decode_capnp::namespace::Type::uint16'(_, _) ->
-	{{0, uint16}, void}.
+	{{7, uint16}, void}.
 'decode_capnp::namespace::Type::uint32'(_, _) ->
-	{{0, uint32}, void}.
+	{{8, uint32}, void}.
 'decode_capnp::namespace::Type::uint64'(_, _) ->
-	{{0, uint64}, void}.
+	{{9, uint64}, void}.
 'decode_capnp::namespace::Type::float32'(_, _) ->
-	{{0, float32}, void}.
+	{{10, float32}, void}.
 'decode_capnp::namespace::Type::float64'(_, _) ->
-	{{0, float64}, void}.
+	{{11, float64}, void}.
 'decode_capnp::namespace::Type::text'(_, _) ->
-	{{0, text}, void}.
+	{{12, text}, void}.
 'decode_capnp::namespace::Type::data'(_, _) ->
-	{{0, data}, void}.
+	{{13, data}, void}.
 'decode_capnp::namespace::Type::list'(_, [ElementType]) ->
-	{{0, list}, 'decode_capnp::namespace::Type'(ElementType)}.
+	{{14, list}, 'decode_capnp::namespace::Type'(ElementType)}.
 'decode_capnp::namespace::Type::enum'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{0, enum}, TypeId}.
+	{{15, enum}, TypeId}.
 'decode_capnp::namespace::Type::struct'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{0, struct}, TypeId}.
+	{{16, struct}, TypeId}.
 'decode_capnp::namespace::Type::interface'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{0, interface}, TypeId}.
+	{{17, interface}, TypeId}.
 'decode_capnp::namespace::Type::anyPointer'(_, _) ->
-	{{0, anyPointer}, void}.
+	{{18, anyPointer}, void}.
 
 
 'decode_capnp::namespace::Value'(#struct{data=Data= <<
@@ -272,41 +272,41 @@ id(X) -> X.
 'decode_capnp::namespace::Value::void'(_, _) ->
 	{{0, void}, void}.
 'decode_capnp::namespace::Value::bool'(<<_:16/bitstring, Value:?Bool, _/bitstring>>, _) ->
-	{{0, bool}, Value}.
+	{{1, bool}, Value}.
 'decode_capnp::namespace::Value::int8'(<<_:16/bitstring, Value:?Int8, _/bitstring>>, _) ->
-	{{0, int8}, Value}.
+	{{2, int8}, Value}.
 'decode_capnp::namespace::Value::int16'(<<_:16/bitstring, Value:?Int16, _/bitstring>>, _) ->
-	{{0, int16}, Value}.
+	{{3, int16}, Value}.
 'decode_capnp::namespace::Value::int32'(<<_:32/bitstring, Value:?Int32, _/bitstring>>, _) ->
-	{{0, int32}, Value}.
+	{{4, int32}, Value}.
 'decode_capnp::namespace::Value::int64'(<<_:64/bitstring, Value:?Int64, _/bitstring>>, _) ->
-	{{0, int64}, Value}.
+	{{5, int64}, Value}.
 'decode_capnp::namespace::Value::uint8'(<<_:16/bitstring, Value:?UInt8, _/bitstring>>, _) ->
-	{{0, uint8}, Value}.
+	{{6, uint8}, Value}.
 'decode_capnp::namespace::Value::uint16'(<<_:16/bitstring, Value:?UInt16, _/bitstring>>, _) ->
-	{{0, uint16}, Value}.
+	{{7, uint16}, Value}.
 'decode_capnp::namespace::Value::uint32'(<<_:32/bitstring, Value:?UInt32, _/bitstring>>, _) ->
-	{{0, uint32}, Value}.
+	{{8, uint32}, Value}.
 'decode_capnp::namespace::Value::uint64'(<<_:64/bitstring, Value:?UInt64, _/bitstring>>, _) ->
-	{{0, uint64}, Value}.
+	{{9, uint64}, Value}.
 'decode_capnp::namespace::Value::float32'(<<_:32/bitstring, Value:?Float32, _/bitstring>>, _) ->
-	{{0, float32}, Value}.
+	{{10, float32}, Value}.
 'decode_capnp::namespace::Value::float64'(<<_:64/bitstring, Value:?Float64, _/bitstring>>, _) ->
-	{{0, float64}, Value}.
+	{{11, float64}, Value}.
 'decode_capnp::namespace::Value::text'(_, [Pointer]) ->
-	{{0, text}, Pointer}.
+	{{12, text}, Pointer}.
 'decode_capnp::namespace::Value::data'(_, [Pointer]) ->
-	{{0, data}, Pointer}.
+	{{13, data}, Pointer}.
 'decode_capnp::namespace::Value::list'(_, [Pointer]) ->
-	{{0, list}, Pointer}.
+	{{14, list}, Pointer}.
 'decode_capnp::namespace::Value::enum'(<<_:16/bitstring, Value:?UInt16, _/bitstring>>, _) ->
-	{{0, enum}, Value}.
+	{{15, enum}, Value}.
 'decode_capnp::namespace::Value::struct'(_, [Pointer]) ->
-	{{0, struct}, Pointer}.
+	{{16, struct}, Pointer}.
 'decode_capnp::namespace::Value::interface'(_, _) ->
-	{{0, interface}, void}.
+	{{17, interface}, void}.
 'decode_capnp::namespace::Value::anyPointer'(_, [Pointer]) ->
-	{{0, anyPointer}, Pointer}.
+	{{18, anyPointer}, Pointer}.
 
 
 'decode_capnp::namespace::CodeGeneratorRequest'(#struct{pointers=[Nodes, RequestedFiles]}) ->
