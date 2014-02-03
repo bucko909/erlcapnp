@@ -1,4 +1,4 @@
--module(bootstrap_capnp).
+-module(capnp_raw).
 
 -compile([export_all]).
 
