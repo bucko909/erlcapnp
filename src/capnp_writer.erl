@@ -9,8 +9,12 @@
 -include_lib("capnp_bootstrap.hrl").
 
 -export([
+		envelope/1,
 		to_bytes/2
 	]).
+
+envelope(Bytes) ->
+	<<0:?UInt32, (round(erlang:byte_size(Bytes)/8)):?UInt32, Bytes/binary>>.
 
 to_bytes(Rec, Schema) ->
 	Name = element(1, Rec),
@@ -44,7 +48,7 @@ encode_parts([
 		|RestFields], [Value|RestValues], DataSeg, PointerSeg, Offset, AccParts, Schema) ->
 	case TypeDescription of
 		void ->
-			{Size, Encoded} = encode(TypeClass, Value, DefaultValue, Offset),
+			{Size, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			io:format("~p~n", [{ec, Value, Size, N, DataSeg, Encoded}]),
 			NewDataSeg = insert((N bsl (Size - 6)), DataSeg, Encoded),
 			io:format("~p~n", [{NewDataSeg}]),
@@ -64,6 +68,7 @@ encode_parts(_, [], DataSeg, PointerSeg, Offset, AccParts, _Schema) ->
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->
 	{S, V} = encode(Type, Value, Default),
+	io:format("~p~n", [{Offset, S, Offset bsl S, (Offset bsl S) band 63, V, V bsl ((Offset bsl S) band 63)}]),
 	{S, V bsl ((Offset bsl S) band 63)}.
 
 % This step is somewhat complicated by erlang's lack of love for little endian data.
@@ -107,7 +112,7 @@ type_size(_) ->
 
 insert(Offset, DataSeg, Value) ->
 	% TODO setelement is sad
-    io:format("~p", [{Offset, DataSeg, Value}]),
+    io:format("~p~n", [{Offset, DataSeg, Value}]),
 	setelement(Offset+1, DataSeg, element(Offset+1, DataSeg) bor Value).
 
 flatten_seg(L) ->

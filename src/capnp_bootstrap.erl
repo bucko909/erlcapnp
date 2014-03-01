@@ -333,7 +333,10 @@ make_objdict(#'capnp::namespace::CodeGeneratorRequest'{nodes=Nodes}) ->
 	}.
 
 test() ->
-	{ok, Data} = file:read_file("/home/bucko/eclipse-workspace/capnp/data/capnp.raw"),
+	load_raw_schema("/home/bucko/eclipse-workspace/capnp/data/capnp.raw").
+
+load_raw_schema(Filename) ->
+	{ok, Data} = file:read_file(Filename),
 	Mes = capnp_raw:read_message(Data),
 	Raw = capnp_raw:decode_pointer(Mes),
 	CGR = 'decode_capnp::namespace::CodeGeneratorRequest'(Raw),
