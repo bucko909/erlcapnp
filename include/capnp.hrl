@@ -1,0 +1,1 @@
+-record(capnp_context, {by_id, name_to_id}).

@@ -24,4 +24,3 @@
 -record(list, {
 		data :: list(term())
 	}).
-

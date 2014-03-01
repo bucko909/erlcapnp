@@ -8,8 +8,9 @@
 
 -compile([export_all]).
 
--include("capnp_raw.hrl").
--include("capnp_bootstrap.hrl").
+-include_lib("capnp_raw.hrl").
+-include_lib("capnp_bootstrap.hrl").
+-include_lib("capnp.hrl").
 
 decode_list(_, null_pointer) ->
 	[];
@@ -17,7 +18,12 @@ decode_list(F, #list{data=Data}) ->
 	lists:map(F, Data).
 
 decode_text(L) ->
-	list_to_binary(lists:reverse(tl(lists:reverse(decode_list(fun id/1, L))))).
+	case decode_list(fun id/1, L) of
+		[] ->
+			[];
+		Decoded ->
+			list_to_binary(lists:reverse(tl(lists:reverse(Decoded))))
+	end.
 
 id(X) -> X.
 
@@ -318,8 +324,17 @@ id(X) -> X.
 'decode_capnp::namespace::CodeGeneratorRequest::RequestedFile'(S) ->
 	S.
 
+make_objdict(#'capnp::namespace::CodeGeneratorRequest'{nodes=Nodes}) ->
+	ById = dict:from_list([{Id, Node} || Node=#'capnp::namespace::Node'{id=Id} <- Nodes ]),
+	NameToId = dict:from_list([{Name, Id} || #'capnp::namespace::Node'{id=Id, displayName=Name} <- Nodes ]),
+	#capnp_context{
+		by_id = ById,
+		name_to_id = NameToId
+	}.
+
 test() ->
-	{ok, Data} = file:read_file("capnp.raw"),
+	{ok, Data} = file:read_file("/home/bucko/eclipse-workspace/capnp/data/capnp.raw"),
 	Mes = capnp_raw:read_message(Data),
 	Raw = capnp_raw:decode_pointer(Mes),
-	'decode_capnp::namespace::CodeGeneratorRequest'(Raw).
+	CGR = 'decode_capnp::namespace::CodeGeneratorRequest'(Raw),
+	make_objdict(CGR).
