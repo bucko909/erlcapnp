@@ -12,3 +12,13 @@ struct TestMultipleIntegers {
 	testVar6 @5 :Int8;
 	testVar7 @6 :Int64;
 }
+
+struct TestBoringPointer {
+	testVar1 @0 :TestBoringInteger;
+}
+
+struct TestLessBoringPointer {
+	testVar1 @0 :TestBoringPointer;
+	testVar2 @1 :Int16;
+	testVar3 @2 :TestMultipleIntegers;
+}
