@@ -43,8 +43,8 @@ to_bytes(Schema, TypeId, Obj) ->
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	{Acc, AccSize} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), PWords, [], Schema),
-	{DWords, PWords, Acc, AccSize+DWords}.
+	{Acc, AccSize} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), 0, [], Schema),
+	{DWords, PWords, Acc, AccSize}.
 
 encode_parts([
 			#'capnp::namespace::Field'{
@@ -64,7 +64,9 @@ encode_parts([
 			encode_parts(RestFields, RestValues, NewDataSeg, PointerSeg, Offset, AccParts, Schema);
 		TypeId when is_integer(TypeId) ->
 			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
-			Pointer = struct_pointer(Offset-N-1, DWords, PWords),
+			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
+			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
+			Pointer = struct_pointer(Offset+(tuple_size(PointerSeg)-(N+1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			encode_parts(RestFields, RestValues, DataSeg, NewPointerSeg, Offset + TotalWords, [AccParts,Data], Schema)
 		% TODO lists
@@ -72,8 +74,8 @@ encode_parts([
 		% TODO unions (discriminantValue/discriminantOffset)
 	end;
 encode_parts(_, [], DataSeg, PointerSeg, Offset, AccParts, _Schema) ->
-	io:format("encode_parts() end ~p~n", [{DataSeg, PointerSeg}]),
-	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), AccParts], Offset}.
+	% Offset is total data length of everything /extra/ we've put in.
+	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), AccParts], Offset+tuple_size(DataSeg)+tuple_size(PointerSeg)}.
 
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->
