@@ -31,6 +31,18 @@ to_bytes(Rec, Schema) ->
 struct_pointer(OffsetAfterHere, DWords, PWords) ->
 	(OffsetAfterHere bsl 2) bor (DWords bsl 32) bor (PWords bsl 48).
 
+% SizeTag is 0-index into bit sizes: {0, 1, 8, 16, 32, 64, 64(Pointer), 64-ish(Composite)}
+% ElementCount is /word/ count in Composite case; we actually just special case this below.
+plain_list_pointer(OffsetAfterHere, SizeTag, ElementCount) ->
+	1 bor (OffsetAfterHere bsl 2) bor (SizeTag bsl 32) bor (ElementCount bsl 35).
+
+% First elt is a pointer. Second is a list tag which looks a bit like a struct pointer; it should go on the start of the list elements.
+composite_list_pointer(OffsetAfterHere, DWords, PWords, ElementCount) ->
+	{
+		1 bor (OffsetAfterHere bsl 2) bor (7 bsl 32) bor ((ElementCount*(DWords+PWords)) bsl 35),
+		struct_pointer(ElementCount, DWords, PWords) % It's a bit ugly to call struct_pointer here, but it /does/ do the right thing.
+	}.
+
 % Convert a record into a byte stream. Each sub-structure will be placed immediately after this one in left-to-right order.
 % Returns the data/pointer words in our structure, an unflattened io_list of the encoded structure and the total encoded length (in words).
 to_bytes(Schema, TypeId, Obj) ->
@@ -57,19 +69,51 @@ encode_parts([
 				}   
 			}
 		|RestFields], [Value|RestValues], DataSeg, PointerSeg, Offset, AccParts, Schema) ->
-	case TypeDescription of
-		void ->
+	case {TypeClass, TypeDescription} of
+		{anyPointer, void} ->
+			erlang:error(not_implemented);
+		{text, void} ->
+			% TODO encode as simple list
+			erlang:error(not_implemented);
+		{data, void} ->
+			% TODO encode as simple list
+			erlang:error(not_implemented);
+		{_, void} ->
 			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
 			encode_parts(RestFields, RestValues, NewDataSeg, PointerSeg, Offset, AccParts, Schema);
-		TypeId when is_integer(TypeId) ->
+		{struct, TypeId} when is_integer(TypeId) -> % TODO are these working fine in bootstrap_capnp? They're a :group.
 			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
 			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
 			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
 			Pointer = struct_pointer(Offset+(tuple_size(PointerSeg)-(N+1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			encode_parts(RestFields, RestValues, DataSeg, NewPointerSeg, Offset + TotalWords, [AccParts,Data], Schema)
-		% TODO lists
+			encode_parts(RestFields, RestValues, DataSeg, NewPointerSeg, Offset + TotalWords, [AccParts,Data], Schema);
+		{list, #'capnp::namespace::Type'{''={{_,list},_LTypeDescription}}} ->
+			% TODO Encode as pointers!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,text},void}}} ->
+			% TODO Encode as pointers!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,data},void}}} ->
+			% TODO Encode as pointers!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,struct},_LTypeId}}} ->
+			% TODO Encode as composite!
+			% TODO Can also encode a /small/ struct as a smaller size.
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
+			% TODO Encode as pointers!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}} ->
+			% TODO Encode as ???!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,enum},_LTypeId}}} ->
+			% TODO Encode as ints!
+			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type'{''={{_,_IntOrVoidType},void}}} ->
+			% TODO Encode as ints!
+			erlang:error(not_implemented)
 		% TODO nested constructs (ie. groups)
 		% TODO unions (discriminantValue/discriminantOffset)
 	end;
