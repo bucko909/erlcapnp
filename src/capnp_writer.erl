@@ -68,7 +68,14 @@ encode_parts([
 					}
 				}   
 			}
-		|RestFields], [Value|RestValues], DataSeg, PointerSeg, Offset, AccParts, Schema) ->
+		|RestFields], [Value|RestValues], DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema) ->
+	{NewDataSeg, NewPointerSeg, NewOffset, NewExtraData} = encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema),
+	encode_parts(RestFields, RestValues, NewDataSeg, NewPointerSeg, NewOffset, [ExtraData|NewExtraData], Schema);
+encode_parts(_, [], DataSeg, PointerSeg, ExtraDataLength, ExtraData, _Schema) ->
+	% Offset is total data length of everything /extra/ we've put in.
+	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData], ExtraDataLength + tuple_size(DataSeg) + tuple_size(PointerSeg)}.
+
+encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema) ->
 	case {TypeClass, TypeDescription} of
 		{anyPointer, void} ->
 			erlang:error(not_implemented);
@@ -81,14 +88,14 @@ encode_parts([
 		{_, void} ->
 			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
-			encode_parts(RestFields, RestValues, NewDataSeg, PointerSeg, Offset, AccParts, Schema);
-		{struct, TypeId} when is_integer(TypeId) -> % TODO are these working fine in bootstrap_capnp? They're a :group.
+			{NewDataSeg, PointerSeg, ExtraDataLength, []};
+		{struct, TypeId} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
 			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
 			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
 			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
-			Pointer = struct_pointer(Offset+(tuple_size(PointerSeg)-(N+1)), DWords, PWords),
+			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			encode_parts(RestFields, RestValues, DataSeg, NewPointerSeg, Offset + TotalWords, [AccParts,Data], Schema);
+			{DataSeg, NewPointerSeg, ExtraDataLength + TotalWords, Data};
 		{list, #'capnp::namespace::Type'{''={{_,list},_LTypeDescription}}} ->
 			% TODO Encode as pointers!
 			erlang:error(not_implemented);
@@ -116,10 +123,7 @@ encode_parts([
 			erlang:error(not_implemented)
 		% TODO nested constructs (ie. groups)
 		% TODO unions (discriminantValue/discriminantOffset)
-	end;
-encode_parts(_, [], DataSeg, PointerSeg, Offset, AccParts, _Schema) ->
-	% Offset is total data length of everything /extra/ we've put in.
-	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), AccParts], Offset+tuple_size(DataSeg)+tuple_size(PointerSeg)}.
+	end.
 
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->
