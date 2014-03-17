@@ -54,7 +54,6 @@ id(X) -> X.
 		fun 'decode_capnp::namespace::Node::::const'/2,
 		fun 'decode_capnp::namespace::Node::::annotation'/2
 	},
-	io:format("~p ~p~n", [UnionTag, Pointers]),
 	(element(UnionTag+1, Decoders))(Data, Pointers).
 
 'decode_capnp::namespace::Node::::file'(_, _) ->
