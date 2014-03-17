@@ -111,7 +111,6 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 					{I+1, [<<Pointer:?UInt64>>|Pointers], [Data|NewData], NewDataLength + DataLength}
 			end,
 			{ListLength, Pointers, Data, DataLength} = lists:foldr(FoldFun, {0, [], [], 0}, Value),
-			io:format("~p~n", [{ListLength, Pointers, Data, DataLength}]),
 			Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 6, ListLength),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			{DataSeg, NewPointerSeg, ListLength + DataLength, [Pointers, Data]};
