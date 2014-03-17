@@ -75,16 +75,21 @@ encode_parts(_, [], DataSeg, PointerSeg, ExtraDataLength, ExtraData, _Schema) ->
 	% Offset is total data length of everything /extra/ we've put in.
 	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData], ExtraDataLength + tuple_size(DataSeg) + tuple_size(PointerSeg)}.
 
+% We actually don't need to care about the DefaultValue except for primitive fields.
+% For composite fields, the default is either a null pointer, or a valid encoding of the entire structure as if it were set manually.
+% We could save space here by potentially verifying that the default /is/ the default value, and encoding as a null pointer.
 encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema) ->
 	case {TypeClass, TypeDescription} of
 		{anyPointer, void} ->
 			erlang:error(not_implemented);
-		{text, void} ->
-			% TODO encode as simple list
-			erlang:error(not_implemented);
-		{data, void} ->
-			% TODO encode as simple list
-			erlang:error(not_implemented);
+		{TextType, void} when TextType =:= text; TextType =:= data ->
+			{Binary, ByteSize} = encode_text(TextType, Value),
+			Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 2, ByteSize),
+			PadLength = -ByteSize band 7,
+			Pad = << <<0:8>> || _ <- lists:seq(1, PadLength) >>,
+			WordSize = (ByteSize + PadLength) bsr 3,
+			NewPointerSeg = insert(N, PointerSeg, Pointer),
+			{DataSeg, NewPointerSeg, ExtraDataLength + WordSize, [Binary|Pad]};
 		{_, void} ->
 			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
@@ -124,6 +129,11 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 		% TODO nested constructs (ie. groups)
 		% TODO unions (discriminantValue/discriminantOffset)
 	end.
+
+encode_text(text, T) when is_binary(T) ->
+	{[T, 0], byte_size(T) + 1};
+encode_text(data, T) when is_binary(T) ->
+	{T, byte_size(T)}.
 
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->

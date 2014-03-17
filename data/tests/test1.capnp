@@ -22,3 +22,39 @@ struct TestLessBoringPointer {
 	testVar2 @1 :Int16;
 	testVar3 @2 :TestMultipleIntegers;
 }
+
+struct TestTextType {
+	testVar1 @0 :Text;
+	testVar2 @1 :Data;
+}
+
+struct TestPrimitiveList {
+	testVar1 @0 :List(Bool);
+	testVar2 @1 :List(Int8);
+	testVar3 @2 :List(Int16);
+	testVar4 @3 :List(Int32);
+	testVar5 @4 :List(Int64);
+}
+
+struct SimpleShortStruct {
+	testVar1 @0 :Int8;
+	testVar2 @1 :Int16;
+}
+
+# This guy's content fits inside an Int32.
+struct TestShortList {
+	testVar1 @0 :List(TestBoringInteger);
+	testVar2 @1 :List(SimpleShortStruct);
+}
+
+# This guy's doesn't fit inside an Int64!
+struct TestCompositeList {
+	testVar1 @0 :List(TestMultipleIntegers);
+}
+
+struct TestDefaults {
+	testVar1 @0 :Int64 = 53;
+	testVar2 @1 :TestBoringInteger = (testVar1 = 54);
+	testVar3 @2 :TestLessBoringPointer = (testVar1 = (testVar1 = (testVar1 = 55)), testVar2 = 56, testVar3 = (testVar1 = 56, testVar2 = 57));
+	testVar4 @3 :List(Int64) = [58, 59, 60];
+}
