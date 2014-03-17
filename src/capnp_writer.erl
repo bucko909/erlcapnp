@@ -68,9 +68,9 @@ encode_parts([
 					}
 				}   
 			}
-		|RestFields], [Value|RestValues], DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema) ->
-	{NewDataSeg, NewPointerSeg, NewOffset, NewExtraData} = encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema),
-	encode_parts(RestFields, RestValues, NewDataSeg, NewPointerSeg, NewOffset, [ExtraData|NewExtraData], Schema);
+		|RestFields], [Value|RestValues], DataSeg, PointerSeg, DataLength, Data, Schema) ->
+	{NewDataSeg, NewPointerSeg, ExtraDataLength, ExtraData} = encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, DataLength, Schema),
+	encode_parts(RestFields, RestValues, NewDataSeg, NewPointerSeg, DataLength + ExtraDataLength, [Data|ExtraData], Schema);
 encode_parts(_, [], DataSeg, PointerSeg, ExtraDataLength, ExtraData, _Schema) ->
 	% Offset is total data length of everything /extra/ we've put in.
 	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData], ExtraDataLength + tuple_size(DataSeg) + tuple_size(PointerSeg)}.
@@ -78,7 +78,7 @@ encode_parts(_, [], DataSeg, PointerSeg, ExtraDataLength, ExtraData, _Schema) ->
 % We actually don't need to care about the DefaultValue except for primitive fields.
 % For composite fields, the default is either a null pointer, or a valid encoding of the entire structure as if it were set manually.
 % We could save space here by potentially verifying that the default /is/ the default value, and encoding as a null pointer.
-encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, ExtraData, Schema) ->
+encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, PointerSeg, ExtraDataLength, Schema) ->
 	case {TypeClass, TypeDescription} of
 		{anyPointer, void} ->
 			erlang:error(not_implemented);
@@ -89,18 +89,18 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			Pad = << <<0:8>> || _ <- lists:seq(1, PadLength) >>,
 			WordSize = (ByteSize + PadLength) bsr 3,
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			{DataSeg, NewPointerSeg, ExtraDataLength + WordSize, [Binary|Pad]};
+			{DataSeg, NewPointerSeg, WordSize, [Binary|Pad]};
 		{_, void} ->
 			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
-			{NewDataSeg, PointerSeg, ExtraDataLength, []};
+			{NewDataSeg, PointerSeg, 0, []};
 		{struct, TypeId} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
 			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
 			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
 			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
 			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			{DataSeg, NewPointerSeg, ExtraDataLength + TotalWords, Data};
+			{DataSeg, NewPointerSeg, TotalWords, Data};
 		{list, #'capnp::namespace::Type'{''={{_,list},_LTypeDescription}}} ->
 			% TODO Encode as pointers!
 			erlang:error(not_implemented);
@@ -115,7 +115,7 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			% TODO Can also encode a /small/ struct as a smaller size.
 			erlang:error(not_implemented);
 		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
-			% TODO Encode as pointers!
+			% TODO Encode as pointers?!
 			erlang:error(not_implemented);
 		{list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}} ->
 			% TODO Encode as ???!
