@@ -28,6 +28,16 @@ struct TestTextType {
 	testVar2 @1 :Data;
 }
 
+struct TestTextList {
+	testVar1 @0 :List(Text);
+	testVar2 @1 :List(Data);
+}
+
+struct TestTextListList {
+	testVar1 @0 :List(List(Text));
+	testVar2 @1 :List(List(Data));
+}
+
 struct TestPrimitiveList {
 	testVar1 @0 :List(Bool);
 	testVar2 @1 :List(Int8);
