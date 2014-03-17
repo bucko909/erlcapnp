@@ -101,15 +101,25 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			{DataSeg, NewPointerSeg, TotalWords, Data};
-		{list, #'capnp::namespace::Type'{''={{_,list},_LTypeDescription}}} ->
+		{list, #'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+			% Start the encode from the end of the list. Append the data, and prepend the pointers.
+			% This means that the first pointer is always just a zero pointer.
+			% The second must skip one list element, and all of the data that element caused.
+			% Etc.
+			FoldFun = fun (V, {I, Pointers, Data, DataLength}) ->
+					{{}, {Pointer}, NewDataLength, NewData} = encode_field(PtrType, LTypeDescription, _Default=0, _N=0, V, _DataSeg={}, _PointerSeg={0}, DataLength+I, Schema),
+					{I+1, [<<Pointer:?UInt64>>|Pointers], [Data|NewData], NewDataLength + DataLength}
+			end,
+			{ListLength, Pointers, Data, DataLength} = lists:foldr(FoldFun, {0, [], [], 0}, Value),
+			io:format("~p~n", [{ListLength, Pointers, Data, DataLength}]),
+			Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 6, ListLength),
+			NewPointerSeg = insert(N, PointerSeg, Pointer),
+			{DataSeg, NewPointerSeg, ListLength + DataLength, [Pointers, Data]};
+			%{Data, DataLength, SizeTag, ElementCount} = encode_plain_list(uint8, DefaultValue, binary_to_list(Value)),
+			%Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), SizeTag, ElementCount),
+			%NewPointerSeg = insert(N, PointerSeg, Pointer),
+			%{DataSeg, NewPointerSeg, ExtraDataLength + DataLength, Data},
 			% TODO Encode as pointers!
-			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,text},void}}} ->
-			% TODO Encode as pointers!
-			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,data},void}}} ->
-			% TODO Encode as pointers!
-			erlang:error(not_implemented);
 		{list, #'capnp::namespace::Type'{''={{_,struct},_LTypeId}}} ->
 			% TODO Encode as composite!
 			% TODO Can also encode a /small/ struct as a smaller size.
@@ -123,9 +133,9 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 		{list, #'capnp::namespace::Type'{''={{_,enum},_LTypeId}}} ->
 			% TODO Encode as ints!
 			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,_IntOrVoidType},void}}} ->
+		{list, #'capnp::namespace::Type'{''={{_,IntOrVoidType},void}}} ->
 			% TODO Encode as ints!
-			erlang:error(not_implemented)
+			erlang:error({not_implemented, list, IntOrVoidType})
 		% TODO nested constructs (ie. groups)
 		% TODO unions (discriminantValue/discriminantOffset)
 	end.
