@@ -93,7 +93,7 @@ id(X) -> X.
 	}.
 'decode_capnp::namespace::Node::::annotation'(_, _) ->
 	% Just ignore!
-	{'decode_capnp::namespace::Node::::interface'}.
+	{'decode_capnp::namespace::Node::::annotation'}.
 
 'decode_capnp::namespace::Node::NestedNode'(#struct{data= <<
 		Id:?UInt64,
@@ -117,18 +117,18 @@ id(X) -> X.
 		name=decode_text(Name),
 		discriminantValue=DiscriminantValueRaw bxor 65535,
 		annotations=decode_list(fun id/1, Annotations),
-		''='deocde_capnp::namespace::Field::'(UnionTag1, Data, Pointers),
-		ordinal='deocde_capnp::namespace::Field::ordinal'(UnionTag2, Data, Pointers)
+		''='decode_capnp::namespace::Field::'(UnionTag1, Data, Pointers),
+		ordinal='decode_capnp::namespace::Field::ordinal'(UnionTag2, Data, Pointers)
 	}.
 
-'deocde_capnp::namespace::Field::'(UnionTag, Data, Pointers) ->
+'decode_capnp::namespace::Field::'(UnionTag, Data, Pointers) ->
 	Decoders = {
-		fun 'deocde_capnp::namespace::Field::::slot'/2,
-		fun 'deocde_capnp::namespace::Field::::group'/2
+		fun 'decode_capnp::namespace::Field::::slot'/2,
+		fun 'decode_capnp::namespace::Field::::group'/2
 	},
 	(element(UnionTag+1, Decoders))(Data, Pointers).
 
-'deocde_capnp::namespace::Field::::slot'(<<
+'decode_capnp::namespace::Field::::slot'(<<
 		_:32/bitstring,
 		Offset:?UInt32,
 		_:64/bitstring,
@@ -141,7 +141,7 @@ id(X) -> X.
 		defaultValue='decode_capnp::namespace::Value'(DefaultValue),
 		hadExplicitDefault=HadExplicitDefault
 	}}.
-'deocde_capnp::namespace::Field::::group'(<<
+'decode_capnp::namespace::Field::::group'(<<
 		_:128/bitstring,
 		TypeId:?UInt64,
 		_/binary>>, _) ->
@@ -149,15 +149,15 @@ id(X) -> X.
 		typeId=TypeId
 	}}.
 
-'deocde_capnp::namespace::Field::ordinal'(UnionTag, Data, Pointers) ->
+'decode_capnp::namespace::Field::ordinal'(UnionTag, Data, Pointers) ->
 	Decoders = {
-		fun 'deocde_capnp::namespace::Field::ordinal::implicit'/2,
-		fun 'deocde_capnp::namespace::Field::ordinal::explicit'/2
+		fun 'decode_capnp::namespace::Field::ordinal::implicit'/2,
+		fun 'decode_capnp::namespace::Field::ordinal::explicit'/2
 	},
 	(element(UnionTag+1, Decoders))(Data, Pointers).
-'deocde_capnp::namespace::Field::ordinal::implicit'(_, _) ->
+'decode_capnp::namespace::Field::ordinal::implicit'(_, _) ->
 	{{0, implicit}, void}.
-'deocde_capnp::namespace::Field::ordinal::explicit'(<<_:96/bitstring, Explicit:?UInt16, _/bitstring>>, _) ->
+'decode_capnp::namespace::Field::ordinal::explicit'(<<_:96/bitstring, Explicit:?UInt16, _/bitstring>>, _) ->
 	{{1, explicit}, Explicit}.
 
 'decode_capnp::namespace::Enumerant'(#struct{data= <<
