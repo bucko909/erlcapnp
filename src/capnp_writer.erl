@@ -160,7 +160,8 @@ encode_enum(TypeId, Value, Schema) ->
 
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->
-	{Shifts, ValueToWrite} = encode(Type, Value, Default),
+	ValueToWrite = encode(Type, Value, Default),
+	Shifts = isize(Type),
 	% Multiply Offset by the value size, and the result with 63.
 	% This gives the offset within this word that the value will appear at.
 	% Now shift the encoded value by that amount to align it to where we'd
@@ -171,27 +172,48 @@ encode(Type, Value, Default, Offset) ->
 % Basically, booleans end up in the wrong part of their byte.
 % Still need a lot of experiment to find the fastest way of writing this code. 
 encode(void, _, _) ->
-	{0, 0};
+	0;
 encode(int8, N, V) ->
-	{3, encode_integer(1 bsl 7, N, V)};
+	encode_integer(1 bsl 7, N, V);
 encode(int16, N, V) ->
-	{4, encode_integer(1 bsl 15, N, V)};
+	encode_integer(1 bsl 15, N, V);
 encode(int32, N, V) ->
-	{5, encode_integer(1 bsl 31, N, V)};
+	encode_integer(1 bsl 31, N, V);
 encode(int64, N, V) ->
-	{6, encode_integer(1 bsl 63, N, V)};
+	encode_integer(1 bsl 63, N, V);
 encode(bool, N, V) ->
-	{1, encode_uinteger(1, N, V)};
+	encode_uinteger(1, N, V);
 encode(uint8, N, V) ->
-	{3, encode_uinteger(1 bsl 8, N, V)};
+	encode_uinteger(1 bsl 8, N, V);
 encode(uint16, N, V) ->
-	{4, encode_uinteger(1 bsl 16, N, V)};
+	encode_uinteger(1 bsl 16, N, V);
 encode(uint32, N, V) ->
-	{5, encode_uinteger(1 bsl 32, N, V)};
+	encode_uinteger(1 bsl 32, N, V);
 encode(uint64, N, V) ->
-	{6, encode_uinteger(1 bsl 64, N, V)};
+	encode_uinteger(1 bsl 64, N, V);
 encode(_, _, _) ->
-	{0, 0}.
+	0.
+
+isize(void) ->
+	0;
+isize(bool) ->
+	1;
+isize(uint8) ->
+	3;
+isize(int8) ->
+	3;
+isize(uint16) ->
+	4;
+isize(int16) ->
+	4;
+isize(uint32) ->
+	5;
+isize(int32) ->
+	5;
+isize(uint64) ->
+	6;
+isize(int64) ->
+	6.
 
 encode_integer(Max, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
 	(Value+Max*2) bxor Default;
