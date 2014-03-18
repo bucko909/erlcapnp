@@ -231,13 +231,13 @@ id(X) -> X.
 'decode_capnp::namespace::Type::data'(_, _) ->
 	{{13, data}, void}.
 'decode_capnp::namespace::Type::list'(_, [ElementType]) ->
-	{{14, list}, 'decode_capnp::namespace::Type'(ElementType)}.
+	{{14, list}, #'capnp::namespace::Type::::list'{elementType='decode_capnp::namespace::Type'(ElementType)}}.
 'decode_capnp::namespace::Type::enum'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{15, enum}, TypeId}.
+	{{15, enum}, #'capnp::namespace::Type::::enum'{typeId=TypeId}}.
 'decode_capnp::namespace::Type::struct'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{16, struct}, TypeId}.
+	{{16, struct}, #'capnp::namespace::Type::::struct'{typeId=TypeId}}.
 'decode_capnp::namespace::Type::interface'(<<_:64/bitstring, TypeId:?UInt64, _/bitstring>>, _) ->
-	{{17, interface}, TypeId}.
+	{{17, interface}, #'capnp::namespace::Type::::interface'{typeId=TypeId}}.
 'decode_capnp::namespace::Type::anyPointer'(_, _) ->
 	{{18, anyPointer}, void}.
 

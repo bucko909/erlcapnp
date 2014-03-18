@@ -94,19 +94,19 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
 			{NewDataSeg, PointerSeg, 0, []};
-		{struct, TypeId} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
+		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
 			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
 			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
 			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
 			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			{DataSeg, NewPointerSeg, TotalWords, Data};
-		{enum, TypeId} when is_integer(TypeId) ->
+		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			Index = encode_enum(TypeId, Value, Schema),
 			{Shifts, Encoded} = encode(uint16, Index, DefaultValue, N),
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
 			{NewDataSeg, PointerSeg, 0, []};			
-		{list, #'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 			% Start the encode from the end of the list. Append the data, and prepend the pointers.
 			% This means that the first pointer is always just a zero pointer.
 			% The second must skip one list element, and all of the data that element caused.
