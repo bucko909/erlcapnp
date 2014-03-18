@@ -173,33 +173,33 @@ encode(Type, Value, Default, Offset) ->
 encode(void, _, _) ->
 	{0, 0};
 encode(int8, N, V) ->
-	encode_integer(1 bsl 7, 3, N, V);
+	{3, encode_integer(1 bsl 7, N, V)};
 encode(int16, N, V) ->
-	encode_integer(1 bsl 15, 4, N, V);
+	{4, encode_integer(1 bsl 15, N, V)};
 encode(int32, N, V) ->
-	encode_integer(1 bsl 31, 5, N, V);
+	{5, encode_integer(1 bsl 31, N, V)};
 encode(int64, N, V) ->
-	encode_integer(1 bsl 63, 6, N, V);
+	{6, encode_integer(1 bsl 63, N, V)};
 encode(bool, N, V) ->
-	encode_uinteger(1, 0, N, V);
+	{1, encode_uinteger(1, N, V)};
 encode(uint8, N, V) ->
-	encode_uinteger(1 bsl 8, 3, N, V);
+	{3, encode_uinteger(1 bsl 8, N, V)};
 encode(uint16, N, V) ->
-	encode_uinteger(1 bsl 16, 4, N, V);
+	{4, encode_uinteger(1 bsl 16, N, V)};
 encode(uint32, N, V) ->
-	encode_uinteger(1 bsl 32, 5, N, V);
+	{5, encode_uinteger(1 bsl 32, N, V)};
 encode(uint64, N, V) ->
-	encode_uinteger(1 bsl 64, 6, N, V);
+	{6, encode_uinteger(1 bsl 64, N, V)};
 encode(_, _, _) ->
 	{0, 0}.
 
-encode_integer(Max, Size, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
-	{Size, (Value+Max*2) bxor Default};
-encode_integer(Max, Size, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
-	{Size, Value bxor Default}.
+encode_integer(Max, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
+	(Value+Max*2) bxor Default;
+encode_integer(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
+	Value bxor Default.
 
-encode_uinteger(Max, Size, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
-	{Size, Value bxor Default}.
+encode_uinteger(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
+	Value bxor Default.
 
 insert(Offset, DataSeg, Value) ->
 	% TODO setelement is sad
