@@ -80,9 +80,9 @@ id(X) -> X.
 			fields=decode_list(fun 'decode_capnp::namespace::Field'/1, Fields)
 	}}.
 'decode_capnp::namespace::Node::::enum'(_, [_, _, _, Enumerants|_]) ->
-	#'capnp::namespace::Node::::enum'{
+	{{2, enum}, #'capnp::namespace::Node::::enum'{
 		enumerants=decode_list(fun 'decode_capnp::namespace::Enumerant'/1, Enumerants)
-	}.
+	}}.
 'decode_capnp::namespace::Node::::interface'(_, _) ->
 	% Not in schema.
 	{'decode_capnp::namespace::Node::::interface'}.

@@ -38,6 +38,16 @@ struct TestTextListList {
 	testVar2 @1 :List(List(Data));
 }
 
+enum SimpleEnum {
+	testEnum1 @0;
+	testEnum2 @1;
+	testEnum3 @2;
+}
+
+struct TestEnum {
+	testVar1 @0 :SimpleEnum;
+}
+
 struct TestPrimitiveList {
 	testVar1 @0 :List(Bool);
 	testVar2 @1 :List(Int8);
