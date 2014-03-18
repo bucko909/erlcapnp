@@ -121,10 +121,30 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 6, ListLength),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			{DataSeg, NewPointerSeg, ListLength + DataLength, [Pointers, Data]};
-		{list, #'capnp::namespace::Type'{''={{_,struct},_LTypeId}}} ->
-			% TODO Encode as composite!
-			% TODO Can also encode a /small/ struct as a smaller size.
-			erlang:error(not_implemented);
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}} ->
+			case struct_bit_size(LTypeId, Schema) of
+				composite ->
+					% Composite = 7
+					erlang:error(not_implemented);
+				{pointer, PTypeClass, PTypeDescription, PDefault} ->
+					% Pointer only
+					erlang:error(not_implemented);
+				{SizeTag, BitSize, Fields} ->
+					io:format("~p~n", [{SizeTag, BitSize, Fields}]),
+					BurnData = fun (Rec) ->
+							Values = tl(tuple_to_list(Rec)),
+							{{Data}, {}, _, 0} = encode_parts(Fields, Values, {0}, {}, 0, [], Schema),
+							<<Data:BitSize/little-integer>>
+					end,
+					Length = length(Value),
+					PadLength = -(Length * BitSize) band 63,
+					Pad = <<0:PadLength>>,
+					ListData = [lists:map(BurnData, Value)|Pad],
+					ListWords = (Length * BitSize + PadLength) bsr 6,
+					Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), SizeTag, Length),
+					NewPointerSeg = insert(N, PointerSeg, Pointer),
+					{DataSeg, NewPointerSeg, ListWords, ListData}
+			end;
 		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
 			% TODO Encode as pointers?!
 			erlang:error(not_implemented);
@@ -159,6 +179,62 @@ encode_enum(TypeId, Value, Schema) ->
 	Index = length(lists:takewhile(fun (#'capnp::namespace::Enumerant'{name=EName}) -> Value /= EName end, Enumerants)),
 	true = Index < length(Enumerants),
 	Index.
+
+struct_bit_size(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords,
+				fields=Fields,
+				discriminantCount=DCount,
+				discriminantOffset=DOffset
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	if
+		PWords + DWords > 1 ->
+			composite;
+		PWords =:= 1 ->
+			[#'capnp::namespace::Field'{
+								''={{0,slot},
+									#'capnp::namespace::Field::::slot'{
+										offset=0,
+										defaultValue=#'capnp::namespace::Value'{''={{_,TypeClass},DefaultValue}},
+										type=#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}} % No pointers, so should be fine here!
+									}
+								}
+							}] = Fields,
+			{pointer, TypeClass, TypeDescription, DefaultValue};
+		true ->
+			% Hard part; there are no pointers but we don't know the data length!
+			% We simply need the highest extent of any struct part.
+			GetExtent = fun (#'capnp::namespace::Field'{
+								''={{0,slot},
+									#'capnp::namespace::Field::::slot'{
+										offset=N,
+										defaultValue=#'capnp::namespace::Value'{''={{_,TypeClass},_}},
+										type=#'capnp::namespace::Type'{''={{_,TypeClass},void}} % No pointers, so should be fine here!
+									}
+								}
+							}) -> (1 bsl isize(TypeClass)) * (N + 1) end,
+			DiscExtent = if DCount > 0 -> 16 + DOffset; true -> 0 end,
+			BitExtent = lists:max([DiscExtent|lists:map(GetExtent, Fields)]),
+			if
+				BitExtent =:= 0 ->
+					{0, 0, []};
+				BitExtent =:= 1 ->
+					{1, 1, Fields};
+				BitExtent =< 8 ->
+					{2, 8, Fields};
+				BitExtent =< 16 ->
+					{3, 16, Fields};
+				BitExtent =< 32 ->
+					{4, 32, Fields};
+				true -> % Since DWords + PWords =< 1, we can't be >64.
+					{5, 64, Fields}
+			end
+	end.
 
 % S is in "integer generations"; we're going to use it to to work out how much to bsl.
 encode(Type, Value, Default, Offset) ->
