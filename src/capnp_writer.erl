@@ -55,8 +55,10 @@ to_bytes(Schema, TypeId, Obj) ->
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	{Acc, AccSize} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), 0, [], Schema),
-	{DWords, PWords, Acc, AccSize}.
+	{DataSeg, PointerSeg, ExtraData, ExtraDataLength} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), 0, [], Schema),
+	Data = [flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData],
+	DataLength = DWords + PWords + ExtraDataLength,
+	{DWords, PWords, Data, DataLength}.
 
 encode_parts([
 			#'capnp::namespace::Field'{
@@ -73,7 +75,7 @@ encode_parts([
 	encode_parts(RestFields, RestValues, NewDataSeg, NewPointerSeg, DataLength + ExtraDataLength, [Data|ExtraData], Schema);
 encode_parts(_, [], DataSeg, PointerSeg, ExtraDataLength, ExtraData, _Schema) ->
 	% Offset is total data length of everything /extra/ we've put in.
-	{[flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData], ExtraDataLength + tuple_size(DataSeg) + tuple_size(PointerSeg)}.
+	{DataSeg, PointerSeg, ExtraData, ExtraDataLength}.
 
 % We actually don't need to care about the DefaultValue except for primitive fields.
 % For composite fields, the default is either a null pointer, or a valid encoding of the entire structure as if it were set manually.
