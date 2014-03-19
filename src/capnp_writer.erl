@@ -60,7 +60,7 @@ to_bytes(Schema, TypeId, Obj, POffset) ->
 	{DataSeg, PointerSeg, ExtraData, ExtraDataLength} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), POffset, [], Schema),
 	Data = [flatten_seg(DataSeg)| flatten_seg(PointerSeg)],
 	DataLength = DWords + PWords,
-	{DWords, PWords, Data, DataLength, ExtraData, ExtraDataLength}.
+	{DWords, PWords, Data, DataLength, ExtraData, ExtraDataLength - POffset}.
 
 encode_parts([
 			#'capnp::namespace::Field'{
@@ -125,9 +125,18 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			{DataSeg, NewPointerSeg, ListLength + DataLength, [Pointers, Data]};
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}} ->
 			case struct_bit_size(LTypeId, Schema) of
-				composite ->
-					% Composite = 7
-					erlang:error(not_implemented);
+				{composite, DWords, PWords} ->
+					FoldFun = fun (V, {L, I, Data, DataLength}) ->
+							{DWords1, PWords1, NewData, _NewDataLength, NewExtraData, NewExtraDataLength} = to_bytes(Schema, LTypeId, V, L+DataLength),
+							io:format("~p~n", [{NewExtraData, NewExtraDataLength}]),
+							{DWords, PWords} = {DWords1, PWords1},
+							{L + DWords1 + PWords1, I+1, [NewData,Data|NewExtraData], NewExtraDataLength + DataLength}
+					end,
+					{DataLength, ListLength, Data, NewExtraDataLength} = lists:foldr(FoldFun, {0, 0, [], 0}, Value),
+					io:format("~p~n", [{DataLength, ListLength, Data, NewExtraDataLength}]),
+					{Pointer, Header} = composite_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords, ListLength),
+					NewPointerSeg = insert(N, PointerSeg, Pointer),
+					{DataSeg, NewPointerSeg, DataLength + NewExtraDataLength + 1, [<<Header:?UInt64>>|Data]};
 				{pointer, PTypeClass, PTypeDescription, PDefaultValue} ->
 					% Pointer only. Actually can encode this exactly like composite in theory; we just don't need a header.
 					% Only difference between this and list-of-list case is the types and the unpacking of the struct, which must be {TypeName, Value} as it's only one pointer.
@@ -202,8 +211,8 @@ struct_bit_size(TypeId, Schema) ->
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	if
-		PWords + DWords > 1 ->
-			composite;
+		DWords + PWords > 1 ->
+			{composite, DWords, PWords};
 		PWords =:= 1 ->
 			[#'capnp::namespace::Field'{
 								''={{0,slot},
