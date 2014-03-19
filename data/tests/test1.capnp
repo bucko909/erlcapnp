@@ -73,6 +73,7 @@ struct TestPointerList {
 # This guy's doesn't fit inside an Int64!
 struct TestCompositeList {
 	testVar1 @0 :List(TestMultipleIntegers);
+	testVar2 @1 :List(TestLessBoringPointer);
 }
 
 struct TestDefaults {
