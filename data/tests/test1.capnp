@@ -61,10 +61,13 @@ struct SimpleShortStruct {
 	testVar2 @1 :Int16;
 }
 
-# This guy's content fits inside an Int32.
 struct TestShortList {
-	testVar1 @0 :List(TestBoringInteger);
-	testVar2 @1 :List(SimpleShortStruct);
+	testVar1 @0 :List(TestBoringInteger); # == Int64
+	testVar2 @1 :List(SimpleShortStruct); # =< Int32
+}
+
+struct TestPointerList {
+	testVar1 @0 :List(TestBoringPointer); # Single pointer
 }
 
 # This guy's doesn't fit inside an Int64!

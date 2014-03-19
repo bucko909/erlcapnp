@@ -28,7 +28,9 @@ test() ->
 	<<0,0,0,0,2,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0>>
 		= capnp_writer:envelope(capnp_writer:to_bytes({<<"test1.capnp:TestEnum">>, <<"testEnum2">>}, Schema)),
 	<<0,0,0,0,8,0,0,0,0,0,0,0,0,0,2,0,5,0,0,0,29,0,0,0,13,0,0,0,28,0,0,0,3,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,1,0,2,0,6,0,7,0,8,0,9,0,0,0,0,0>>
-		= capnp_writer:envelope(capnp_writer:to_bytes({<<"test1.capnp:TestShortList">>, [{<<"test1.capnp:TestBoringInteger">>, N} || N <- [3, 4, 5]], [{<<"test1.capnp:SimpleShortStruct">>, A, B} || {A, B} <- [{1, 2}, {6, 7}, {8, 9}]]}, Schema)).
+		= capnp_writer:envelope(capnp_writer:to_bytes({<<"test1.capnp:TestShortList">>, [{<<"test1.capnp:TestBoringInteger">>, N} || N <- [3, 4, 5]], [{<<"test1.capnp:SimpleShortStruct">>, A, B} || {A, B} <- [{1, 2}, {6, 7}, {8, 9}]]}, Schema)),
+	<<0,0,0,0,8,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,30,0,0,0,16,0,0,0,1,0,0,0,8,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,94,0,0,0,0,0,0,0,95,0,0,0,0,0,0,0,93,0,0,0,0,0,0,0>>
+		= capnp_writer:envelope(capnp_writer:to_bytes({<<"test1.capnp:TestPointerList">>, [{<<"test1.capnp:TestBoringPointer">>, {<<"test1.capnp:TestBoringInteger">>, A}} || A <- [93, 95, 94]]}, Schema)).
 	
 %capnp_writer:envelope(capnp_writer:to_bytes({<<"test1.capnp:TestPrimitiveList">>, [true, false, true], [1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]}, Schema)).
 

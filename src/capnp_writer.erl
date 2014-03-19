@@ -126,11 +126,18 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 				composite ->
 					% Composite = 7
 					erlang:error(not_implemented);
-				{pointer, PTypeClass, PTypeDescription, PDefault} ->
-					% Pointer only
-					erlang:error(not_implemented);
+				{pointer, PTypeClass, PTypeDescription, PDefaultValue} ->
+					% Pointer only. Actually can encode this exactly like composite in theory; we just don't need a header.
+					% Only difference between this and list-of-list case is the types and the unpacking of the struct, which must be {TypeName, Value} as it's only one pointer.
+					FoldFun = fun ({_, V}, {I, Pointers, Data, DataLength}) ->
+							{{}, {Pointer}, NewDataLength, NewData} = encode_field(PTypeClass, PTypeDescription, PDefaultValue, _N=0, V, _DataSeg={}, _PointerSeg={0}, DataLength+I, Schema),
+							{I+1, [<<Pointer:?UInt64>>|Pointers], [Data|NewData], NewDataLength + DataLength}
+					end,
+					{ListLength, Pointers, Data, DataLength} = lists:foldr(FoldFun, {0, [], [], 0}, Value),
+					Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 6, ListLength),
+					NewPointerSeg = insert(N, PointerSeg, Pointer),
+					{DataSeg, NewPointerSeg, ListLength + DataLength, [Pointers, Data]};
 				{SizeTag, BitSize, Fields} ->
-					io:format("~p~n", [{SizeTag, BitSize, Fields}]),
 					BurnData = fun (Rec) ->
 							Values = tl(tuple_to_list(Rec)),
 							{{Data}, {}, _, 0} = encode_parts(Fields, Values, {0}, {}, 0, [], Schema),
