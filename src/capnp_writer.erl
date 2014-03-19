@@ -24,8 +24,8 @@ envelope(Bytes) ->
 to_bytes(Rec, Schema) ->
 	Name = element(1, Rec),
 	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
-	{DWords, PWords, Raw, _Size} = to_bytes(Schema, TypeId, Rec),
-	list_to_binary([<<(struct_pointer(0, DWords, PWords)):?UInt64>>, Raw]).
+	{DWords, PWords, Raw, _RawSize, Extra, _FinalOffset} = to_bytes(Schema, TypeId, Rec, 0),
+	list_to_binary([<<(struct_pointer(0, DWords, PWords)):?UInt64>>, Raw | Extra]).
 
 % OffsetAfterHere is num words /after/ the pointer that the data segment starts. It will therefore often be zero.
 struct_pointer(OffsetAfterHere, DWords, PWords) ->
@@ -46,6 +46,8 @@ composite_list_pointer(OffsetAfterHere, DWords, PWords, ElementCount) ->
 % Convert a record into a byte stream. Each sub-structure will be placed immediately after this one in left-to-right order.
 % Returns the data/pointer words in our structure, an unflattened io_list of the encoded structure and the total encoded length (in words).
 to_bytes(Schema, TypeId, Obj) ->
+	to_bytes(Schema, TypeId, Obj, 0).
+to_bytes(Schema, TypeId, Obj, POffset) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -55,10 +57,10 @@ to_bytes(Schema, TypeId, Obj) ->
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	{DataSeg, PointerSeg, ExtraData, ExtraDataLength} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), 0, [], Schema),
-	Data = [flatten_seg(DataSeg), flatten_seg(PointerSeg), ExtraData],
-	DataLength = DWords + PWords + ExtraDataLength,
-	{DWords, PWords, Data, DataLength}.
+	{DataSeg, PointerSeg, ExtraData, ExtraDataLength} = encode_parts(Fields, tl(tuple_to_list(Obj)), list_to_tuple(lists:duplicate(DWords, 0)), list_to_tuple(lists:duplicate(PWords, 0)), POffset, [], Schema),
+	Data = [flatten_seg(DataSeg)| flatten_seg(PointerSeg)],
+	DataLength = DWords + PWords,
+	{DWords, PWords, Data, DataLength, ExtraData, ExtraDataLength}.
 
 encode_parts([
 			#'capnp::namespace::Field'{
@@ -97,12 +99,12 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
 			{NewDataSeg, PointerSeg, 0, []};
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
-			{DWords, PWords, Data, TotalWords} = to_bytes(Schema, TypeId, Value),
+			{DWords, PWords, Data, DataWords, NewExtraData, FinalOffset} = to_bytes(Schema, TypeId, Value, 0),
 			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
 			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
 			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			{DataSeg, NewPointerSeg, TotalWords, Data};
+			{DataSeg, NewPointerSeg, DataWords + FinalOffset, [Data|NewExtraData]};
 		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			Index = encode_enum(TypeId, Value, Schema),
 			{Shifts, Encoded} = encode(uint16, Index, DefaultValue, N),
