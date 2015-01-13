@@ -29,12 +29,80 @@ to_ast(Name, Schema) ->
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	% Start by finding the bit offsets of each field, so that we can order them.
 	AllFields = lists:map(fun field_info/1, Fields),
-	{PtrFields, DataFields} = lists:partition(fun ({_,ptr,_,_,_}) -> true end, AllFields),
+	io:format("~p~n", [AllFields]),
+	{PtrFields, DataFields} = lists:partition(fun ({_,Size,_,_}) -> Size =:= ptr end, AllFields),
 	% We like these sorted.
 	SortedDataFields = lists:sort(DataFields),
 	SortedPtrFields = lists:sort(PtrFields),
 
-	ok.
+	Line = 0, % TODO
+	DataMatcher = generate_data_binary(0, SortedDataFields, {var, Line, '_'}),
+	DataMaker = generate_data_binary(0, SortedDataFields, {integer, Line, 0}),
+	PtrMatcher = generate_ptr_binary(SortedPtrFields),
+
+	RecordName = list_to_atom(binary_to_list(Name)),
+	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields]}},
+	EncodeFunDef = {function, Line, list_to_atom("decode_" ++ binary_to_list(Name)), 1,
+		[{clause, Line,
+				[{bin, Line, DataMatcher ++ PtrMatcher}],
+				[],
+				[{record,Line,RecordName,
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
+					}]
+			}]},
+	DecodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 1,
+		[{clause, Line,
+				[{record,Line,RecordName,
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
+					}],
+				[],
+				[{bin, Line, DataMaker ++ PtrMatcher}]
+			}]},
+
+	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,1,module,capnp_test},{attribute,5,compile,[export_all]},RecDef,EncodeFunDef,DecodeFunDef,{eof,11}],
+	io:format("~p~n", [Forms]),
+	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms))]),
+	{ok, capnp_test, BinData} = compile:forms(Forms, [debug_info]),
+	code:load_binary(capnp_test, "capnp_test.beam", BinData).
+
+% Need to be careful to gather bit-size elements /backwards/ inside each byte.
+% Ignore for now.
+% Also support only ints for now.
+generate_data_binary(DesiredOffset, [{DesiredOffset, Size, Name, _Data}|Rest], JunkTerm) ->
+	% Match an integer.
+	Line = 0, % TODO
+	Var = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
+	[{bin_element, Line, Var, {integer, Line, Size}, [little,integer]}|generate_data_binary(DesiredOffset+Size, Rest, JunkTerm)];
+generate_data_binary(CurrentOffset, Rest=[{DesiredOffset, _, _, _}|_], JunkTerm) ->
+	% Generate filler junk.
+	Line = 0, % TODO
+	[{bin_element, Line, JunkTerm, {integer, Line, DesiredOffset-CurrentOffset}, [little,integer]}|generate_data_binary(DesiredOffset, Rest, JunkTerm)];
+generate_data_binary(CurrentOffset, [], _JunkTerm) when CurrentOffset rem 64 == 0 ->
+	[];
+generate_data_binary(CurrentOffset, [], JunkTerm) ->
+	% Generate terminal junk.
+	Line = 0, % TODO
+	[{bin_element, Line, JunkTerm, {integer, Line, 64-(CurrentOffset rem 64)}, [little,integer]}].
+
+generate_ptr_binary([{DesiredOffset, ptr, Name, _}|Rest]) ->
+	Line = 0, % TODO
+	Var = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
+	[{bin_element, Line, Var, {integer, Line, 64}, [little,integer]}|generate_ptr_binary(Rest)];
+generate_ptr_binary([]) ->
+	[].
+
+% Var = {var,Line,Atom}.
+% The code we generate to /match/ this integer.
+matcher(int64, Var, Line) ->
+	{bin_element, Line, Var, {integer,Line,64}, [little,integer]}.
+
+% The code we generate to construct data to put into a binary.
+encoder(int64, Var, _Line) ->
+	Var.
+
+% The code we generate after matching a binary to put data into a record.
+decoder(int64, Var, _Line) ->
+	Var.
 
 field_info(#'capnp::namespace::Field'{
 		name=Name,
@@ -48,17 +116,18 @@ field_info(#'capnp::namespace::Field'{
 	}) ->
 	{Offset, Size} = case {TypeClass, TypeDescription} of
 		{text, void} ->
-			{N, ptr};
+			{N * 64, ptr};
 		{data, void} ->
-			{N, ptr};
+			{N * 64, ptr};
 		{anyPointer, void} ->
-			{N, ptr};
+			{N * 64, ptr};
 		{_, void} ->
-			{N, 1 bsl isize(TypeDescription)};
+			Size1 = 1 bsl isize(TypeClass),
+			{N * Size1, Size1};
 		_ ->
-			{N, ptr}
+			{N * 64, ptr}
 	end,
-	{Offset, Size, TypeClass, TypeDescription, Name, DefaultValue}.
+	{Offset * Size, Size, Name, {TypeClass, TypeDescription, DefaultValue}}.
 
 % Convert a record into a segment, starting with the pointer to the binary.
 to_bytes(Rec, Schema) ->
