@@ -28,7 +28,7 @@ to_ast(Name, Schema) ->
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	% Start by finding the bit offsets of each field, so that we can order them.
-	AllFields = lists:map(fun field_info/1, Fields),
+	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
 	io:format("~p~n", [AllFields]),
 	{PtrFields, DataFields} = lists:partition(fun ({_,Size,_,_}) -> Size =:= ptr end, AllFields),
 	% We like these sorted.
@@ -47,7 +47,7 @@ to_ast(Name, Schema) ->
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
 				[],
 				[{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(BroadType, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}, Line)} || {_, {BroadType, _, _}, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
 					}]
 			}]},
 	DecodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 1,
@@ -62,7 +62,7 @@ to_ast(Name, Schema) ->
 	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,1,module,capnp_test},{attribute,5,compile,[export_all]},RecDef,EncodeFunDef,DecodeFunDef,{eof,11}],
 	io:format("~p~n", [Forms]),
 	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms))]),
-	{ok, capnp_test, BinData} = compile:forms(Forms, [debug_info]),
+	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(capnp_test, "capnp_test.beam", BinData).
 
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
@@ -76,7 +76,7 @@ generate_data_binary(DesiredOffset, [{DesiredOffset, {BroadType, Size, BinType},
 		encode ->
 			encoder(BroadType, RawVar, Line);
 		decode ->
-			decoder(BroadType, RawVar, Line)
+			RawVar
 	end,
 	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction)];
 generate_data_binary(CurrentOffset, Rest=[{DesiredOffset, _, _, _}|_], Direction) ->
@@ -108,7 +108,11 @@ encoder(integer, Var, _Line) ->
 encoder(float, Var, _Line) ->
 	Var;
 encoder(boolean, Var, Line) ->
-	{'if',Line,[{clause,Line,[],[[Var]],[{integer,Line,1}]},{clause,Line,[],[[{atom,Line,true}]],[{integer,Line,0}]}]}.
+	{'if',Line,[{clause,Line,[],[[Var]],[{integer,Line,1}]},{clause,Line,[],[[{atom,Line,true}]],[{integer,Line,0}]}]};
+encoder({enum, Enumerants}, Var, Line) ->
+	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N, Elt}, N+1} end, 0, Enumerants),
+	% case Var of V1 -> 0; ... end
+	{'case', Line, Var, [{clause, Line, [{atom, Line, Name}], [], [{integer, Line, Number}]} || {Number, Name} <- Numbered ]}.
 
 % The code we generate after matching a binary to put data into a record.
 decoder(integer, Var, _Line) ->
@@ -116,7 +120,11 @@ decoder(integer, Var, _Line) ->
 decoder(float, Var, _Line) ->
 	Var;
 decoder(boolean, Var, Line) ->
-	{'if',Line,[{clause,Line,[],[[{op,Line,'=:=',Var,{integer,Line,1}}]],[{atom,Line,true}]},{clause,Line,[],[[{atom,Line,true}]],[{atom,Line,false}]}]}.
+	{'if',Line,[{clause,Line,[],[[{op,Line,'=:=',Var,{integer,Line,1}}]],[{atom,Line,true}]},{clause,Line,[],[[{atom,Line,true}]],[{atom,Line,false}]}]};
+decoder({enum, Enumerants}, Var, Line) ->
+	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
+	% erlang:element(Var+1, {V1, ...})
+	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]}.
 
 field_info(#'capnp::namespace::Field'{
 		name=Name,
@@ -127,7 +135,7 @@ field_info(#'capnp::namespace::Field'{
 				type=#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}
 			}
 		}   
-	}) ->
+	}, Schema) ->
 	{Offset, Info} = case {TypeClass, TypeDescription} of
 		{text, void} ->
 			{N * 64, ptr};
@@ -138,10 +146,23 @@ field_info(#'capnp::namespace::Field'{
 		{_, void} ->
 			Info1 = {_BroadType, Size1, _BinType} = builtin_info(TypeClass),
 			{N * Size1, Info1};
+		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
+			EnumerantNames = enumerant_names(TypeId, Schema),
+			{N * 16, {{enum, EnumerantNames}, 16, [little,unsigned,integer]}};
 		_ ->
 			{N * 64, ptr}
 	end,
 	{Offset, Info, Name, {TypeClass, TypeDescription, DefaultValue}}.
+
+enumerant_names(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{2, enum},
+			#'capnp::namespace::Node::::enum'{
+				enumerants=Enumerants
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
 % {BroadType, Bits, BinaryType}
 builtin_info(int64) -> {integer, 64, [little, signed, integer]};
