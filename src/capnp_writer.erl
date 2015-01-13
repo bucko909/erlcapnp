@@ -177,6 +177,8 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 		% TODO unions (discriminantValue/discriminantOffset)
 	end.
 
+encode_text(text, T) when is_list(T) ->
+	{[T, 0], iolist_size(T) + 1};
 encode_text(text, T) when is_binary(T) ->
 	{[T, 0], byte_size(T) + 1};
 encode_text(data, T) when is_binary(T) ->
@@ -285,6 +287,14 @@ encode(uint32, N, V) ->
 	encode_uinteger(1 bsl 32, N, V);
 encode(uint64, N, V) ->
 	encode_uinteger(1 bsl 64, N, V);
+encode(float32, NF, VF) ->
+	<<N:32/integer>> = <<NF:32/float>>,
+	<<V:32/integer>> = <<VF:32/float>>,
+	N bxor V;
+encode(float64, NF, VF) ->
+	<<N:64/integer>> = <<NF:64/float>>,
+	<<V:64/integer>> = <<VF:64/float>>,
+	N bxor V;
 encode(_, _, _) ->
 	0.
 
@@ -307,6 +317,10 @@ isize(int32) ->
 isize(uint64) ->
 	6;
 isize(int64) ->
+	6;
+isize(float32) ->
+	5;
+isize(float64) ->
 	6.
 
 encode_integer(Max, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
