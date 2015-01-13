@@ -374,92 +374,92 @@ struct_bit_size(TypeId, Schema) ->
 						}
 					}) -> (1 bsl isize(TypeClass)) * (N + 1) end,
 			DiscExtent = if DCount > 0 -> 16 + DOffset; true -> 0 end,
-				BitExtent = lists:max([DiscExtent|lists:map(GetExtent, Fields)]),
-				if
-					BitExtent =:= 0 ->
-						{0, 0, []};
-					BitExtent =:= 1 ->
-						{1, 1, Fields};
-					BitExtent =< 8 ->
-						{2, 8, Fields};
-					BitExtent =< 16 ->
-						{3, 16, Fields};
-					BitExtent =< 32 ->
-						{4, 32, Fields};
-					true -> % Since DWords + PWords =< 1, we can't be >64.
-						{5, 64, Fields}
-				end
-		end.
+			BitExtent = lists:max([DiscExtent|lists:map(GetExtent, Fields)]),
+			if
+				BitExtent =:= 0 ->
+					{0, 0, []};
+				BitExtent =:= 1 ->
+					{1, 1, Fields};
+				BitExtent =< 8 ->
+					{2, 8, Fields};
+				BitExtent =< 16 ->
+					{3, 16, Fields};
+				BitExtent =< 32 ->
+					{4, 32, Fields};
+				true -> % Since DWords + PWords =< 1, we can't be >64.
+					{5, 64, Fields}
+			end
+	end.
 
-	% S is in "integer generations"; we're going to use it to to work out how much to bsl.
-	encode(Type, Value, Default, Offset) ->
-		ValueToWrite = encode(Type, Value, Default),
-		Shifts = isize(Type),
-		% Multiply Offset by the value size, and the result with 63.
-		% This gives the offset within this word that the value will appear at.
-		% Now shift the encoded value by that amount to align it to where we'd
-		% hope it gets written.
-		{Shifts, ValueToWrite bsl ((Offset bsl Shifts) band 63)}.
+% S is in "integer generations"; we're going to use it to to work out how much to bsl.
+encode(Type, Value, Default, Offset) ->
+	ValueToWrite = encode(Type, Value, Default),
+	Shifts = isize(Type),
+	% Multiply Offset by the value size, and the result with 63.
+	% This gives the offset within this word that the value will appear at.
+	% Now shift the encoded value by that amount to align it to where we'd
+	% hope it gets written.
+	{Shifts, ValueToWrite bsl ((Offset bsl Shifts) band 63)}.
 
-	% This step is somewhat complicated by erlang's lack of love for little endian data.
-	% Basically, booleans end up in the wrong part of their byte.
-	% Still need a lot of experiment to find the fastest way of writing this code. 
-	encode(void, _, _) ->
-		0;
-	encode(int8, N, V) ->
-		encode_integer(1 bsl 7, N, V);
-	encode(int16, N, V) ->
-		encode_integer(1 bsl 15, N, V);
-	encode(int32, N, V) ->
-		encode_integer(1 bsl 31, N, V);
-	encode(int64, N, V) ->
-		encode_integer(1 bsl 63, N, V);
-	encode(bool, N, V) ->
-		encode_uinteger(1, N, V);
-	encode(uint8, N, V) ->
-		encode_uinteger(1 bsl 8, N, V);
-	encode(uint16, N, V) ->
-		encode_uinteger(1 bsl 16, N, V);
-	encode(uint32, N, V) ->
-		encode_uinteger(1 bsl 32, N, V);
-	encode(uint64, N, V) ->
-		encode_uinteger(1 bsl 64, N, V);
-	encode(_, _, _) ->
-		0.
+% This step is somewhat complicated by erlang's lack of love for little endian data.
+% Basically, booleans end up in the wrong part of their byte.
+% Still need a lot of experiment to find the fastest way of writing this code. 
+encode(void, _, _) ->
+	0;
+encode(int8, N, V) ->
+	encode_integer(1 bsl 7, N, V);
+encode(int16, N, V) ->
+	encode_integer(1 bsl 15, N, V);
+encode(int32, N, V) ->
+	encode_integer(1 bsl 31, N, V);
+encode(int64, N, V) ->
+	encode_integer(1 bsl 63, N, V);
+encode(bool, N, V) ->
+	encode_uinteger(1, N, V);
+encode(uint8, N, V) ->
+	encode_uinteger(1 bsl 8, N, V);
+encode(uint16, N, V) ->
+	encode_uinteger(1 bsl 16, N, V);
+encode(uint32, N, V) ->
+	encode_uinteger(1 bsl 32, N, V);
+encode(uint64, N, V) ->
+	encode_uinteger(1 bsl 64, N, V);
+encode(_, _, _) ->
+	0.
 
-	% How many times do we bsl 1 to get the size in bits?
-	isize(void) ->
-		-1;
-	isize(bool) ->
-		0;
-	isize(uint8) ->
-		3;
-	isize(int8) ->
-		3;
-	isize(uint16) ->
-		4;
-	isize(int16) ->
-		4;
-	isize(uint32) ->
-		5;
-	isize(int32) ->
-		5;
-	isize(uint64) ->
-		6;
-	isize(int64) ->
-		6.
+% How many times do we bsl 1 to get the size in bits?
+isize(void) ->
+	-1;
+isize(bool) ->
+	0;
+isize(uint8) ->
+	3;
+isize(int8) ->
+	3;
+isize(uint16) ->
+	4;
+isize(int16) ->
+	4;
+isize(uint32) ->
+	5;
+isize(int32) ->
+	5;
+isize(uint64) ->
+	6;
+isize(int64) ->
+	6.
 
-	encode_integer(Max, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
-		(Value+Max*2) bxor Default;
-	encode_integer(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
-		Value bxor Default.
+encode_integer(Max, Value, Default) when is_integer(Value), Value < 0, Value >= -Max ->
+	(Value+Max*2) bxor Default;
+encode_integer(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
+	Value bxor Default.
 
-	encode_uinteger(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
-		Value bxor Default.
+encode_uinteger(Max, Value, Default) when is_integer(Value), Value >= 0, Value < Max ->
+	Value bxor Default.
 
-	insert(Offset, DataSeg, Value) ->
-		% TODO setelement is sad
-		setelement(Offset+1, DataSeg, element(Offset+1, DataSeg) bor Value).
+insert(Offset, DataSeg, Value) ->
+	% TODO setelement is sad
+	setelement(Offset+1, DataSeg, element(Offset+1, DataSeg) bor Value).
 
-	flatten_seg(L) ->
-		<< <<A:?UInt64>> || A <- tuple_to_list(L) >>.
+flatten_seg(L) ->
+	<< <<A:?UInt64>> || A <- tuple_to_list(L) >>.
