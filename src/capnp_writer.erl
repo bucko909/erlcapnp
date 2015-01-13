@@ -128,12 +128,10 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 				{composite, DWords, PWords} ->
 					FoldFun = fun (V, {L, I, Data, DataLength}) ->
 							{DWords1, PWords1, NewData, _NewDataLength, NewExtraData, NewExtraDataLength} = to_bytes(Schema, LTypeId, V, L+DataLength),
-							io:format("~p~n", [{NewExtraData, NewExtraDataLength}]),
 							{DWords, PWords} = {DWords1, PWords1},
 							{L + DWords1 + PWords1, I+1, [NewData,Data|NewExtraData], NewExtraDataLength + DataLength}
 					end,
 					{DataLength, ListLength, Data, NewExtraDataLength} = lists:foldr(FoldFun, {0, 0, [], 0}, Value),
-					io:format("~p~n", [{DataLength, ListLength, Data, NewExtraDataLength}]),
 					{Pointer, Header} = composite_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords, ListLength),
 					NewPointerSeg = insert(N, PointerSeg, Pointer),
 					{DataSeg, NewPointerSeg, DataLength + NewExtraDataLength + 1, [<<Header:?UInt64>>|Data]};
