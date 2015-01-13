@@ -36,8 +36,8 @@ to_ast(Name, Schema) ->
 	SortedPtrFields = lists:sort(PtrFields),
 
 	Line = 0, % TODO
-	DataMatcher = generate_data_binary(0, SortedDataFields, {var, Line, '_'}),
-	DataMaker = generate_data_binary(0, SortedDataFields, {integer, Line, 0}),
+	DataMatcher = generate_data_binary(0, SortedDataFields, decode),
+	DataMaker = generate_data_binary(0, SortedDataFields, encode),
 	PtrMatcher = generate_ptr_binary(SortedPtrFields),
 
 	RecordName = list_to_atom(binary_to_list(Name)),
@@ -68,21 +68,32 @@ to_ast(Name, Schema) ->
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
 % Also support only ints for now.
-generate_data_binary(DesiredOffset, [{DesiredOffset, Size, Name, _Data}|Rest], JunkTerm) ->
+generate_data_binary(DesiredOffset, [{DesiredOffset, {BroadType, Size, BinType}, Name, _Data}|Rest], Direction) ->
 	% Match an integer.
 	Line = 0, % TODO
-	Var = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
-	[{bin_element, Line, Var, {integer, Line, Size}, [little,integer]}|generate_data_binary(DesiredOffset+Size, Rest, JunkTerm)];
-generate_data_binary(CurrentOffset, Rest=[{DesiredOffset, _, _, _}|_], JunkTerm) ->
+	RawVar = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
+	Var = case Direction of
+		encode ->
+			encoder(BroadType, RawVar, Line);
+		decode ->
+			decoder(BroadType, RawVar, Line)
+	end,
+	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction)];
+generate_data_binary(CurrentOffset, Rest=[{DesiredOffset, _, _, _}|_], Direction) ->
 	% Generate filler junk.
 	Line = 0, % TODO
-	[{bin_element, Line, JunkTerm, {integer, Line, DesiredOffset-CurrentOffset}, [little,integer]}|generate_data_binary(DesiredOffset, Rest, JunkTerm)];
-generate_data_binary(CurrentOffset, [], _JunkTerm) when CurrentOffset rem 64 == 0 ->
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, DesiredOffset-CurrentOffset}, [integer]}|generate_data_binary(DesiredOffset, Rest, Direction)];
+generate_data_binary(CurrentOffset, [], _Direction) when CurrentOffset rem 64 == 0 ->
 	[];
-generate_data_binary(CurrentOffset, [], JunkTerm) ->
+generate_data_binary(CurrentOffset, [], Direction) ->
 	% Generate terminal junk.
 	Line = 0, % TODO
-	[{bin_element, Line, JunkTerm, {integer, Line, 64-(CurrentOffset rem 64)}, [little,integer]}].
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64-(CurrentOffset rem 64)}, [integer]}].
+
+junkterm(Line, decode) ->
+	{var, Line, '_'};
+junkterm(Line, encode) ->
+	{integer, Line, 0}.
 
 generate_ptr_binary([{DesiredOffset, ptr, Name, _}|Rest]) ->
 	Line = 0, % TODO
@@ -91,18 +102,21 @@ generate_ptr_binary([{DesiredOffset, ptr, Name, _}|Rest]) ->
 generate_ptr_binary([]) ->
 	[].
 
-% Var = {var,Line,Atom}.
-% The code we generate to /match/ this integer.
-matcher(int64, Var, Line) ->
-	{bin_element, Line, Var, {integer,Line,64}, [little,integer]}.
-
 % The code we generate to construct data to put into a binary.
-encoder(int64, Var, _Line) ->
-	Var.
+encoder(integer, Var, _Line) ->
+	Var;
+encoder(float, Var, _Line) ->
+	Var;
+encoder(boolean, Var, Line) ->
+	{'if',Line,[{clause,Line,[],[[Var]],[{integer,Line,1}]},{clause,Line,[],[[{atom,Line,true}]],[{integer,Line,0}]}]}.
 
 % The code we generate after matching a binary to put data into a record.
-decoder(int64, Var, _Line) ->
-	Var.
+decoder(integer, Var, _Line) ->
+	Var;
+decoder(float, Var, _Line) ->
+	Var;
+decoder(boolean, Var, Line) ->
+	{'if',Line,[{clause,Line,[],[[{op,Line,'=:=',Var,{integer,Line,1}}]],[{atom,Line,true}]},{clause,Line,[],[[{atom,Line,true}]],[{atom,Line,false}]}]}.
 
 field_info(#'capnp::namespace::Field'{
 		name=Name,
@@ -114,7 +128,7 @@ field_info(#'capnp::namespace::Field'{
 			}
 		}   
 	}) ->
-	{Offset, Size} = case {TypeClass, TypeDescription} of
+	{Offset, Info} = case {TypeClass, TypeDescription} of
 		{text, void} ->
 			{N * 64, ptr};
 		{data, void} ->
@@ -122,12 +136,26 @@ field_info(#'capnp::namespace::Field'{
 		{anyPointer, void} ->
 			{N * 64, ptr};
 		{_, void} ->
-			Size1 = 1 bsl isize(TypeClass),
-			{N * Size1, Size1};
+			Info1 = {_BroadType, Size1, _BinType} = builtin_info(TypeClass),
+			{N * Size1, Info1};
 		_ ->
 			{N * 64, ptr}
 	end,
-	{Offset * Size, Size, Name, {TypeClass, TypeDescription, DefaultValue}}.
+	{Offset, Info, Name, {TypeClass, TypeDescription, DefaultValue}}.
+
+% {BroadType, Bits, BinaryType}
+builtin_info(int64) -> {integer, 64, [little, signed, integer]};
+builtin_info(int32) -> {integer, 32, [little, signed, integer]};
+builtin_info(int16) -> {integer, 16, [little, signed, integer]};
+builtin_info(int8) -> {integer, 8, [little, signed, integer]};
+builtin_info(uint64) -> {integer, 64, [little, unsigned, integer]};
+builtin_info(uint32) -> {integer, 32, [little, unsigned, integer]};
+builtin_info(uint16) -> {integer, 16, [little, unsigned, integer]};
+builtin_info(uint8) -> {integer, 8, [little, unsigned, integer]};
+builtin_info(float32) -> {float, 32, [float]};
+builtin_info(float64) -> {float, 64, [float]};
+builtin_info(bool) -> {boolean, 1, [integer]};
+builtin_info(void) -> {void, 0, [integer]}.
 
 % Convert a record into a segment, starting with the pointer to the binary.
 to_bytes(Rec, Schema) ->
