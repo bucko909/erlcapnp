@@ -14,9 +14,35 @@
 
 -record(field_info, {a}).
 
+% TODO:
+%  void is not rendered. This is probably OK as we can basically delete void fields.
+%  no lists
+%  no structs
+%  no unions
+%  no groups
+
 % Compiled reader functions take as arguments a #deref_ptr{} and a #envelope{} for pointer lookups.
 % Compiled writer functions take data as argument, and return an io_list() which is locally consistent.
 to_ast(Name, Schema) ->
+	to_ast([Name], sets:new(), [], [], Schema).
+
+to_ast([], _Done, Recs, Funs, _Schema) ->
+	Line = 0,
+	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ Funs ++ [{eof,Line}],
+	io:format("~p~n", [Forms]),
+	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms))]),
+	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
+	code:load_binary(capnp_test, "capnp_test.beam", BinData);
+to_ast([Name|Rest], Done, Recs, Funs, Schema) ->
+	case sets:is_element(Name, Done) of
+		true ->
+			to_ast(Rest, Done, Schema, Recs, Funs);
+		false ->
+			{NewRec, NewFuns, NewStructNames} = to_ast_one(Name, Schema),
+			to_ast(NewStructNames ++ Rest, sets:add_element(Name, Done), [NewRec|Recs], NewFuns ++ Funs, Schema)
+	end.
+
+to_ast_one(Name, Schema) ->
 	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
 	#'capnp::namespace::Node'{
 		''={{1, struct},
@@ -58,12 +84,8 @@ to_ast(Name, Schema) ->
 				[],
 				[{bin, Line, DataMaker ++ PtrMatcher}]
 			}]},
+	{RecDef, [EncodeFunDef, DecodeFunDef], []}.
 
-	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,1,module,capnp_test},{attribute,5,compile,[export_all]},RecDef,EncodeFunDef,DecodeFunDef,{eof,11}],
-	io:format("~p~n", [Forms]),
-	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms))]),
-	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
-	code:load_binary(capnp_test, "capnp_test.beam", BinData).
 
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
