@@ -12,7 +12,9 @@
 		to_ast/2
 	]).
 
--record(field_info, {a}).
+-record(field_info, {offset, type, name}).
+-record(native_type, {type, width, extra, binary_options}).
+-record(ptr_type, {type, extra}).
 
 % TODO:
 %  void is not rendered. This is probably OK as we can basically delete void fields.
@@ -56,7 +58,7 @@ to_ast_one(Name, Schema) ->
 	% Start by finding the bit offsets of each field, so that we can order them.
 	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
 	io:format("~p~n", [AllFields]),
-	{PtrFields, DataFields} = lists:partition(fun ({_,Size,_,_}) -> Size =:= ptr end, AllFields),
+	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, AllFields),
 	% We like these sorted.
 	SortedDataFields = lists:sort(DataFields),
 	SortedPtrFields = lists:sort(PtrFields),
@@ -67,19 +69,19 @@ to_ast_one(Name, Schema) ->
 	PtrMatcher = generate_ptr_binary(SortedPtrFields),
 
 	RecordName = list_to_atom(binary_to_list(Name)),
-	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields]}},
+	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields]}},
 	EncodeFunDef = {function, Line, list_to_atom("decode_" ++ binary_to_list(Name)), 1,
 		[{clause, Line,
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
 				[],
 				[{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(BroadType, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}, Line)} || {_, {BroadType, _, _}, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}, Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
 					}]
 			}]},
 	DecodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 1,
 		[{clause, Line,
 				[{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || {_, _, FieldName, _} <- SortedDataFields ++ SortedPtrFields ]
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ]
 					}],
 				[],
 				[{bin, Line, DataMaker ++ PtrMatcher}]
@@ -90,18 +92,18 @@ to_ast_one(Name, Schema) ->
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
 % Also support only ints for now.
-generate_data_binary(DesiredOffset, [{DesiredOffset, {BroadType, Size, BinType}, Name, _Data}|Rest], Direction) ->
+generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction) ->
 	% Match an integer.
 	Line = 0, % TODO
 	RawVar = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
 	Var = case Direction of
 		encode ->
-			encoder(BroadType, RawVar, Line);
+			encoder(Type, RawVar, Line);
 		decode ->
 			RawVar
 	end,
 	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction)];
-generate_data_binary(CurrentOffset, Rest=[{DesiredOffset, _, _, _}|_], Direction) ->
+generate_data_binary(CurrentOffset, Rest=[#field_info{offset=DesiredOffset}|_], Direction) ->
 	% Generate filler junk.
 	Line = 0, % TODO
 	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, DesiredOffset-CurrentOffset}, [integer]}|generate_data_binary(DesiredOffset, Rest, Direction)];
@@ -125,25 +127,25 @@ generate_ptr_binary([]) ->
 	[].
 
 % The code we generate to construct data to put into a binary.
-encoder(integer, Var, _Line) ->
+encoder(#native_type{type=integer}, Var, _Line) ->
 	Var;
-encoder(float, Var, _Line) ->
+encoder(#native_type{type=float}, Var, _Line) ->
 	Var;
-encoder(boolean, Var, Line) ->
+encoder(#native_type{type=boolean}, Var, Line) ->
 	{'if',Line,[{clause,Line,[],[[Var]],[{integer,Line,1}]},{clause,Line,[],[[{atom,Line,true}]],[{integer,Line,0}]}]};
-encoder({enum, Enumerants}, Var, Line) ->
+encoder(#native_type{type=enum, extra=Enumerants}, Var, Line) ->
 	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N, Elt}, N+1} end, 0, Enumerants),
 	% case Var of V1 -> 0; ... end
 	{'case', Line, Var, [{clause, Line, [{atom, Line, Name}], [], [{integer, Line, Number}]} || {Number, Name} <- Numbered ]}.
 
 % The code we generate after matching a binary to put data into a record.
-decoder(integer, Var, _Line) ->
+decoder(#native_type{type=integer}, Var, _Line) ->
 	Var;
-decoder(float, Var, _Line) ->
+decoder(#native_type{type=float}, Var, _Line) ->
 	Var;
-decoder(boolean, Var, Line) ->
+decoder(#native_type{type=boolean}, Var, Line) ->
 	{'if',Line,[{clause,Line,[],[[{op,Line,'=:=',Var,{integer,Line,1}}]],[{atom,Line,true}]},{clause,Line,[],[[{atom,Line,true}]],[{atom,Line,false}]}]};
-decoder({enum, Enumerants}, Var, Line) ->
+decoder(#native_type{type=enum, extra=Enumerants}, Var, Line) ->
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
 	% erlang:element(Var+1, {V1, ...})
 	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]}.
@@ -160,21 +162,24 @@ field_info(#'capnp::namespace::Field'{
 	}, Schema) ->
 	{Offset, Info} = case {TypeClass, TypeDescription} of
 		{text, void} ->
-			{N * 64, ptr};
+			{N * 64, #ptr_type{type=unknown}}; % TODO
 		{data, void} ->
-			{N * 64, ptr};
+			{N * 64, #ptr_type{type=unknown}}; % TODO
 		{anyPointer, void} ->
-			{N * 64, ptr};
+			{N * 64, #ptr_type{type=unknown}}; % Not really possible
 		{_, void} ->
-			Info1 = {_BroadType, Size1, _BinType} = builtin_info(TypeClass),
+			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
 			{N * Size1, Info1};
 		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			EnumerantNames = enumerant_names(TypeId, Schema),
-			{N * 16, {{enum, EnumerantNames}, 16, [little,unsigned,integer]}};
+			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
+		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
+			Name = node_name(TypeId, Schema),
+			{N * 64, #ptr_type{type=struct, extra=Name}};
 		_ ->
-			{N * 64, ptr}
+			{N * 64, #ptr_type{type=unknown}} % TODO
 	end,
-	{Offset, Info, Name, {TypeClass, TypeDescription, DefaultValue}}.
+	#field_info{offset=Offset, type=Info, name=Name}.
 
 enumerant_names(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
@@ -186,19 +191,25 @@ enumerant_names(TypeId, Schema) ->
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
+node_name(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		displayName=Name
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	Name.
+
 % {BroadType, Bits, BinaryType}
-builtin_info(int64) -> {integer, 64, [little, signed, integer]};
-builtin_info(int32) -> {integer, 32, [little, signed, integer]};
-builtin_info(int16) -> {integer, 16, [little, signed, integer]};
-builtin_info(int8) -> {integer, 8, [little, signed, integer]};
-builtin_info(uint64) -> {integer, 64, [little, unsigned, integer]};
-builtin_info(uint32) -> {integer, 32, [little, unsigned, integer]};
-builtin_info(uint16) -> {integer, 16, [little, unsigned, integer]};
-builtin_info(uint8) -> {integer, 8, [little, unsigned, integer]};
-builtin_info(float32) -> {float, 32, [float]};
-builtin_info(float64) -> {float, 64, [float]};
-builtin_info(bool) -> {boolean, 1, [integer]};
-builtin_info(void) -> {void, 0, [integer]}.
+builtin_info(int64) -> #native_type{type=integer, width=64, binary_options=[little, signed, integer]};
+builtin_info(int32) -> #native_type{type=integer, width=32, binary_options=[little, signed, integer]};
+builtin_info(int16) -> #native_type{type=integer, width=16, binary_options=[little, signed, integer]};
+builtin_info(int8) -> #native_type{type=integer, width=8, binary_options=[little, signed, integer]};
+builtin_info(uint64) -> #native_type{type=integer, width=64, binary_options=[little, unsigned, integer]};
+builtin_info(uint32) -> #native_type{type=integer, width=32, binary_options=[little, unsigned, integer]};
+builtin_info(uint16) -> #native_type{type=integer, width=16, binary_options=[little, unsigned, integer]};
+builtin_info(uint8) -> #native_type{type=integer, width=8, binary_options=[little, unsigned, integer]};
+builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[float]};
+builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[float]};
+builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer]};
+builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer]}.
 
 % Convert a record into a segment, starting with the pointer to the binary.
 to_bytes(Rec, Schema) ->
