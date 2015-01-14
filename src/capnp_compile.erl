@@ -38,7 +38,7 @@ to_ast([], _Done, Recs, Funs, _Schema) ->
 to_ast([Name|Rest], Done, Recs, Funs, Schema) ->
 	case sets:is_element(Name, Done) of
 		true ->
-			to_ast(Rest, Done, Schema, Recs, Funs);
+			to_ast(Rest, Done, Recs, Funs, Schema);
 		false ->
 			{NewRec, NewFuns, NewStructNames} = to_ast_one(Name, Schema),
 			to_ast(NewStructNames ++ Rest, sets:add_element(Name, Done), [NewRec|Recs], NewFuns ++ Funs, Schema)
@@ -66,11 +66,13 @@ to_ast_one(Name, Schema) ->
 	Line = 0, % TODO
 	DataMatcher = generate_data_binary(0, SortedDataFields, decode),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode),
-	PtrMatcher = generate_ptr_binary(SortedPtrFields),
+	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode),
+	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
 
 	RecordName = list_to_atom(binary_to_list(Name)),
 	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields]}},
-	EncodeFunDef = {function, Line, list_to_atom("decode_" ++ binary_to_list(Name)), 1,
+	% function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
+	DecodeFunDef = {function, Line, list_to_atom("decode_" ++ binary_to_list(Name)), 1,
 		[{clause, Line,
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
 				[],
@@ -78,16 +80,64 @@ to_ast_one(Name, Schema) ->
 						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}, Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
 					}]
 			}]},
-	DecodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 1,
+	% We're going to encode by encoding each type as close to its contents as possible.
+	% So a #a{b=#c{}} looks like [ enc(a), enc(b) ].
+	% This doesn't quite work for lists, as the complete list must be inlined first.
+	% So PtrOffsetWordsFromEnd0 will be 0 for structs, or the distance to the end of the list for lists.
+	%
+	% function encode_<Type>(#<Type>{}, PtrOffsetWordsFromEnd0) ->
+	%     {DataLen0, PtrLen0} = (constant)
+	%     ExtraLen0 = 0,
+	%
+	%     {DataLen1, PtrLen1, ExtraLen1, Data1, Extra1} = encode_<Type1>(<InputData1>, 0),
+	%     PtrOffset1 = PtrOffsetWordsFromEnd0 + (PtrLen0 - 1), % Distance /from/ end plus distance /to/ end
+	%     Ptr1 = struct_ptr(PtrOffset1, DataLen1, PtrLen1),
+	%     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0 + DataLen1 + PtrLen1 + ExtraLen1,
+	%
+	%     {DataLen2, PtrLen2, ExtraLen2, Data2, Extra2} = encode_<Type2>(<InputData2>, 0),
+	%     PtrOffset2 = PtrOffsetWordsFromEnd1 + (PtrLen0 - 2),
+	%     Ptr2 = struct_ptr(PtrOffset2, DataLen2, PtrLen2),
+	%     PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1 + DataLen2 + PtrLen2 + ExtraLen2,
+	%
+	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
+	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
+	%
+	EncodePointers = lists:append([ gen_encode_ptr(N, length(PtrFields), FieldDataLen, FieldPtrLen, TypeName, FieldName, Line) || {N, #field_info{name=FieldName, type=#ptr_type{type=struct, extra={TypeName, FieldDataLen, FieldPtrLen}}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 2,
 		[{clause, Line,
-				[{record,Line,RecordName,
+				[
+					{record,Line,RecordName,
 						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ]
-					}],
+					},
+					{var, Line, 'PtrOffsetWordsFromEnd0'}
+				],
 				[],
-				[{bin, Line, DataMaker ++ PtrMatcher}]
+				EncodePointers ++ [
+					{tuple, Line, [
+							{op, Line, '-', {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ integer_to_list(length(PtrFields)))}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
+							{bin, Line, DataMaker ++ PtrMaker},
+							to_list(Line, lists:append([ [ {var, Line, list_to_atom("Data" ++ integer_to_list(N))}, {var, Line, list_to_atom("Extra" ++ integer_to_list(N))}] || N <- lists:seq(1, length(PtrFields)) ]))
+					]}
+				]
 			}]},
-	{RecDef, [EncodeFunDef, DecodeFunDef], []}.
+	ExtraTypes = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
+	{RecDef, [EncodeFunDef, DecodeFunDef], ExtraTypes}.
 
+to_list(Line, List) ->
+	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
+
+make_var_sum(Line, Names) ->
+	Vars = [ {var, Line, list_to_atom(Name)} || Name <- lists:reverse(Names) ],
+	lists:foldl(fun (Var, SoFar) -> {op, Line, '+', SoFar, Var} end, hd(Vars), tl(Vars)).
+
+gen_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
+	Ns = integer_to_list(N),
+	PtrOffset1 = {op, Line, '+', {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ integer_to_list(N-1))}, {integer, Line, PtrLen0 - N}},
+	[
+		{match, Line, {tuple, Line, [ {var, Line, list_to_atom(VN ++ Ns)} || VN <- ["ExtraLen", "Data", "Extra"] ]}, {call, Line, {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))}, [{var, Line, list_to_atom("Var" ++ binary_to_list(VarName))}, {integer, Line, 0}]}},
+		{match, Line, {var, Line, list_to_atom("Ptr" ++ binary_to_list(VarName))}, {op, Line, '+', {op, Line, 'bsl', PtrOffset1, {integer, Line, 2}}, {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)}}},
+		{match, Line, {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ Ns)}, {op, Line, '+', make_var_sum(Line, ["PtrOffsetWordsFromEnd" ++ integer_to_list(N-1), "ExtraLen" ++ Ns]), {integer, Line, DataLen + PtrLen}}}
+	].
 
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
@@ -114,17 +164,24 @@ generate_data_binary(CurrentOffset, [], Direction) ->
 	Line = 0, % TODO
 	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64-(CurrentOffset rem 64)}, [integer]}].
 
+% We shouldn't have gaps in this case, but we sanity check that.
+generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#ptr_type{}, name=Name}|Rest], Direction) ->
+	% Match an integer.
+	Line = 0, % TODO
+	Var = case Direction of
+		encode ->
+			{var, Line, list_to_atom("Ptr" ++ binary_to_list(Name))};
+		decode ->
+			{var, Line, list_to_atom("Var" ++ binary_to_list(Name))}
+	end,
+	[{bin_element, Line, Var, {integer, Line, 64}, [little,unsigned,integer]}|generate_ptr_binary(DesiredOffset+64, Rest, Direction)];
+generate_ptr_binary(_CurrentOffset, [], _Direction) ->
+	[].
+
 junkterm(Line, decode) ->
 	{var, Line, '_'};
 junkterm(Line, encode) ->
 	{integer, Line, 0}.
-
-generate_ptr_binary([{DesiredOffset, ptr, Name, _}|Rest]) ->
-	Line = 0, % TODO
-	Var = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
-	[{bin_element, Line, Var, {integer, Line, 64}, [little,integer]}|generate_ptr_binary(Rest)];
-generate_ptr_binary([]) ->
-	[].
 
 % The code we generate to construct data to put into a binary.
 encoder(#native_type{type=integer}, Var, _Line) ->
@@ -136,7 +193,9 @@ encoder(#native_type{type=boolean}, Var, Line) ->
 encoder(#native_type{type=enum, extra=Enumerants}, Var, Line) ->
 	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N, Elt}, N+1} end, 0, Enumerants),
 	% case Var of V1 -> 0; ... end
-	{'case', Line, Var, [{clause, Line, [{atom, Line, Name}], [], [{integer, Line, Number}]} || {Number, Name} <- Numbered ]}.
+	{'case', Line, Var, [{clause, Line, [{atom, Line, Name}], [], [{integer, Line, Number}]} || {Number, Name} <- Numbered ]};
+encoder(#ptr_type{}, Var, _Line) ->
+	Var.
 
 % The code we generate after matching a binary to put data into a record.
 decoder(#native_type{type=integer}, Var, _Line) ->
@@ -148,7 +207,9 @@ decoder(#native_type{type=boolean}, Var, Line) ->
 decoder(#native_type{type=enum, extra=Enumerants}, Var, Line) ->
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
 	% erlang:element(Var+1, {V1, ...})
-	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]}.
+	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]};
+decoder(#ptr_type{}, Var, _Line) ->
+	Var.
 
 field_info(#'capnp::namespace::Field'{
 		name=Name,
@@ -174,8 +235,8 @@ field_info(#'capnp::namespace::Field'{
 			EnumerantNames = enumerant_names(TypeId, Schema),
 			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
-			Name = node_name(TypeId, Schema),
-			{N * 64, #ptr_type{type=struct, extra=Name}};
+			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
+			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
 		_ ->
 			{N * 64, #ptr_type{type=unknown}} % TODO
 	end,
@@ -193,9 +254,15 @@ enumerant_names(TypeId, Schema) ->
 
 node_name(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
-		displayName=Name
+		displayName=Name,
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	Name.
+	{Name, DWords, PWords}.
 
 % {BroadType, Bits, BinaryType}
 builtin_info(int64) -> #native_type{type=integer, width=64, binary_options=[little, signed, integer]};
