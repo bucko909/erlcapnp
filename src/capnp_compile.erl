@@ -120,8 +120,37 @@ to_ast_one(Name, Schema) ->
 					]}
 				]
 			}]},
+	EnvelopeFunDef = {function, Line, list_to_atom("envelope_" ++ binary_to_list(Name)), 1,
+		[{clause, Line,
+				[
+					{var, Line, 'Input'}
+				],
+				[],
+				[
+					{match, Line,
+							{tuple, Line, [
+								{var, Line, 'ExtraLen'},
+								{var, Line, 'MainData'},
+								{var, Line, 'ExtraData'}
+							]},
+							{call, Line, {atom, Line, list_to_atom("encode_" ++ binary_to_list(Name))}, [{var, Line, 'Input'}, {integer, Line, 0}]}
+					},
+					{call, Line, {atom, Line, 'list_to_binary'}, [to_list(Line, [
+									{bin, Line, [
+											{bin_element, Line, {integer, Line, 0}, {integer, Line, 32}, [unsigned, little, integer]}, % Seg count - 1
+											{bin_element, Line, {op, Line, '+', {var, Line, 'ExtraLen'}, {integer, Line, 1+DWords+PWords}}, {integer, Line, 32}, [unsigned, little, integer]}, % Seg length = 1 + DWords + PWords + ExtraData
+											{bin_element, Line, {integer, Line, 0}, {integer, Line, 32}, [unsigned, little, integer]}, % (Offset of first bit of data) bsl 2 + 0 == 0
+											{bin_element, Line, {integer, Line, DWords}, {integer, Line, 16}, [unsigned, little, integer]},
+											{bin_element, Line, {integer, Line, PWords}, {integer, Line, 16}, [unsigned, little, integer]}
+										]},
+									{var, Line, 'MainData'},
+									{var, Line, 'ExtraData'}
+								])]
+					}
+				]
+			}]},
 	ExtraTypes = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
-	{RecDef, [EncodeFunDef, DecodeFunDef], ExtraTypes}.
+	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes}.
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
