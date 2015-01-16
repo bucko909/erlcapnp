@@ -16,6 +16,8 @@
 -record(native_type, {type, width, extra, binary_options}).
 -record(ptr_type, {type, extra}).
 
+-compile({parse_transform, uberpt}).
+
 % TODO:
 %  void is not rendered. This is probably OK as we can basically delete void fields.
 %  no lists
@@ -102,7 +104,7 @@ to_ast_one(Name, Schema) ->
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	EncodePointers = lists:append([ gen_encode_ptr(N, length(PtrFields), FieldDataLen, FieldPtrLen, TypeName, FieldName, Line) || {N, #field_info{name=FieldName, type=#ptr_type{type=struct, extra={TypeName, FieldDataLen, FieldPtrLen}}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ ast_encode_ptr(N, length(PtrFields), FieldDataLen, FieldPtrLen, TypeName, FieldName, Line) || {N, #field_info{name=FieldName, type=#ptr_type{type=struct, extra={TypeName, FieldDataLen, FieldPtrLen}}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	EncodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 2,
 		[{clause, Line,
 				[
@@ -155,18 +157,32 @@ to_ast_one(Name, Schema) ->
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
 
-make_var_sum(Line, Names) ->
-	Vars = [ {var, Line, list_to_atom(Name)} || Name <- lists:reverse(Names) ],
-	lists:foldl(fun (Var, SoFar) -> {op, Line, '+', SoFar, Var} end, hd(Vars), tl(Vars)).
+% This is just a variable aligning function which passes through to ast_encode_ptr_
+ast_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
+	[ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["ExtraLen", "Data", "Extra"] ],
+	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
+	StructLen = {integer, Line, DataLen + PtrLen},
+	PtrOffset = {op, Line, '+', var_p(Line, "PtrOffsetWordsFromEnd", N-1), {integer, Line, PtrLen0 - N}},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_ptr_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen).
 
-gen_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
-	Ns = integer_to_list(N),
-	PtrOffset1 = {op, Line, '+', {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ integer_to_list(N-1))}, {integer, Line, PtrLen0 - N}},
-	[
-		{match, Line, {tuple, Line, [ {var, Line, list_to_atom(VN ++ Ns)} || VN <- ["ExtraLen", "Data", "Extra"] ]}, {call, Line, {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))}, [{var, Line, list_to_atom("Var" ++ binary_to_list(VarName))}, {integer, Line, 0}]}},
-		{match, Line, {var, Line, list_to_atom("Ptr" ++ binary_to_list(VarName))}, {op, Line, '+', {op, Line, 'bsl', PtrOffset1, {integer, Line, 2}}, {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)}}},
-		{match, Line, {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ Ns)}, {op, Line, '+', make_var_sum(Line, ["PtrOffsetWordsFromEnd" ++ integer_to_list(N-1), "ExtraLen" ++ Ns]), {integer, Line, DataLen + PtrLen}}}
-	].
+% This is the fragment that's inserted for each pointer.
+-ast_fragment([]).
+ast_encode_ptr_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
+	{ExtraLenVar, DataVar, ExtraVar} = EncodeFun(MatchVar, 0),
+	PtrVar = (PtrOffset bsl 2) + StructHeaderNumbers,
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ExtraLenVar + StructLen.
+
+to_list(A) when is_atom(A) -> atom_to_list(A);
+to_list(A) when is_binary(A) -> binary_to_list(A);
+to_list(A) when is_integer(A) -> integer_to_list(A);
+to_list(A) when is_list(A) -> A.
+
+var_p(Line, Prepend, Value) ->
+	{var, Line, list_to_atom(to_list(Prepend) ++ to_list(Value))}.
 
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
