@@ -12,7 +12,7 @@
 		to_ast/2
 	]).
 
--record(field_info, {offset, type, name}).
+-record(field_info, {offset, type, name, default}).
 -record(native_type, {type, width, extra, binary_options}).
 -record(ptr_type, {type, extra}).
 
@@ -194,7 +194,7 @@ generate_data_binary(CurrentOffset, [], Direction) ->
 	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64-(CurrentOffset rem 64)}, [integer]}].
 
 % We shouldn't have gaps in this case, but we sanity check that.
-generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#ptr_type{}, name=Name}|Rest], Direction) ->
+generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction) ->
 	% Match an integer.
 	Line = 0, % TODO
 	Var = case Direction of
@@ -269,7 +269,7 @@ field_info(#'capnp::namespace::Field'{
 		_ ->
 			{N * 64, #ptr_type{type=unknown}} % TODO
 	end,
-	#field_info{offset=Offset, type=Info, name=Name}.
+	#field_info{offset=Offset, type=Info, name=Name, default=DefaultValue}.
 
 enumerant_names(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
