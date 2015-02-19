@@ -128,34 +128,38 @@ to_ast_one(Name, Schema) ->
 					{var, Line, 'Input'}
 				],
 				[],
-				[
-					{match, Line,
-							{tuple, Line, [
-								{var, Line, 'ExtraLen'},
-								{var, Line, 'MainData'},
-								{var, Line, 'ExtraData'}
-							]},
-							{call, Line, {atom, Line, list_to_atom("encode_" ++ binary_to_list(Name))}, [{var, Line, 'Input'}, {integer, Line, 0}]}
-					},
-					{call, Line, {atom, Line, 'list_to_binary'}, [to_list(Line, [
-									{bin, Line, [
-											{bin_element, Line, {integer, Line, 0}, {integer, Line, 32}, [unsigned, little, integer]}, % Seg count - 1
-											{bin_element, Line, {op, Line, '+', {var, Line, 'ExtraLen'}, {integer, Line, 1+DWords+PWords}}, {integer, Line, 32}, [unsigned, little, integer]}, % Seg length = 1 + DWords + PWords + ExtraData
-											{bin_element, Line, {integer, Line, 0}, {integer, Line, 32}, [unsigned, little, integer]}, % (Offset of first bit of data) bsl 2 + 0 == 0
-											{bin_element, Line, {integer, Line, DWords}, {integer, Line, 16}, [unsigned, little, integer]},
-											{bin_element, Line, {integer, Line, PWords}, {integer, Line, 16}, [unsigned, little, integer]}
-										]},
-									{var, Line, 'MainData'},
-									{var, Line, 'ExtraData'}
-								])]
-					}
-				]
+				ast_envelope(DWords, PWords, Name, Line)
 			}]},
 	ExtraTypes = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes}.
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
+
+ast_envelope(DWords, PWords, Name, Line) ->
+	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(Name))},
+	ast_envelope_({integer, Line, DWords}, {integer, Line, PWords}, {integer, Line, 1+DWords+PWords}, {var, Line, 'Input'}, EncodeFun).
+
+-ast_fragment([]).
+ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
+	{ExtraDataLen, MainData, ExtraData} = EncodeFun(InputVar, 0),
+	list_to_binary([
+			<<
+				% Segment envelope
+				0:32/unsigned-little-integer, % Segcount - 1. Always 0 for us.
+				(CommonLenInt+ExtraDataLen):32/unsigned-little-integer, % Seglen = 1 + DWords + PWords + ExtraLen
+
+				% Pointer to first struct
+				0:32/unsigned-little-integer, % Offset of data, starting from end of this pointer, after the struct-type tag. Always 0 for us.
+				DWordsInt:16/unsigned-little-integer, % Number of data words in the struct.
+				PWordsInt:16/unsigned-little-integer % Number of pointer words in the struct.
+			>>,
+
+			% Now the actual data. This may be an io_list, so we can't just /binary it in.
+			MainData,
+			ExtraData
+	]).
+
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
 ast_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
