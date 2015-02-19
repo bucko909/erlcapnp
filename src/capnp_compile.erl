@@ -433,25 +433,6 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 	case {TypeClass, TypeDescription} of
 		{anyPointer, void} ->
 			erlang:error(not_implemented);
-		{TextType, void} when TextType =:= text; TextType =:= data ->
-			{Binary, ByteSize} = encode_text(TextType, Value),
-			Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), 2, ByteSize),
-			PadLength = -ByteSize band 7,
-			Pad = << <<0:8>> || _ <- lists:seq(1, PadLength) >>,
-			WordSize = (ByteSize + PadLength) bsr 3,
-			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			{DataSeg, NewPointerSeg, WordSize, [Binary|Pad]};
-		{_, void} ->
-			{Shifts, Encoded} = encode(TypeClass, Value, DefaultValue, N),
-			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
-			{NewDataSeg, PointerSeg, 0, []};
-		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId)-> % TODO are these working fine in bootstrap_capnp? They're a :group.
-			{DWords, PWords, Data, DataWords, NewExtraData, FinalOffset} = to_bytes(Schema, TypeId, Value, 0),
-			% We're going to jam the new data on the end of the accumulator, so we must add the length of every structure we've added so far.
-			% We also need to include the length of every pointer /after/ this one. Not that the first pointer is N=0.
-			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
-			NewPointerSeg = insert(N, PointerSeg, Pointer),
-			{DataSeg, NewPointerSeg, DataWords + FinalOffset, [Data|NewExtraData]};
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 			% Start the encode from the end of the list. Append the data, and prepend the pointers.
 			% This means that the first pointer is always just a zero pointer.
