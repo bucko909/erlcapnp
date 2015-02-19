@@ -34,7 +34,7 @@ to_ast([], _Done, Recs, Funs, _Schema) ->
 	Line = 0,
 	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ Funs ++ [{eof,Line}],
 	io:format("~p~n", [Forms]),
-	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms))]),
+	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}])]),
 	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(capnp_test, "capnp_test.beam", BinData);
 to_ast([Name|Rest], Done, Recs, Funs, Schema) ->
