@@ -169,16 +169,55 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrL
 	PtrVar = var_p(Line, "Ptr", VarName),
 	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
 	StructLen = {integer, Line, DataLen + PtrLen},
-	PtrOffset = {op, Line, '+', var_p(Line, "PtrOffsetWordsFromEnd", N-1), {integer, Line, PtrLen0 - N}},
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen).
+	ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, OffsetToEndInt, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
+	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_text_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
+	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
 
-% This is the fragment that's inserted for each pointer.
+% This are the fragment that are inserted for each pointer.
+% They should assign PtrOffsetWordsFromEnd{N} to include the length of all of the stuff they're encoding, plus PtrOffsetWordsFromEnd{N-1}.
+% They should assign Ptr{VarName} to a valid 64-bit integer to encode into the pointer.
+% They should assign Data{N} to their personal data.
+% They should assign Extra{N} to any extra data they are adding.
+% The distinction between Data{N} and Extra{N} is important for list contents; Data should contain /just/ the thing that would be put into the list; Extra /just/ the thing that isn't.
 -ast_fragment([]).
-ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
+ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, OffsetToEndInt, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
 	{ExtraLenVar, DataVar, ExtraVar} = EncodeFun(MatchVar, 0),
-	PtrVar = (PtrOffset bsl 2) + StructHeaderNumbers,
+	PtrVar = ((OldOffsetWordsFromEndVar + OffsetToEndInt) bsl 2) + StructHeaderNumbers,
 	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ExtraLenVar + StructLen.
+
+-ast_fragment([]).
+ast_encode_text_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
+	ExtraVar = <<>>,
+	DataLenVar = iolist_size(MatchVar)+1,
+	% We need to add a null terminator.
+	% Then we need to add (-L band 7) bytes of padding for alignment.
+	DataVar = [MatchVar, <<0:8, 0:((-DataLenVar band 7)*8)/unsigned-little-integer>>],
+	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (2 bsl 32) bor (DataLenVar bsl 35),
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 7) bsr 3).
+
+-ast_fragment([]).
+ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
+	ExtraVar = <<>>,
+	DataLenVar = iolist_size(MatchVar),
+	% We need to add (-L band 7) bytes of padding for alignment.
+	DataVar = [MatchVar, <<0:((-DataLenVar band 7)*8)/unsigned-little-integer>>],
+	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (2 bsl 32) bor (DataLenVar bsl 35),
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 7) bsr 3).
+
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
 to_list(A) when is_binary(A) -> binary_to_list(A);
@@ -271,24 +310,23 @@ field_info(#'capnp::namespace::Field'{
 		}   
 	}, Schema) ->
 	{Offset, Info} = case {TypeClass, TypeDescription} of
-		% Data types
-		{text, void} ->
-			{N * 64, #ptr_type{type=unknown}}; % TODO
-		{data, void} ->
-			{N * 64, #ptr_type{type=unknown}}; % TODO
+		% Pointer types (composite/list)
+		{TextType, void} when TextType =:= text; TextType =:= data ->
+			{N * 64, #ptr_type{type=text_or_data, extra=TextType}};
 		{anyPointer, void} ->
 			{N * 64, #ptr_type{type=unknown}}; % Not really possible
-		{_, void} ->
-			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
-			{N * Size1, Info1};
-		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
-			EnumerantNames = enumerant_names(TypeId, Schema),
-			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
-		% Pointer types (composite/list)
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
 			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
+		% Data types
+		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
+			EnumerantNames = enumerant_names(TypeId, Schema),
+			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
+		{_, void} ->
+			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
+			{N * Size1, Info1};
 		_ ->
+			io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
 			{N * 64, #ptr_type{type=unknown}} % TODO
 	end,
 	#field_info{offset=Offset, type=Info, name=Name, default=DefaultValue}.
