@@ -318,6 +318,25 @@ field_info(#'capnp::namespace::Field'{
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
 			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
+		{list, #'capnp::namespace::Type'{''={{_,enum},_LTypeId}}} ->
+			% List of enums.
+			erlang:error({not_implemented, enum});
+		{list, #'capnp::namespace::Type'{''={{_,TextType},void}}} when TextType =:= text; TextType =:= data ->
+			% List of text types; this is a list-of-lists.
+			erlang:error({not_implemented, list, TextType});
+		{list, #'capnp::namespace::Type'{''={{_,IntOrVoidType},void}}} ->
+			% List of native types
+			erlang:error({not_implemented, list, IntOrVoidType});
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+			% List of lists, text or data -- all three are lists of lists.
+			erlang:error({not_implemented, list, list});
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}} ->
+			% List of structs.
+			erlang:error({not_implemented, list, struct});
+		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
+			erlang:error({not_implemented, list, anyPointer});
+		{list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}} ->
+			erlang:error({not_implemented, list, interface});
 		% Data types
 		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			EnumerantNames = enumerant_names(TypeId, Schema),
@@ -325,6 +344,7 @@ field_info(#'capnp::namespace::Field'{
 		{_, void} ->
 			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
 			{N * Size1, Info1};
+		% Catchall
 		_ ->
 			io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
 			{N * 64, #ptr_type{type=unknown}} % TODO
@@ -485,19 +505,7 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 					Pointer = plain_list_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), SizeTag, Length),
 					NewPointerSeg = insert(N, PointerSeg, Pointer),
 					{DataSeg, NewPointerSeg, ListWords, ListData}
-			end;
-		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
-			% TODO Encode as pointers?!
-			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}} ->
-			% TODO Encode as ???!
-			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,enum},_LTypeId}}} ->
-			% TODO Encode as ints!
-			erlang:error(not_implemented);
-		{list, #'capnp::namespace::Type'{''={{_,IntOrVoidType},void}}} ->
-			% TODO Encode as ints!
-			erlang:error({not_implemented, list, IntOrVoidType})
+			end
 			% TODO nested constructs (ie. groups)
 			% TODO unions (discriminantValue/discriminantOffset)
 	end.
