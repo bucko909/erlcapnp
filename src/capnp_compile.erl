@@ -412,11 +412,6 @@ encode_field(TypeClass, TypeDescription, DefaultValue, N, Value, DataSeg, Pointe
 			Pointer = struct_pointer(ExtraDataLength + (tuple_size(PointerSeg) - (N + 1)), DWords, PWords),
 			NewPointerSeg = insert(N, PointerSeg, Pointer),
 			{DataSeg, NewPointerSeg, DataWords + FinalOffset, [Data|NewExtraData]};
-		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
-			Index = encode_enum(TypeId, Value, Schema),
-			{Shifts, Encoded} = encode(uint16, Index, DefaultValue, N),
-			NewDataSeg = insert((N bsl (Shifts - 6)), DataSeg, Encoded),
-			{NewDataSeg, PointerSeg, 0, []};			
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 			% Start the encode from the end of the list. Append the data, and prepend the pointers.
 			% This means that the first pointer is always just a zero pointer.
@@ -490,20 +485,6 @@ encode_text(text, T) when is_binary(T) ->
 	{[T, 0], byte_size(T) + 1};
 encode_text(data, T) when is_binary(T) ->
 	{T, byte_size(T)}.
-
-encode_enum(TypeId, Value, Schema) ->
-	% TODO store this in a more convenient format in the schema!
-	% TODO support not-binaries as enum values (probably ought to be atoms or something).
-	#'capnp::namespace::Node'{
-		''={{2, enum},
-			#'capnp::namespace::Node::::enum'{
-				enumerants=Enumerants
-			}
-		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	Index = length(lists:takewhile(fun (#'capnp::namespace::Enumerant'{name=EName}) -> Value /= EName end, Enumerants)),
-	true = Index < length(Enumerants),
-	Index.
 
 struct_bit_size(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
