@@ -79,7 +79,7 @@ to_ast_one(Name, Schema) ->
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
 				[],
 				[{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}, Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, var_p(Line, "Var", FieldName), Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
 					}]
 			}]},
 	% We're going to encode by encoding each type as close to its contents as possible.
@@ -109,16 +109,16 @@ to_ast_one(Name, Schema) ->
 		[{clause, Line,
 				[
 					{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, {var, Line, list_to_atom("Var" ++ binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ]
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ]
 					},
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
 				],
 				[],
 				EncodePointers ++ [
 					{tuple, Line, [
-							{op, Line, '-', {var, Line, list_to_atom("PtrOffsetWordsFromEnd" ++ integer_to_list(length(PtrFields)))}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
+							{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(PtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}},
 							{bin, Line, DataMaker ++ PtrMaker},
-							to_list(Line, lists:append([ [ {var, Line, list_to_atom("Data" ++ integer_to_list(N))}, {var, Line, list_to_atom("Extra" ++ integer_to_list(N))}] || N <- lists:seq(1, length(PtrFields)) ]))
+							to_list(Line, lists:append([ [ var_p(Line, "Data", N), var_p(Line, "Extra", N) ] || N <- lists:seq(1, length(PtrFields)) ]))
 					]}
 				]
 			}]},
@@ -194,7 +194,7 @@ var_p(Line, Prepend, Value) ->
 generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction) ->
 	% Match an integer.
 	Line = 0, % TODO
-	RawVar = {var, Line, list_to_atom("Var" ++ binary_to_list(Name))},
+	RawVar = var_p(Line, "Var", Name),
 	Var = case Direction of
 		encode ->
 			encoder(Type, RawVar, Line);
@@ -219,9 +219,9 @@ generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_
 	Line = 0, % TODO
 	Var = case Direction of
 		encode ->
-			{var, Line, list_to_atom("Ptr" ++ binary_to_list(Name))};
+			var_p(Line, "Ptr", Name);
 		decode ->
-			{var, Line, list_to_atom("Var" ++ binary_to_list(Name))}
+			var_p(Line, "Var", Name)
 	end,
 	[{bin_element, Line, Var, {integer, Line, 64}, [little,unsigned,integer]}|generate_ptr_binary(DesiredOffset+64, Rest, Direction)];
 generate_ptr_binary(_CurrentOffset, [], _Direction) ->
