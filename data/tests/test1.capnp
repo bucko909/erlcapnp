@@ -56,6 +56,10 @@ struct TestPrimitiveList {
 	testVar5 @4 :List(Int64);
 }
 
+struct TestEnumList {
+	testVar1 @0 :List(SimpleEnum);
+}
+
 struct SimpleShortStruct {
 	testVar1 @0 :Int8;
 	testVar2 @1 :Int16;

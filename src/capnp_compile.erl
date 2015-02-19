@@ -13,7 +13,7 @@
 	]).
 
 -record(field_info, {offset, type, name, default}).
--record(native_type, {type, width, extra, binary_options}).
+-record(native_type, {type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
 
 -compile({parse_transform, uberpt}).
@@ -185,7 +185,20 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Li
 	PtrVar = var_p(Line, "Ptr", VarName),
 	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
+	ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarName, Line) ->
+	#native_type{list_tag=WidthType, width=Width, binary_options=BinType} = Type,
+	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+	WidthTypeInt = {integer, Line, WidthType},
+	WidthInt = {integer, Line, Width},
+	% I can't << X || ... >> is invalid syntax, and << <<X>> || ... >> doesn't let me specify encoding types, so I
+	% have to write the whole comprehension by hand! Woe!
+	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'},MatchVar}]},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
 
 % This are the fragment that are inserted for each pointer.
 % They should assign PtrOffsetWordsFromEnd{N} to include the length of all of the stuff they're encoding, plus PtrOffsetWordsFromEnd{N-1}.
@@ -217,6 +230,15 @@ ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt
 	DataVar = [MatchVar, <<0:((-DataLenVar band 7)*8)/unsigned-little-integer>>],
 	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (2 bsl 32) bor (DataLenVar bsl 35),
 	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 7) bsr 3).
+
+-ast_fragment([]).
+ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
+	ExtraVar = <<>>,
+	DataLenVar = length(MatchVar),
+	% We need to add (-L band 7) bytes of padding for alignment.
+	DataVar = [ EncodedX, <<0:(-DataLenVar*WidthInt band 63)/unsigned-little-integer>>],
+	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (WidthTypeInt bsl 32) bor (DataLenVar bsl 35),
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar * WidthInt + 63) bsr 6).
 
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
@@ -318,17 +340,22 @@ field_info(#'capnp::namespace::Field'{
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
 			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-		{list, #'capnp::namespace::Type'{''={{_,enum},_LTypeId}}} ->
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,enum},#'capnp::namespace::Type::::enum'{typeId=TypeId}}}}} ->
 			% List of enums.
-			erlang:error({not_implemented, enum});
+			EnumerantNames = enumerant_names(TypeId, Schema),
+			{N * 16, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
 		{list, #'capnp::namespace::Type'{''={{_,TextType},void}}} when TextType =:= text; TextType =:= data ->
 			% List of text types; this is a list-of-lists.
 			erlang:error({not_implemented, list, TextType});
+		{list, #'capnp::namespace::Type'{''={{_,bool},void}}} ->
+			% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
+			% So we need to special case it!
+			erlang:error({not_implemented, list, bool});
 		{list, #'capnp::namespace::Type'{''={{_,IntOrVoidType},void}}} ->
 			% List of native types
-			erlang:error({not_implemented, list, IntOrVoidType});
+			{N * 64, #ptr_type{type=list, extra={primitive, IntOrVoidType}}};
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
-			% List of lists, text or data -- all three are lists of lists.
+			% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 			erlang:error({not_implemented, list, list});
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}} ->
 			% List of structs.
@@ -340,7 +367,7 @@ field_info(#'capnp::namespace::Field'{
 		% Data types
 		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			EnumerantNames = enumerant_names(TypeId, Schema),
-			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
+			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
 		{_, void} ->
 			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
 			{N * Size1, Info1};
@@ -374,18 +401,18 @@ node_name(TypeId, Schema) ->
 	{Name, DWords, PWords}.
 
 % {BroadType, Bits, BinaryType}
-builtin_info(int64) -> #native_type{type=integer, width=64, binary_options=[little, signed, integer]};
-builtin_info(int32) -> #native_type{type=integer, width=32, binary_options=[little, signed, integer]};
-builtin_info(int16) -> #native_type{type=integer, width=16, binary_options=[little, signed, integer]};
-builtin_info(int8) -> #native_type{type=integer, width=8, binary_options=[little, signed, integer]};
-builtin_info(uint64) -> #native_type{type=integer, width=64, binary_options=[little, unsigned, integer]};
-builtin_info(uint32) -> #native_type{type=integer, width=32, binary_options=[little, unsigned, integer]};
-builtin_info(uint16) -> #native_type{type=integer, width=16, binary_options=[little, unsigned, integer]};
-builtin_info(uint8) -> #native_type{type=integer, width=8, binary_options=[little, unsigned, integer]};
-builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[float]};
-builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[float]};
-builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer]};
-builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer]}.
+builtin_info(int64) -> #native_type{type=integer, width=64, binary_options=[little, signed, integer], list_tag=5};
+builtin_info(int32) -> #native_type{type=integer, width=32, binary_options=[little, signed, integer], list_tag=4};
+builtin_info(int16) -> #native_type{type=integer, width=16, binary_options=[little, signed, integer], list_tag=3};
+builtin_info(int8) -> #native_type{type=integer, width=8, binary_options=[little, signed, integer], list_tag=2};
+builtin_info(uint64) -> #native_type{type=integer, width=64, binary_options=[little, unsigned, integer], list_tag=5};
+builtin_info(uint32) -> #native_type{type=integer, width=32, binary_options=[little, unsigned, integer], list_tag=4};
+builtin_info(uint16) -> #native_type{type=integer, width=16, binary_options=[little, unsigned, integer], list_tag=3};
+builtin_info(uint8) -> #native_type{type=integer, width=8, binary_options=[little, unsigned, integer], list_tag=8};
+builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[float], list_tag=4};
+builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[float], list_tag=5};
+builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer], list_tag=1};
+builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer], list_tag=0}.
 
 % Convert a record into a segment, starting with the pointer to the binary.
 to_bytes(Rec, Schema) ->
