@@ -104,7 +104,7 @@ to_ast_one(Name, Schema) ->
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	EncodePointers = lists:append([ ast_encode_ptr(N, length(PtrFields), FieldDataLen, FieldPtrLen, TypeName, FieldName, Line) || {N, #field_info{name=FieldName, type=#ptr_type{type=struct, extra={TypeName, FieldDataLen, FieldPtrLen}}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ ast_encode_ptr(N, length(PtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	EncodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 2,
 		[{clause, Line,
 				[
@@ -162,7 +162,7 @@ ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
 
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
-ast_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
 	[ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["ExtraLen", "Data", "Extra"] ],
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
 	MatchVar = var_p(Line, "Var", VarName),
@@ -171,11 +171,11 @@ ast_encode_ptr(N, PtrLen0, DataLen, PtrLen, TypeName, VarName, Line) ->
 	StructLen = {integer, Line, DataLen + PtrLen},
 	PtrOffset = {op, Line, '+', var_p(Line, "PtrOffsetWordsFromEnd", N-1), {integer, Line, PtrLen0 - N}},
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_ptr_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen).
+	ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen).
 
 % This is the fragment that's inserted for each pointer.
 -ast_fragment([]).
-ast_encode_ptr_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
+ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, PtrOffset, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
 	{ExtraLenVar, DataVar, ExtraVar} = EncodeFun(MatchVar, 0),
 	PtrVar = (PtrOffset bsl 2) + StructHeaderNumbers,
 	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ExtraLenVar + StructLen.
@@ -271,6 +271,7 @@ field_info(#'capnp::namespace::Field'{
 		}   
 	}, Schema) ->
 	{Offset, Info} = case {TypeClass, TypeDescription} of
+		% Data types
 		{text, void} ->
 			{N * 64, #ptr_type{type=unknown}}; % TODO
 		{data, void} ->
@@ -283,6 +284,7 @@ field_info(#'capnp::namespace::Field'{
 		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
 			EnumerantNames = enumerant_names(TypeId, Schema),
 			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer]}};
+		% Pointer types (composite/list)
 		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
 			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
