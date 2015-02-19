@@ -32,7 +32,7 @@ to_ast(Name, Schema) ->
 
 to_ast([], _Done, Recs, Funs, _Schema) ->
 	Line = 0,
-	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ Funs ++ [{eof,Line}],
+	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	io:format("~p~n", [Forms]),
 	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}])]),
 	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
@@ -186,6 +186,13 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Li
 	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
 	ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, bool}}, VarName, Line) ->
+	[DataLenVar, DataFixedVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "DataFixed", "Data", "Extra"] ],
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_bool_list_(DataLenVar, DataFixedVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarName, Line) ->
 	#native_type{list_tag=WidthType, width=Width, binary_options=BinType} = Type,
 	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
@@ -240,6 +247,36 @@ ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar
 	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (WidthTypeInt bsl 32) bor (DataLenVar bsl 35),
 	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar * WidthInt + 63) bsr 6).
 
+-ast_fragment([]).
+ast_encode_bool_list_(DataLenVar, DataFixedVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
+	ExtraVar = <<>>,
+	DataLenVar = length(MatchVar),
+	% We need to add (-L band 7) bytes of padding for alignment.
+	DataFixedVar = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- MatchVar ]),
+	DataVar = [ << <<X:1>> || X <- DataFixedVar >>, <<0:(-length(DataFixedVar) band 63)/unsigned-little-integer>>],
+	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (1 bsl 32) bor (DataLenVar bsl 35),
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 63) bsr 6).
+
+massage_bool_list() ->
+	Var = {var, 0, 'List'},
+	[{function, 0, massage_bool_list, 1,
+		[{clause, 0,
+				[
+					Var
+				],
+				[],
+				ast_massage_bool_list_(Var)
+			}]}].
+
+-ast_fragment([]).
+ast_massage_bool_list_(List) ->
+	try lists:split(8, List) of
+		{First, Last} ->
+			lists:reverse(First) ++ massage_bool_list(Last)
+	catch
+		error:badarg ->
+			lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
+	end.
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
 to_list(A) when is_binary(A) -> binary_to_list(A);
@@ -347,13 +384,13 @@ field_info(#'capnp::namespace::Field'{
 		{list, #'capnp::namespace::Type'{''={{_,TextType},void}}} when TextType =:= text; TextType =:= data ->
 			% List of text types; this is a list-of-lists.
 			erlang:error({not_implemented, list, TextType});
-		{list, #'capnp::namespace::Type'{''={{_,bool},void}}} ->
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,bool},void}}}} ->
 			% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
 			% So we need to special case it!
-			erlang:error({not_implemented, list, bool});
-		{list, #'capnp::namespace::Type'{''={{_,IntOrVoidType},void}}} ->
-			% List of native types
-			{N * 64, #ptr_type{type=list, extra={primitive, IntOrVoidType}}};
+			{N * 64, #ptr_type{type=list, extra={primitive, bool}}};
+		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PrimitiveType},void}}}} ->
+			% List of any normal primitive type.
+			{N * 64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
 		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 			% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 			erlang:error({not_implemented, list, list});
