@@ -364,56 +364,62 @@ field_info(#'capnp::namespace::Field'{
 			#'capnp::namespace::Field::::slot'{
 				offset=N,
 				defaultValue=#'capnp::namespace::Value'{''={{_,TypeClass},DefaultValue}},
-				type=#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}
+				type=Type=#'capnp::namespace::Type'{''={{_,TypeClass},_TypeDescription}}
 			}
-		}   
+		}
 	}, Schema) ->
-	{Offset, Info} = case {TypeClass, TypeDescription} of
-		% Pointer types (composite/list)
-		{TextType, void} when TextType =:= text; TextType =:= data ->
-			{N * 64, #ptr_type{type=text_or_data, extra=TextType}};
-		{anyPointer, void} ->
-			{N * 64, #ptr_type{type=unknown}}; % Not really possible
-		{struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}} when is_integer(TypeId) ->
-			{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
-			{N * 64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,enum},#'capnp::namespace::Type::::enum'{typeId=TypeId}}}}} ->
-			% List of enums.
-			EnumerantNames = enumerant_names(TypeId, Schema),
-			{N * 16, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
-		{list, #'capnp::namespace::Type'{''={{_,TextType},void}}} when TextType =:= text; TextType =:= data ->
-			% List of text types; this is a list-of-lists.
-			erlang:error({not_implemented, list, TextType});
-		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,bool},void}}}} ->
-			% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
-			% So we need to special case it!
-			{N * 64, #ptr_type{type=list, extra={primitive, bool}}};
-		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PrimitiveType},void}}}} ->
-			% List of any normal primitive type.
-			{N * 64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
-		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}} when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
-			% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
-			erlang:error({not_implemented, list, list});
-		{list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}} ->
-			% List of structs.
-			erlang:error({not_implemented, list, struct});
-		{list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}} ->
-			erlang:error({not_implemented, list, anyPointer});
-		{list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}} ->
-			erlang:error({not_implemented, list, interface});
-		% Data types
-		{enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}} when is_integer(TypeId) ->
-			EnumerantNames = enumerant_names(TypeId, Schema),
-			{N * 16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
-		{_, void} ->
-			Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
-			{N * Size1, Info1};
-		% Catchall
-		_ ->
-			io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
-			{N * 64, #ptr_type{type=unknown}} % TODO
-	end,
-	#field_info{offset=Offset, type=Info, name=Name, default=DefaultValue}.
+	{Size, Info} = type_info(Type, Schema),
+	#field_info{offset=Size*N, type=Info, name=Name, default=DefaultValue}.
+
+type_info(#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}, Schema) ->
+	type_info(TypeClass, TypeDescription, Schema).
+
+% Pointer types (composite/list)
+type_info(TextType, void, _Schema) when TextType =:= text; TextType =:= data ->
+	{64, #ptr_type{type=text_or_data, extra=TextType}};
+type_info(anyPointer, void, _Schema) ->
+	{64, #ptr_type{type=unknown}}; % Not really possible
+type_info(struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
+	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,enum},#'capnp::namespace::Type::::enum'{typeId=TypeId}}}}, Schema) ->
+	% List of enums.
+	EnumerantNames = enumerant_names(TypeId, Schema),
+	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
+type_info(list, #'capnp::namespace::Type'{''={{_,TextType},void}}, _Schema) when TextType =:= text; TextType =:= data ->
+	% List of text types; this is a list-of-lists.
+	erlang:error({not_implemented, list, TextType}); % TODO
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,bool},void}}}, _Schema) ->
+	% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
+	% So we need to special case it!
+	{64, #ptr_type{type=list, extra={primitive, bool}}};
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PrimitiveType},void}}}, _Schema) ->
+	% List of any normal primitive type.
+	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
+	erlang:error({not_implemented, list, list}); % TODO
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}, _Schema) ->
+	% List of structs.
+	erlang:error({not_implemented, list, struct}); % TODO
+type_info(list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}, _Schema) ->
+	erlang:error({not_implemented, list, anyPointer}); % TODO
+type_info(list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}, _Schema) ->
+	erlang:error({not_implemented, list, interface}); % TODO
+% TODO union variables.
+% TODO group variables.
+% TODO decoders for pointers.
+% Data types
+type_info(enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+	EnumerantNames = enumerant_names(TypeId, Schema),
+	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
+type_info(TypeClass, void, _Schema) ->
+	Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
+	{Size1, Info1};
+% Catchall
+type_info(TypeClass, TypeDescription, _Schema) ->
+	io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
+	{64, #ptr_type{type=unknown}}.
 
 enumerant_names(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
