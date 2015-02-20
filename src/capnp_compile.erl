@@ -130,8 +130,9 @@ to_ast_one(Name, Schema) ->
 				[],
 				ast_envelope(DWords, PWords, Name, Line)
 			}]},
-	ExtraTypes = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
-	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes}.
+	ExtraTypes1 = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
+	ExtraTypes2 = [ TypeName || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
+	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes1 ++ ExtraTypes2}.
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
@@ -205,7 +206,17 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 	% have to write the whole comprehension by hand! Woe!
 	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'},MatchVar}]},
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
+	ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
+	[DataLenVar, ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "ExtraLen", "Data", "Extra"] ],
+	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
+	MatchVar = var_p(Line, "Var", VarName),
+	PtrVar = var_p(Line, "Ptr", VarName),
+	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
+	StructLenInt = {integer, Line, DataLen + PtrLen},
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	ast_encode_struct_list_(DataLenVar, ExtraLenVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
 
 % This are the fragment that are inserted for each pointer.
 % They should assign PtrOffsetWordsFromEnd{N} to include the length of all of the stuff they're encoding, plus PtrOffsetWordsFromEnd{N-1}.
@@ -256,6 +267,27 @@ ast_encode_bool_list_(DataLenVar, DataFixedVar, DataVar, ExtraVar, MatchVar, Ptr
 	DataVar = [ << <<X:1>> || X <- DataFixedVar >>, <<0:(-length(DataFixedVar) band 63)/unsigned-little-integer>>],
 	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (1 bsl 32) bor (DataLenVar bsl 35),
 	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 63) bsr 6).
+
+-ast_fragment([]).
+ast_encode_struct_list_(DataLenVar, OffsetVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
+	DataLenVar = length(MatchVar),
+	% We need to add (-L band 7) bytes of padding for alignment.
+	{OffsetVar, DataVar, ExtraVar} = lists:foldl(fun
+			(Element, {Offset, DataAcc, ExtraAcc}) ->
+				% Call encode_Name once for each struct element
+				{ExtraLen, ThisData, ThisExtra} = EncodeFun(Element, Offset - StructLenInt), % The function wants an offset from the /end/ of this struct
+				% Must remember to account for the fact that next element starts StructLenInt further along.
+				{ExtraLen + Offset - StructLenInt, [DataAcc|ThisData], [ExtraAcc|ThisExtra]}
+		end, {
+			DataLenVar * StructLenInt, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
+			[<< ((DataLenVar bsl 2) + StructHeaderNumbers):64/unsigned-little-integer >>], % Struct lists start with a tag word.
+			[] % Extra accumulator starts empty!
+		}, MatchVar),
+	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (7 bsl 32) bor ((DataLenVar * StructLenInt) bsl 35),
+	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar
+				+ 1 % tag word
+				+ DataLenVar % list contents
+				+ OffsetVar. % extra data length.
 
 massage_bool_list() ->
 	Var = {var, 0, 'List'},
@@ -399,9 +431,11 @@ type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace
 type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},LTypeDescription}}}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 	erlang:error({not_implemented, list, list}); % TODO
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,struct},#'capnp::namespace::Type::::struct'{typeId=LTypeId}}}}, _Schema) ->
+type_info(list, #'capnp::namespace::Type::::list'{elementType=InnerType=#'capnp::namespace::Type'{''={{_,struct},_}}}, Schema) ->
 	% List of structs.
-	erlang:error({not_implemented, list, struct}); % TODO
+	% These will be encoded in-line.
+	{64, TypeInfo} = type_info(InnerType, Schema),
+	{64, #ptr_type{type=list, extra={struct, TypeInfo}}};
 type_info(list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}, _Schema) ->
 	erlang:error({not_implemented, list, anyPointer}); % TODO
 type_info(list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}, _Schema) ->
