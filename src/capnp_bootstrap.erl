@@ -335,7 +335,16 @@ test() ->
 	load_raw_schema("/home/bucko/eclipse-workspace/capnp/data/capnp.raw").
 
 load_raw_schema(Filename) ->
-	{ok, Data} = file:read_file(Filename),
+	Data = case file:read_file(Filename) of
+		{ok, Data1= <<0, _/binary>>} ->
+			Data1;
+		{ok, _} ->
+			"pnpac" ++ Base = lists:reverse(Filename),
+			RawFilename = lists:reverse(Base) ++ "raw",
+			[] = os:cmd("capnpc -o/bin/cat " ++ Filename ++ " > " ++ RawFilename),
+			{ok, Data1} = file:read_file(RawFilename),
+			Data1
+	end,
 	Mes = capnp_raw:read_message(Data),
 	Raw = capnp_raw:decode_pointer(Mes),
 	CGR = 'decode_capnp::namespace::CodeGeneratorRequest'(Raw),

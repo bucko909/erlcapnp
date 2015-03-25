@@ -27,6 +27,9 @@
 
 % Compiled reader functions take as arguments a #deref_ptr{} and a #envelope{} for pointer lookups.
 % Compiled writer functions take data as argument, and return an io_list() which is locally consistent.
+to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
+	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
+	to_ast(Name, Schema);
 to_ast(Name, Schema) ->
 	to_ast([Name], sets:new(), [], [], Schema).
 
@@ -164,15 +167,23 @@ ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
-	[ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["ExtraLen", "Data", "Extra"] ],
-	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
+	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	MatchVar = var_p(Line, "Var", VarName),
+	CommonIn = [OldPtrOffsetWordsFromEndVar, OffsetToEndInt, MatchVar],
+
 	PtrVar = var_p(Line, "Ptr", VarName),
+	[DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["Data", "Extra"] ],
+	CommonOut = [NewPtrOffsetWordsFromEndVar, PtrVar, DataVar, ExtraVar],
+
+	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
 	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
 	StructLen = {integer, Line, DataLen + PtrLen},
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, OffsetToEndInt, StructHeaderNumbers, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen);
+	ast_encode_struct_(
+		{in, CommonIn ++ [EncodeFun, StructHeaderNumbers, StructLen]},
+		{out, CommonOut},
+		{temp_suffix, binary_to_list(VarName)}
+	);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
 	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
 	MatchVar = var_p(Line, "Var", VarName),
@@ -219,16 +230,21 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=st
 	ast_encode_struct_list_(DataLenVar, ExtraLenVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
 
 % This are the fragment that are inserted for each pointer.
+% All of them should have the same 'out' params:
 % They should assign PtrOffsetWordsFromEnd{N} to include the length of all of the stuff they're encoding, plus PtrOffsetWordsFromEnd{N-1}.
 % They should assign Ptr{VarName} to a valid 64-bit integer to encode into the pointer.
 % They should assign Data{N} to their personal data.
 % They should assign Extra{N} to any extra data they are adding.
 % The distinction between Data{N} and Extra{N} is important for list contents; Data should contain /just/ the thing that would be put into the list; Extra /just/ the thing that isn't.
--ast_fragment([]).
-ast_encode_struct_(ExtraLenVar, DataVar, ExtraVar, EncodeFun, MatchVar, PtrVar, OffsetToEndInt, StructHeaderNumbers, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar, StructLen) ->
-	{ExtraLenVar, DataVar, ExtraVar} = EncodeFun(MatchVar, 0),
-	PtrVar = ((OldOffsetWordsFromEndVar + OffsetToEndInt) bsl 2) + StructHeaderNumbers,
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ExtraLenVar + StructLen.
+-ast_fragment2([]).
+ast_encode_struct_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun, StructSizePreformatted, StructLen]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [ExtraLen]}
+	) ->
+	{ExtraLen, MainData, ExtraData} = EncodeFun(ValueToEncode, 0),
+	PointerAsInt = ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + StructSizePreformatted,
+	NewOffsetFromEnd = OldOffsetFromEnd + ExtraLen + StructLen.
 
 -ast_fragment([]).
 ast_encode_text_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
