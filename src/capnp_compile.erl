@@ -12,9 +12,10 @@
 		to_ast/2
 	]).
 
--record(field_info, {offset, type, name, default}).
+-record(field_info, {offset, type, name, default, discriminant}).
 -record(native_type, {type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
+-record(group_type, {type_id}).
 
 -compile({parse_transform, uberpt}).
 
@@ -56,15 +57,17 @@ to_ast_one(Name, Schema) ->
 			#'capnp::namespace::Node::::struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords,
-				fields=Fields
+				fields=Fields,
+				discriminantCount=_DiscriminantCount % 0 if there is no anonymous union.
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	% Start by finding the bit offsets of each field, so that we can order them.
 	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
 	io:format("~p~n", [AllFields]),
-	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, AllFields),
-	% We like these sorted.
+	{_Groups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, AllFields),
+	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, Slots),
+	% We like these sorted by offset.
 	SortedDataFields = lists:sort(DataFields),
 	SortedPtrFields = lists:sort(PtrFields),
 
@@ -408,6 +411,7 @@ decoder(#ptr_type{}, Var, _Line) ->
 	Var.
 
 field_info(#'capnp::namespace::Field'{
+		discriminantValue=DiscriminantValue,
 		name=Name,
 		''={{0,slot},
 			#'capnp::namespace::Field::::slot'{
@@ -418,7 +422,18 @@ field_info(#'capnp::namespace::Field'{
 		}
 	}, Schema) ->
 	{Size, Info} = type_info(Type, Schema),
-	#field_info{offset=Size*N, type=Info, name=Name, default=DefaultValue}.
+	#field_info{offset=Size*N, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=DefaultValue};
+field_info(#'capnp::namespace::Field'{
+		discriminantValue=DiscriminantValue,
+		name=Name,
+		''={{1,group},
+			#'capnp::namespace::Field::::group'{
+				typeId=TypeId
+			}
+		}
+	}, _Schema) ->
+	% Groups and unions.
+	#field_info{offset=undefined, type=#group_type{type_id=TypeId}, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end}.
 
 type_info(#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}, Schema) ->
 	type_info(TypeClass, TypeDescription, Schema).
