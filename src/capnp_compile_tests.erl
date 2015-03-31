@@ -9,13 +9,17 @@ test() ->
 	do_test(
 		{'data/tests/test1.capnp:TestLessBoringPointer', 4, {'data/tests/test1.capnp:TestBoringPointer', {'data/tests/test1.capnp:TestBoringInteger', 7600}}, {'data/tests/test1.capnp:TestMultipleIntegers', 1, 2, 3, 4, 5, 6, 7}},
 		<<"(testVar1 = (testVar1 = (testVar1 = 7600)), testVar2 = 4, testVar3 = (testVar1 = 1, testVar2 = 2, testVar3 = 3, testVar4 = 4, testVar5 = 5, testVar6 = 6, testVar7 = 7))">>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestTextType', "FOOOOOO", "BAAARRRRRRRRR"},
+		<<"(testVar1 = \"FOOOOOO\", testVar2 = \"BAAARRRRRRRRR\")">>
 	).
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
 	capnp_compile:to_ast(list_to_binary(RecName), fname()),
 	EncodeFun = list_to_atom("envelope_" ++ RecName),
-	FriendlyName = "TestLessBoringPointer",
+	{match, [FriendlyName]} = re:run(RecName, ".*:(.*)", [{capture, all_but_first, list}]),
 	DataBin = capnp_test:EncodeFun(Rec),
 	Pipe = erlang:open_port(
 			{spawn, "capnp decode --short " ++ fname() ++ " " ++ FriendlyName}, [
@@ -28,7 +32,7 @@ do_test(Rec, Expected) ->
 		{Pipe, {data, {eol, Line}}} ->
 			if
 				Line == Expected -> ok;
-				true -> exit({bad_output, {Line, Expected}})
+				true -> exit({bad_output, {Line, DataBin, Expected}})
 			end
 	after
 		1000 ->

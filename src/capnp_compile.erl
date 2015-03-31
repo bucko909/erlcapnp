@@ -164,9 +164,7 @@ ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
 			ExtraData
 	]).
 
-
-% This is just a variable aligning function which passes through to ast_encode_ptr_
-ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
+ast_encode_ptr_common(N, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
 	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
 	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	MatchVar = var_p(Line, "Var", VarName),
@@ -176,28 +174,22 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrL
 	[DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["Data", "Extra"] ],
 	CommonOut = [NewPtrOffsetWordsFromEndVar, PtrVar, DataVar, ExtraVar],
 
+	AstFun(
+		{in, CommonIn ++ ExtraInputParams},
+		{out, CommonOut},
+		{temp_suffix, binary_to_list(VarName)}
+	).
+
+% This is just a variable aligning function which passes through to ast_encode_ptr_
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
 	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
 	StructLen = {integer, Line, DataLen + PtrLen},
-	ast_encode_struct_(
-		{in, CommonIn ++ [EncodeFun, StructHeaderNumbers, StructLen]},
-		{out, CommonOut},
-		{temp_suffix, binary_to_list(VarName)}
-	);
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun, StructHeaderNumbers, StructLen], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
-	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
-	MatchVar = var_p(Line, "Var", VarName),
-	PtrVar = var_p(Line, "Ptr", VarName),
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_text_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_text_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
-	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
-	MatchVar = var_p(Line, "Var", VarName),
-	PtrVar = var_p(Line, "Ptr", VarName),
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_data_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, bool}}, VarName, Line) ->
 	[DataLenVar, DataFixedVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "DataFixed", "Data", "Extra"] ],
 	MatchVar = var_p(Line, "Var", VarName),
@@ -246,24 +238,32 @@ ast_encode_struct_(
 	PointerAsInt = ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + StructSizePreformatted,
 	NewOffsetFromEnd = OldOffsetFromEnd + ExtraLen + StructLen.
 
--ast_fragment([]).
-ast_encode_text_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
-	ExtraVar = <<>>,
-	DataLenVar = iolist_size(MatchVar)+1,
+-ast_fragment2([]).
+ast_encode_text_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [DataLen]}
+	) ->
+	ExtraData = <<>>,
+	DataLen = iolist_size(ValueToEncode)+1,
 	% We need to add a null terminator.
 	% Then we need to add (-L band 7) bytes of padding for alignment.
-	DataVar = [MatchVar, <<0:8, 0:((-DataLenVar band 7)*8)/unsigned-little-integer>>],
-	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (2 bsl 32) bor (DataLenVar bsl 35),
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 7) bsr 3).
+	MainData = [ValueToEncode, <<0:8, 0:((-DataLen band 7)*8)/unsigned-little-integer>>],
+	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3).
 
--ast_fragment([]).
-ast_encode_data_(DataLenVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
-	ExtraVar = <<>>,
-	DataLenVar = iolist_size(MatchVar),
-	% We need to add (-L band 7) bytes of padding for alignment.
-	DataVar = [MatchVar, <<0:((-DataLenVar band 7)*8)/unsigned-little-integer>>],
-	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (2 bsl 32) bor (DataLenVar bsl 35),
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 7) bsr 3).
+-ast_fragment2([]).
+ast_encode_data_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [DataLen]}
+	) ->
+	ExtraData = <<>>,
+	DataLen = iolist_size(ValueToEncode),
+	% Then we need to add (-L band 7) bytes of padding for alignment.
+	MainData = [ValueToEncode, <<0:((-DataLen band 7)*8)/unsigned-little-integer>>],
+	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3).
 
 -ast_fragment([]).
 ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
