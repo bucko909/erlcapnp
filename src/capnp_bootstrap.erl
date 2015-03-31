@@ -64,8 +64,9 @@ id(X) -> X.
 		_:64/bitstring,
 		PointerCount:16/unsigned-little-integer,
 		PreferredListEncoding:16/unsigned-little-integer,
+		_:7/bitstring,
 		IsGroup:1/unsigned-little-integer,
-		_:15/bitstring,
+		_:8/bitstring,
 		DiscriminantCount:16/unsigned-little-integer,
 		DiscriminantOffset:32/unsigned-little-integer,
 		_/binary
