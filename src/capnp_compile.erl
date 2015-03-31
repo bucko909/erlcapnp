@@ -73,9 +73,7 @@ to_ast_one(Name, Schema) ->
 
 	Line = 0, % TODO
 	DataMatcher = generate_data_binary(0, SortedDataFields, decode),
-	DataMaker = generate_data_binary(0, SortedDataFields, encode),
 	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode),
-	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
 
 	RecordName = list_to_atom(binary_to_list(Name)),
 	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields]}},
@@ -110,7 +108,7 @@ to_ast_one(Name, Schema) ->
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	EncodePointers = lists:append([ ast_encode_ptr(N, length(PtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodeBody = encode_function_body(SortedDataFields, SortedPtrFields, Line),
 	EncodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 2,
 		[{clause, Line,
 				[
@@ -120,13 +118,7 @@ to_ast_one(Name, Schema) ->
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
 				],
 				[],
-				EncodePointers ++ [
-					{tuple, Line, [
-							{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(PtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}},
-							{bin, Line, DataMaker ++ PtrMaker},
-							to_list(Line, lists:append([ [ var_p(Line, "Data", N), var_p(Line, "Extra", N) ] || N <- lists:seq(1, length(PtrFields)) ]))
-					]}
-				]
+				EncodeBody
 			}]},
 	EnvelopeFunDef = {function, Line, list_to_atom("envelope_" ++ binary_to_list(Name)), 1,
 		[{clause, Line,
@@ -139,6 +131,18 @@ to_ast_one(Name, Schema) ->
 	ExtraTypes1 = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	ExtraTypes2 = [ TypeName || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
 	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes1 ++ ExtraTypes2}.
+
+encode_function_body(SortedDataFields, SortedPtrFields, Line) ->
+	DataMaker = generate_data_binary(0, SortedDataFields, encode),
+	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
+	EncodePointers = lists:append([ ast_encode_ptr(N, length(SortedPtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers ++ [
+		{tuple, Line, [
+				{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}},
+				{bin, Line, DataMaker ++ PtrMaker},
+				to_list(Line, lists:append([ [ var_p(Line, "Data", N), var_p(Line, "Extra", N) ] || N <- lists:seq(1, length(SortedPtrFields)) ]))
+		]}
+	].
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
