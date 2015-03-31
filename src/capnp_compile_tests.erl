@@ -5,7 +5,6 @@
 fname() -> "data/tests/test1.capnp".
 
 test() ->
-	capnp_compile:to_ast(<<"data/tests/test1.capnp:TestCompositeList">>, "data/tests/test1.capnp"),
 	do_test(
 		{'data/tests/test1.capnp:TestLessBoringPointer', 4, {'data/tests/test1.capnp:TestBoringPointer', {'data/tests/test1.capnp:TestBoringInteger', 7600}}, {'data/tests/test1.capnp:TestMultipleIntegers', 1, 2, 3, 4, 5, 6, 7}},
 		<<"(testVar1 = (testVar1 = (testVar1 = 7600)), testVar2 = 4, testVar3 = (testVar1 = 1, testVar2 = 2, testVar3 = 3, testVar4 = 4, testVar5 = 5, testVar6 = 6, testVar7 = 7))">>
