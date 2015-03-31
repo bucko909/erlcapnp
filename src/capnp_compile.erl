@@ -191,25 +191,16 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Li
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_data_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, bool}}, VarName, Line) ->
-	[DataLenVar, DataFixedVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "DataFixed", "Data", "Extra"] ],
-	MatchVar = var_p(Line, "Var", VarName),
-	PtrVar = var_p(Line, "Ptr", VarName),
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_bool_list_(DataLenVar, DataFixedVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_bool_list_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarName, Line) ->
 	#native_type{list_tag=WidthType, width=Width, binary_options=BinType} = Type,
-	[DataLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "Data", "Extra"] ],
-	MatchVar = var_p(Line, "Var", VarName),
-	PtrVar = var_p(Line, "Ptr", VarName),
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
 	WidthTypeInt = {integer, Line, WidthType},
 	WidthInt = {integer, Line, Width},
 	% I can't << X || ... >> is invalid syntax, and << <<X>> || ... >> doesn't let me specify encoding types, so I
 	% have to write the whole comprehension by hand! Woe!
-	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'},MatchVar}]},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar);
+	MatchVar = var_p(Line, "Var", VarName),
+	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
 	[DataLenVar, ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "ExtraLen", "Data", "Extra"] ],
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
@@ -265,24 +256,33 @@ ast_encode_data_(
 	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
 	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3).
 
--ast_fragment([]).
-ast_encode_primitive_list_(DataLenVar, WidthInt, WidthTypeInt, EncodedX, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
-	ExtraVar = <<>>,
-	DataLenVar = length(MatchVar),
-	% We need to add (-L band 7) bytes of padding for alignment.
-	DataVar = [ EncodedX, <<0:(-DataLenVar*WidthInt band 63)/unsigned-little-integer>>],
-	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (WidthTypeInt bsl 32) bor (DataLenVar bsl 35),
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar * WidthInt + 63) bsr 6).
+-ast_fragment2([]).
+ast_encode_primitive_list_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, Width, WidthType, EncodedX]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [DataLen]}
+	) ->
+	ExtraData = <<>>,
+	DataLen = length(ValueToEncode),
+	% We need to add (-L*W band 63) bytes of padding for alignment.
+	MainData = [EncodedX, <<0:(-DataLen*Width band 63)/unsigned-little-integer>>],
+	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (WidthType bsl 32) bor (DataLen bsl 35),
+	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen * Width + 63) bsr 6).
 
--ast_fragment([]).
-ast_encode_bool_list_(DataLenVar, DataFixedVar, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
-	ExtraVar = <<>>,
-	DataLenVar = length(MatchVar),
-	% We need to add (-L band 7) bytes of padding for alignment.
-	DataFixedVar = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- MatchVar ]),
-	DataVar = [ << <<X:1>> || X <- DataFixedVar >>, <<0:(-length(DataFixedVar) band 63)/unsigned-little-integer>>],
-	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (1 bsl 32) bor (DataLenVar bsl 35),
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar + ((DataLenVar + 63) bsr 6).
+-ast_fragment2([]).
+ast_encode_bool_list_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [DataLen, DataFixed]}
+	) ->
+	ExtraData = <<>>,
+	DataLen = length(ValueToEncode),
+	% Because Erlang will reverse blocks of 8 bools, we pre-reverse them here.
+	DataFixed = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- ValueToEncode ]),
+	% We need to add (-L band 63) bytes of padding for alignment.
+	MainData = [ << <<X:1>> || X <- DataFixed >>, <<0:(-length(DataFixed) band 63)/unsigned-little-integer>>],
+	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
+	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6).
 
 -ast_fragment([]).
 ast_encode_struct_list_(DataLenVar, OffsetVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->

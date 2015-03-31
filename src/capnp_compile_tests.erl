@@ -13,7 +13,24 @@ test() ->
 	do_test(
 		{'data/tests/test1.capnp:TestTextType', "FOOOOOO", "BAAARRRRRRRRR"},
 		<<"(testVar1 = \"FOOOOOO\", testVar2 = \"BAAARRRRRRRRR\")">>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestPrimitiveList',
+			[true, false, true, true, true, false, false, true, false],
+			[1, -2, 3, -4, 5, -6, 7, -8, 9],
+			[1, -2, 3, -4, 5, -6, 7, -8, 9],
+			[1, -2, 3, -4, 5, -6, 7, -8, 9],
+			[1, -2, 3, -4, 5, -6, 7, -8, 9]
+		},
+		<<"(",
+			"testVar1 = [true, false, true, true, true, false, false, true, false], ",
+			"testVar2 = [1, -2, 3, -4, 5, -6, 7, -8, 9], ",
+			"testVar3 = [1, -2, 3, -4, 5, -6, 7, -8, 9], ",
+			"testVar4 = [1, -2, 3, -4, 5, -6, 7, -8, 9], ",
+			"testVar5 = [1, -2, 3, -4, 5, -6, 7, -8, 9]",
+		")">>
 	).
+
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
