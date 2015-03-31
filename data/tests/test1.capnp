@@ -86,3 +86,36 @@ struct TestDefaults {
 	testVar3 @2 :TestLessBoringPointer = (testVar1 = (testVar1 = (testVar1 = 55)), testVar2 = 56, testVar3 = (testVar1 = 56, testVar2 = 57));
 	testVar4 @3 :List(Int64) = [58, 59, 60];
 }
+
+struct TestUnion {
+	testVar1 @0 :Int32;
+	union {
+		union1 @1 :Int32;
+		union2 @2 :Int64;
+		union3 @3 :List(Int8);
+		union4 @4 :Void;
+	}
+}
+
+struct TestGroup {
+	group1 :group {
+		testVar1 @0 :Int32;
+		testVar2 @1 :Int64;
+	}
+	testVar3 @2 :Int32;
+}
+
+struct TestGroupInUnion {
+	union {
+		unionVar1 :group {
+			testVar1 @0 :Int32;
+			testVar2 @1 :Int64;
+		}
+		unionVar2 @2 :Int32;
+		unionVar3 @3 :Int64;
+	}
+	union2 :union {
+		testVar1 @4 :Int32;
+		testVar2 @5 :List(Int32);
+	}
+}
