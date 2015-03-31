@@ -202,15 +202,10 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
-	[DataLenVar, ExtraLenVar, DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["DataLen", "ExtraLen", "Data", "Extra"] ],
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
-	MatchVar = var_p(Line, "Var", VarName),
-	PtrVar = var_p(Line, "Ptr", VarName),
-	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
-	StructLenInt = {integer, Line, DataLen + PtrLen},
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	ast_encode_struct_list_(DataLenVar, ExtraLenVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar).
+	StructSizePreformatted = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
+	StructLen = {integer, Line, DataLen + PtrLen},
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line).
 
 % This are the fragment that are inserted for each pointer.
 % All of them should have the same 'out' params:
@@ -284,26 +279,32 @@ ast_encode_bool_list_(
 	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
 	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6).
 
--ast_fragment([]).
-ast_encode_struct_list_(DataLenVar, OffsetVar, StructLenInt, StructHeaderNumbers, EncodeFun, DataVar, ExtraVar, MatchVar, PtrVar, OffsetToEndInt, OldOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar) ->
-	DataLenVar = length(MatchVar),
+-ast_fragment2([]).
+ast_encode_struct_list_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun, StructSizePreformatted, StructLen]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, [DataLen, FinalOffset]}
+	) ->
+	DataLen = length(ValueToEncode),
 	% We need to add (-L band 7) bytes of padding for alignment.
-	{OffsetVar, DataVar, ExtraVar} = lists:foldl(fun
+	{FinalOffset, MainData, ExtraData} = lists:foldl(fun
 			(Element, {Offset, DataAcc, ExtraAcc}) ->
 				% Call encode_Name once for each struct element
-				{ExtraLen, ThisData, ThisExtra} = EncodeFun(Element, Offset - StructLenInt), % The function wants an offset from the /end/ of this struct
-				% Must remember to account for the fact that next element starts StructLenInt further along.
-				{ExtraLen + Offset - StructLenInt, [DataAcc|ThisData], [ExtraAcc|ThisExtra]}
+				{ExtraLen, ThisData, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
+				% Must remember to account for the fact that next element starts StructLen further along.
+				{ExtraLen + Offset - StructLen, [DataAcc|ThisData], [ExtraAcc|ThisExtra]}
 		end, {
-			DataLenVar * StructLenInt, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
-			[<< ((DataLenVar bsl 2) + StructHeaderNumbers):64/unsigned-little-integer >>], % Struct lists start with a tag word.
+			DataLen * StructLen, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
+			[<< ((DataLen bsl 2) + StructSizePreformatted):64/unsigned-little-integer >>], % Struct lists start with a tag word.
 			[] % Extra accumulator starts empty!
-		}, MatchVar),
-	PtrVar = 1 bor ((OffsetToEndInt + OldOffsetWordsFromEndVar) bsl 2) bor (7 bsl 32) bor ((DataLenVar * StructLenInt) bsl 35),
-	NewPtrOffsetWordsFromEndVar = OldOffsetWordsFromEndVar
+		}, ValueToEncode),
+	FinalOffset = round(iolist_size(ExtraData) / 8),
+	DataLen = round(iolist_size(MainData) / 8 / StructLen),
+	PointerAsInt = 1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2) bor (7 bsl 32) bor ((DataLen * StructLen) bsl 35),
+	NewOffsetFromEnd = OldOffsetFromEnd
 				+ 1 % tag word
-				+ DataLenVar % list contents
-				+ OffsetVar. % extra data length.
+				+ DataLen * StructLen % list contents
+				+ FinalOffset. % extra data length.
 
 massage_bool_list() ->
 	Var = {var, 0, 'List'},

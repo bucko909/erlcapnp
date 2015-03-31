@@ -29,8 +29,31 @@ test() ->
 			"testVar4 = [1, -2, 3, -4, 5, -6, 7, -8, 9], ",
 			"testVar5 = [1, -2, 3, -4, 5, -6, 7, -8, 9]",
 		")">>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestCompositeList',
+			[{'data/tests/test1.capnp:TestMultipleIntegers', X, X, X, X, X, X, X} || X <- lists:seq(1, 10)],
+			[{'data/tests/test1.capnp:TestLessBoringPointer', X, {'data/tests/test1.capnp:TestBoringPointer', {'data/tests/test1.capnp:TestBoringInteger', X}}, {'data/tests/test1.capnp:TestMultipleIntegers', X, X, X, X, X, X, X}} || X <- [1, 2]]},
+		<<"(",
+			"testVar1 = [",
+				(list_to_binary(join([ "(" ++ join([ "testVar" ++ integer_to_list(VN) ++ " = " ++ integer_to_list(N) || VN <- lists:seq(1, 7)], ", ") ++ ")" || N <- lists:seq(1, 10) ], ", ")))/binary,
+			"], ",
+			"testVar2 = [",
+				(list_to_binary(join([
+					"(" ++
+						"testVar1 = (testVar1 = (testVar1 = " ++ integer_to_list(N) ++ ")), " ++
+						"testVar2 = " ++ integer_to_list(N) ++ ", " ++
+						"testVar3 = (" ++ join([ "testVar" ++ integer_to_list(VN) ++ " = " ++ integer_to_list(N) || VN <- lists:seq(1, 7)], ", ") ++ ")" ++
+					")"
+					|| N <- [1, 2]
+				], ", ")))/binary,
+			"])"
+		>>
 	).
 
+join([H], _) -> H;
+join([H|T], J) -> H ++ J ++ join(T, J);
+join([], _) -> "".
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
@@ -42,7 +65,7 @@ do_test(Rec, Expected) ->
 			{spawn, "capnp decode --short " ++ fname() ++ " " ++ FriendlyName}, [
 			use_stdio,
 			binary,
-			line
+			{line, 1000000}
 		]),
 	erlang:port_command(Pipe, DataBin),
 	receive
