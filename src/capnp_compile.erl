@@ -32,7 +32,7 @@ to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
 	to_ast(Name, Schema);
 to_ast(Name, Schema) ->
-	to_ast([Name], sets:new(), [], [], Schema).
+	to_ast([{generate_name, Name}], sets:new(), [], [], Schema).
 
 to_ast([], _Done, Recs, Funs, _Schema) ->
 	Line = 0,
@@ -41,51 +41,78 @@ to_ast([], _Done, Recs, Funs, _Schema) ->
 	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}])]),
 	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(capnp_test, "capnp_test.beam", BinData);
-to_ast([Name|Rest], Done, Recs, Funs, Schema) ->
-	case sets:is_element(Name, Done) of
+to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
+	io:format("Job: ~p~n", [Job]),
+	case sets:is_element(Job, Done) of
 		true ->
 			to_ast(Rest, Done, Recs, Funs, Schema);
 		false ->
-			{NewRec, NewFuns, NewStructNames} = to_ast_one(Name, Schema),
-			to_ast(NewStructNames ++ Rest, sets:add_element(Name, Done), [NewRec|Recs], NewFuns ++ Funs, Schema)
+			{NewRecs, NewFuns, NewJobs} = do_job(Job, Schema),
+			to_ast(NewJobs ++ Rest, sets:add_element(Job, Done), NewRecs ++ Recs, NewFuns ++ Funs, Schema)
 	end.
 
-to_ast_one(Name, Schema) ->
-	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
+do_job({generate_name, TypeName}, Schema) ->
+	TypeId = dict:fetch(TypeName, Schema#capnp_context.name_to_id),
+	{[], [], [{generate, TypeId}]};
+do_job({generate, TypeId}, Schema) ->
+	generate_basic(TypeId, Schema);
+do_job({generate_body, TypeId}, Schema) ->
+	erlang:error(foo).
+	%generate_body(TypeId, Schema).
+
+generate_basic(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
+		displayName=Name,
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
-				dataWordCount=DWords,
-				pointerCount=PWords,
 				fields=Fields,
+				isGroup=IsGroup,
 				discriminantCount=_DiscriminantCount % 0 if there is no anonymous union.
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	% Start by finding the bit offsets of each field, so that we can order them.
 	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
-	io:format("~p~n", [AllFields]),
-	{_Groups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, AllFields),
+	{Groups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, AllFields),
 	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, Slots),
 	% We like these sorted by offset.
 	SortedDataFields = lists:sort(DataFields),
 	SortedPtrFields = lists:sort(PtrFields),
 
 	Line = 0, % TODO
+	DecodeFunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+
+	RecDef = generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+
+	EncodeFunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+
+	EnvelopeFunDef = generate_envelope_fun(Line, TypeId, Schema),
+
+	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
+	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
+	{[RecDef], [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes1 ++ ExtraTypes2}.
+
+generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
+	% TODO types, too!
+	RecordName = record_name(TypeId, Schema),
+	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- SortedDataFields ++ SortedPtrFields]}}.
+
+generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
+	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
+	% We just take the binary for now and break if we get a pointer type.
 	DataMatcher = generate_data_binary(0, SortedDataFields, decode),
 	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode),
-
-	RecordName = list_to_atom(binary_to_list(Name)),
-	RecDef = {attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields]}},
-	% function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
-	DecodeFunDef = {function, Line, list_to_atom("decode_" ++ binary_to_list(Name)), 1,
+	{function, Line, decoder_name(TypeId, Schema), 1,
 		[{clause, Line,
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
 				[],
-				[{record,Line,RecordName,
+				[{record, Line, record_name(TypeId, Schema),
 						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, var_p(Line, "Var", FieldName), Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
 					}]
-			}]},
+			}]}.
+
+
+generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	% We're going to encode by encoding each type as close to its contents as possible.
 	% So a #a{b=#c{}} looks like [ enc(a), enc(b) ].
 	% This doesn't quite work for lists, as the complete list must be inlined first.
@@ -108,47 +135,125 @@ to_ast_one(Name, Schema) ->
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	EncodeBody = encode_function_body(SortedDataFields, SortedPtrFields, Line),
-	EncodeFunDef = {function, Line, list_to_atom("encode_" ++ binary_to_list(Name)), 2,
+	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body(SortedDataFields, SortedPtrFields, Line),
+	EncodeBody = if
+		Groups =:= [] ->
+			% Easy case.
+			NoGroupEncodeBody ++ [ {tuple, Line, [NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData]} ];
+		true ->
+			NoGroupBodyDataInt = {var, Line, 'NoGroupBodyDataAsInt'},
+			#'capnp::namespace::Node'{
+				''={{1, struct},
+					#'capnp::namespace::Node::::struct'{
+						dataWordCount=DWords,
+						pointerCount=PWords
+					}
+				}
+			} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+			BodyLengthInt = {integer, Line, (PWords+DWords)*64},
+			ToIntBody = [{match, Line, {bin, Line, [{bin_element, Line, NoGroupBodyDataInt, BodyLengthInt, [integer]}]}, NoGroupBodyData}],
+			{FullEncodeBody, ExtraLen, BodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
+			FullEncodeBody ++ [ {tuple, Line, [ExtraLen, BodyData, ExtraData]} ]
+	end,
+
+	EncodeFunDef = {function, Line, outer_encoder_name(TypeId, Schema), 2,
 		[{clause, Line,
 				[
-					{record,Line,RecordName,
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ]
+					{record, Line, record_name(TypeId, Schema),
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 					},
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
 				],
 				[],
 				EncodeBody
-			}]},
-	EnvelopeFunDef = {function, Line, list_to_atom("envelope_" ++ binary_to_list(Name)), 1,
-		[{clause, Line,
-				[
-					{var, Line, 'Input'}
-				],
-				[],
-				ast_envelope(DWords, PWords, Name, Line)
-			}]},
-	ExtraTypes1 = [ TypeName || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
-	ExtraTypes2 = [ TypeName || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
-	{RecDef, [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes1 ++ ExtraTypes2}.
+			}]}.
 
 encode_function_body(SortedDataFields, SortedPtrFields, Line) ->
 	DataMaker = generate_data_binary(0, SortedDataFields, encode),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
 	EncodePointers = lists:append([ ast_encode_ptr(N, length(SortedPtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
-	EncodePointers ++ [
-		{tuple, Line, [
-				{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}},
-				{bin, Line, DataMaker ++ PtrMaker},
-				to_list(Line, lists:append([ [ var_p(Line, "Data", N), var_p(Line, "Extra", N) ] || N <- lists:seq(1, length(SortedPtrFields)) ]))
-		]}
-	].
+	{
+		EncodePointers,
+		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
+		{bin, Line, DataMaker ++ PtrMaker},
+		to_list(Line, lists:append([ [ var_p(Line, "Data", N), var_p(Line, "Extra", N) ] || N <- lists:seq(1, length(SortedPtrFields)) ])) % Extra data that we added
+	}.
+
+
+% This is the part of the encoder body that's inserted after we've encoded the pointers and such.
+% It boils down to "call the encoders for each group, then convert everything to big integers and add them together".
+group_encoder(InitialBody, InitialExtraLen, InitialBodyData, InitialExtraData, [], _Line, _BodyLengthInt, _Schema) ->
+	{InitialBody, InitialExtraLen, InitialBodyData, InitialExtraData};
+group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData, [#field_info{name=FieldName, type=#group_type{type_id=TypeId}}|T], Line, BodyLengthInt, Schema) ->
+	MatchVar = var_p(Line, "Var", FieldName),
+	NewExtraLen = var_p(Line, "ExtraDataLen", FieldName),
+	NewBodyData = var_p(Line, "BodyData", FieldName),
+	NewExtraData = var_p(Line, "ExtraData", FieldName),
+	GroupEncodeFun = {atom, Line, inner_encoder_name(TypeId, Line)},
+	ExtraBody = ast_encode_group_(
+		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
+		{out, [NewExtraLen, NewBodyData, NewExtraData]},
+		{temp_suffix, binary_to_list(FieldName)}
+	),
+	NewBodyDataInt = var_p(Line, "BodyDataAsIntFrom", FieldName),
+	MeldBody = [{match, Line, {bin, Line, [{bin_element, Line, NewBodyDataInt, BodyLengthInt, [integer]}]}, NewBodyData}],
+	group_encoder(InitialBody ++ ExtraBody ++ MeldBody, {op, Line, '+', InitialExtraLen, NewExtraLen}, {op, Line, '+', InitialBodyDataInt, NewBodyDataInt}, {cons, Line, InitialExtraData, NewExtraData}, T, Line, BodyLengthInt, Schema).
+
+-ast_fragment2([]).
+ast_encode_group_(
+		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
+		{out, [NewExtraLen, NewBodyData, NewExtraData]},
+		{temp, []}
+	) ->
+	{NewExtraLen, NewBodyData, NewExtraData} = GroupEncodeFun(MatchVar, InitialExtraLen).
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
 
-ast_envelope(DWords, PWords, Name, Line) ->
-	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(Name))},
+outer_encoder_name(TypeId, Schema) ->
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom("encode_" ++ binary_to_list(TypeName)).
+
+inner_encoder_name(TypeId, Schema) ->
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom("encode_group_" ++ integer_to_list(TypeId) ++ "_" ++ binary_to_list(TypeName)).
+
+decoder_name(TypeId, Schema) ->
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom("decode_" ++ binary_to_list(TypeName)).
+
+record_name(TypeId, Schema) ->
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom(binary_to_list(TypeName)).
+
+envelope_fun_name(TypeId, Schema) ->
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom("envelope_" ++ binary_to_list(TypeName)).
+
+field_name(#field_info{name=FieldName}) ->
+	list_to_atom(binary_to_list(FieldName)).
+
+
+generate_envelope_fun(Line, TypeId, Schema) ->
+	{function, Line, envelope_fun_name(TypeId, Schema), 1,
+		[{clause, Line,
+				[
+					{var, Line, 'Input'}
+				],
+				[],
+				generate_envelope_body(Line, TypeId, Schema)
+			}]}.
+
+generate_envelope_body(Line, TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	EncodeFun = {atom, Line, outer_encoder_name(TypeId, Schema)},
 	ast_envelope_({integer, Line, DWords}, {integer, Line, PWords}, {integer, Line, 1+DWords+PWords}, {var, Line, 'Input'}, EncodeFun).
 
 -ast_fragment([]).
@@ -501,7 +606,7 @@ enumerant_names(TypeId, Schema) ->
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
-node_name(TypeId, Schema) ->
+node_name(TypeId, Schema) when is_integer(TypeId) ->
 	#'capnp::namespace::Node'{
 		displayName=Name,
 		''={{1, struct},
