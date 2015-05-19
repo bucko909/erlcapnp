@@ -135,8 +135,23 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body(SortedDataFields, SortedPtrFields, Line),
-	EncodeBody = if
+	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+
+	EncodeFunDef = {function, Line, outer_encoder_name(TypeId, Schema), 2,
+		[{clause, Line,
+				[
+					{record, Line, record_name(TypeId, Schema),
+						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+					},
+					{var, Line, 'PtrOffsetWordsFromEnd0'}
+				],
+				[],
+				EncodeBody
+			}]}.
+
+encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
+	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, SortedDataFields, SortedPtrFields),
+	if
 		Groups =:= [] ->
 			% Easy case.
 			NoGroupEncodeBody ++ [ {tuple, Line, [NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData]} ];
@@ -154,21 +169,9 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 			ToIntBody = [{match, Line, {bin, Line, [{bin_element, Line, NoGroupBodyDataInt, BodyLengthInt, [integer]}]}, NoGroupBodyData}],
 			{FullEncodeBody, ExtraLen, BodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
 			FullEncodeBody ++ [ {tuple, Line, [ExtraLen, BodyData, ExtraData]} ]
-	end,
+	end.
 
-	EncodeFunDef = {function, Line, outer_encoder_name(TypeId, Schema), 2,
-		[{clause, Line,
-				[
-					{record, Line, record_name(TypeId, Schema),
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
-					},
-					{var, Line, 'PtrOffsetWordsFromEnd0'}
-				],
-				[],
-				EncodeBody
-			}]}.
-
-encode_function_body(SortedDataFields, SortedPtrFields, Line) ->
+encode_function_body_inline(Line, SortedDataFields, SortedPtrFields) ->
 	DataMaker = generate_data_binary(0, SortedDataFields, encode),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
 	EncodePointers = lists:append([ ast_encode_ptr(N, length(SortedPtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
