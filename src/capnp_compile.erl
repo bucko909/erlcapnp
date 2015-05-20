@@ -34,12 +34,24 @@ to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
 to_ast(Name, Schema) ->
 	to_ast([{generate_name, Name}], sets:new(), [], [], Schema).
 
+split_forms([Dot={dot,_}|Rest], Acc) ->
+	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
+	[Form | split_forms(Rest, [])];
+split_forms([Other|Rest], Acc) ->
+	split_forms(Rest, [Other|Acc]);
+split_forms([], []) ->
+	[].
+
 to_ast([], _Done, Recs, Funs, _Schema) ->
 	Line = 0,
 	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	io:format("~p~n", [Forms]),
-	io:format("~s~n", [erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}])]),
-	{ok, capnp_test, BinData, []} = compile:forms(Forms, [debug_info, return]),
+	Source = erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]),
+	io:format("~s~n", [Source]),
+	file:write_file("/tmp/capnp_test.erl", Source),
+	{ok, Tokens, _} = erl_scan:string(Source),
+	Forms2 = split_forms(Tokens, []),
+	{ok, capnp_test, BinData, []} = compile:forms(Forms2, [debug_info, return]),
 	code:load_binary(capnp_test, "capnp_test.beam", BinData);
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
 	io:format("Job: ~p~n", [Job]),
@@ -82,26 +94,34 @@ generate_basic(TypeId, Schema) ->
 	Line = 0, % TODO
 	DecodeFunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
 
-	RecDef = generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+	RecDef = generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema),
 
 	EncodeFunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
-	EnvelopeFunDef = generate_envelope_fun(Line, TypeId, Schema),
+	EnvelopeFunDef = case IsGroup of
+		0 ->
+			[generate_envelope_fun(Line, TypeId, Schema)];
+		1 ->
+			[]
+	end,
+	io:format("IsGroup ~p ~p~n", [Name, IsGroup]),
 
 	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
-	{[RecDef], [EncodeFunDef, DecodeFunDef, EnvelopeFunDef], ExtraTypes1 ++ ExtraTypes2}.
+	ExtraTypes3 = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- Groups ],
+	{[RecDef], [EncodeFunDef, DecodeFunDef] ++  EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3}.
 
-generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
+generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
 	% TODO types, too!
 	RecordName = record_name(TypeId, Schema),
-	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- SortedDataFields ++ SortedPtrFields]}}.
+	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- SortedDataFields ++ SortedPtrFields ++ Groups]}}.
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 	% We just take the binary for now and break if we get a pointer type.
-	DataMatcher = generate_data_binary(0, SortedDataFields, decode),
-	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode),
+	{_, DWords, PWords} = node_name(TypeId, Schema),
+	DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
+	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
 	{function, Line, decoder_name(TypeId, Schema), 1,
 		[{clause, Line,
 				[{bin, Line, DataMatcher ++ PtrMatcher}],
@@ -137,7 +157,7 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%
 	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
-	EncodeFunDef = {function, Line, outer_encoder_name(TypeId, Schema), 2,
+	EncodeFunDef = {function, Line, encoder_name(TypeId, Schema), 2,
 		[{clause, Line,
 				[
 					{record, Line, record_name(TypeId, Schema),
@@ -150,7 +170,7 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 			}]}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
-	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, SortedDataFields, SortedPtrFields),
+	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
 	if
 		Groups =:= [] ->
 			% Easy case.
@@ -167,13 +187,17 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 			} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 			BodyLengthInt = {integer, Line, (PWords+DWords)*64},
 			ToIntBody = [{match, Line, {bin, Line, [{bin_element, Line, NoGroupBodyDataInt, BodyLengthInt, [integer]}]}, NoGroupBodyData}],
-			{FullEncodeBody, ExtraLen, BodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
+			{FullEncodeBody, ExtraLen, SumBodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
+			BodyData = {bin, Line, [{bin_element, Line, SumBodyData, BodyLengthInt, [integer]}]},
 			FullEncodeBody ++ [ {tuple, Line, [ExtraLen, BodyData, ExtraData]} ]
 	end.
 
-encode_function_body_inline(Line, SortedDataFields, SortedPtrFields) ->
-	DataMaker = generate_data_binary(0, SortedDataFields, encode),
-	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode),
+% Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
+% The difference becomes larger with more elements.
+encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
+	{_, DWords, PWords} = node_name(TypeId, Schema),
+	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
+	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
 	EncodePointers = lists:append([ ast_encode_ptr(N, length(SortedPtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
@@ -185,6 +209,16 @@ encode_function_body_inline(Line, SortedDataFields, SortedPtrFields) ->
 
 % This is the part of the encoder body that's inserted after we've encoded the pointers and such.
 % It boils down to "call the encoders for each group, then convert everything to big integers and add them together".
+% This is somewhat faster than generating the individual binary parts and flattening them,
+% though slower than simply spitting out the binary parts in an iolist.
+% The time to bor two binaries of length 256 bits is about 0.3 micros for my test script. 1024 bits takes about a micro per bor.
+% For comparison, the loop framework was consuming about 0.01 micros per test.
+%
+% 'bor' has a slight (probably not even statistically significant) speed advantage over '+', and is equivalent since the parts are supposed to be independent.
+%
+% The iolist solution, while faster as we're ultimately going to return an io_list anyway, is complicated by bit patterns, since:
+% - Erlang shuffles the bits relative to our ideal little-endian order (we can fix this just by mangling the offsets), and
+% - bitstrings aren't iolists, so we'd still need to add code to combine the bitstrings into binaries before we return.
 group_encoder(InitialBody, InitialExtraLen, InitialBodyData, InitialExtraData, [], _Line, _BodyLengthInt, _Schema) ->
 	{InitialBody, InitialExtraLen, InitialBodyData, InitialExtraData};
 group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData, [#field_info{name=FieldName, type=#group_type{type_id=TypeId}}|T], Line, BodyLengthInt, Schema) ->
@@ -192,7 +226,7 @@ group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData
 	NewExtraLen = var_p(Line, "ExtraDataLen", FieldName),
 	NewBodyData = var_p(Line, "BodyData", FieldName),
 	NewExtraData = var_p(Line, "ExtraData", FieldName),
-	GroupEncodeFun = {atom, Line, inner_encoder_name(TypeId, Line)},
+	GroupEncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
 	ExtraBody = ast_encode_group_(
 		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
 		{out, [NewExtraLen, NewBodyData, NewExtraData]},
@@ -200,7 +234,7 @@ group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData
 	),
 	NewBodyDataInt = var_p(Line, "BodyDataAsIntFrom", FieldName),
 	MeldBody = [{match, Line, {bin, Line, [{bin_element, Line, NewBodyDataInt, BodyLengthInt, [integer]}]}, NewBodyData}],
-	group_encoder(InitialBody ++ ExtraBody ++ MeldBody, {op, Line, '+', InitialExtraLen, NewExtraLen}, {op, Line, '+', InitialBodyDataInt, NewBodyDataInt}, {cons, Line, InitialExtraData, NewExtraData}, T, Line, BodyLengthInt, Schema).
+	group_encoder(InitialBody ++ ExtraBody ++ MeldBody, {op, Line, '+', InitialExtraLen, NewExtraLen}, {op, Line, 'bor', InitialBodyDataInt, NewBodyDataInt}, {cons, Line, InitialExtraData, NewExtraData}, T, Line, BodyLengthInt, Schema).
 
 -ast_fragment2([]).
 ast_encode_group_(
@@ -213,13 +247,18 @@ ast_encode_group_(
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
 
-outer_encoder_name(TypeId, Schema) ->
+encoder_name(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		displayName=Name,
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				isGroup=IsGroup
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("encode_" ++ binary_to_list(TypeName)).
-
-inner_encoder_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("encode_group_" ++ integer_to_list(TypeId) ++ "_" ++ binary_to_list(TypeName)).
+	GroupBit = case IsGroup of 1 -> "group_"; 0 -> "" end,
+	list_to_atom("encode_" ++ GroupBit ++ binary_to_list(TypeName)).
 
 decoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
@@ -256,7 +295,7 @@ generate_envelope_body(Line, TypeId, Schema) ->
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	EncodeFun = {atom, Line, outer_encoder_name(TypeId, Schema)},
+	EncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
 	ast_envelope_({integer, Line, DWords}, {integer, Line, PWords}, {integer, Line, 1+DWords+PWords}, {var, Line, 'Input'}, EncodeFun).
 
 -ast_fragment([]).
@@ -453,7 +492,7 @@ var_p(Line, Prepend, Value) ->
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
 % Also support only ints for now.
-generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction) ->
+generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction, DWords) ->
 	% Match an integer.
 	Line = 0, % TODO
 	RawVar = var_p(Line, "Var", Name),
@@ -463,20 +502,20 @@ generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type
 		decode ->
 			RawVar
 	end,
-	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction)];
-generate_data_binary(CurrentOffset, Rest=[#field_info{offset=DesiredOffset}|_], Direction) ->
+	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction, DWords)];
+generate_data_binary(CurrentOffset, Rest=[#field_info{offset=DesiredOffset}|_], Direction, DWords) ->
 	% Generate filler junk.
 	Line = 0, % TODO
-	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, DesiredOffset-CurrentOffset}, [integer]}|generate_data_binary(DesiredOffset, Rest, Direction)];
-generate_data_binary(CurrentOffset, [], _Direction) when CurrentOffset rem 64 == 0 ->
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, DesiredOffset-CurrentOffset}, [integer]}|generate_data_binary(DesiredOffset, Rest, Direction, DWords)];
+generate_data_binary(CurrentOffset, [], _Direction, DWords) when CurrentOffset == DWords * 64 ->
 	[];
-generate_data_binary(CurrentOffset, [], Direction) ->
+generate_data_binary(CurrentOffset, [], Direction, DWords) ->
 	% Generate terminal junk.
 	Line = 0, % TODO
-	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64-(CurrentOffset rem 64)}, [integer]}].
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64*DWords-CurrentOffset}, [integer]}].
 
 % We shouldn't have gaps in this case, but we sanity check that.
-generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction) ->
+generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction, PWords) ->
 	% Match an integer.
 	Line = 0, % TODO
 	Var = case Direction of
@@ -485,9 +524,13 @@ generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_
 		decode ->
 			var_p(Line, "Var", Name)
 	end,
-	[{bin_element, Line, Var, {integer, Line, 64}, [little,unsigned,integer]}|generate_ptr_binary(DesiredOffset+64, Rest, Direction)];
-generate_ptr_binary(_CurrentOffset, [], _Direction) ->
-	[].
+	[{bin_element, Line, Var, {integer, Line, 64}, [little,unsigned,integer]}|generate_ptr_binary(DesiredOffset+64, Rest, Direction, PWords)];
+generate_ptr_binary(CurrentOffset, [], _Direction, PWords) when CurrentOffset == PWords * 64 ->
+	[];
+generate_ptr_binary(CurrentOffset, [], Direction, PWords) ->
+	% Generate terminal junk.
+	Line = 0, % TODO
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64*PWords-CurrentOffset}, [integer]}].
 
 junkterm(Line, decode) ->
 	{var, Line, '_'};
@@ -610,6 +653,7 @@ enumerant_names(TypeId, Schema) ->
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
 node_name(TypeId, Schema) when is_integer(TypeId) ->
+	io:format("Node name: ~p~n", [TypeId]),
 	#'capnp::namespace::Node'{
 		displayName=Name,
 		''={{1, struct},

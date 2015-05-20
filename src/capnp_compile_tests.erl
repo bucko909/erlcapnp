@@ -48,6 +48,10 @@ test() ->
 				], ", ")))/binary,
 			"])"
 		>>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestGroup', -2, {'data/tests/test1.capnp:TestGroup.group1', 1, -3}},
+		<<"(group1 = (testVar1 = 1, testVar2 = -3), testVar3 = -2)">>
 	).
 
 join([H], _) -> H;
@@ -71,7 +75,7 @@ do_test(Rec, Expected) ->
 		{Pipe, {data, {eol, Line}}} ->
 			if
 				Line == Expected -> ok;
-				true -> exit({bad_output, {Line, DataBin, Expected}})
+				true -> io:format("Got:~n~10000000p~n", [Line]), exit({bad_output, {Line, DataBin, Expected}})
 			end
 	after
 		1000 ->
