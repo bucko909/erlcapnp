@@ -52,6 +52,27 @@ test() ->
 	do_test(
 		{'data/tests/test1.capnp:TestGroup', -2, {'data/tests/test1.capnp:TestGroup.group1', 1, -3}},
 		<<"(group1 = (testVar1 = 1, testVar2 = -3), testVar3 = -2)">>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestGroupInUnion',
+			{0, {'data/tests/test1.capnp:TestGroupInUnion.unionVar1', 7, 8}},
+			{0, 1}
+		},
+		<<>>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestGroupInUnion',
+			{1, -4},
+			{1, [-5, 2, 3]}
+		},
+		<<>>
+	),
+	do_test(
+		{'data/tests/test1.capnp:TestGroupInUnion',
+			{2, -4},
+			{1, [-2, 0, 2]}
+		},
+		<<>>
 	).
 
 join([H], _) -> H;
@@ -75,7 +96,7 @@ do_test(Rec, Expected) ->
 		{Pipe, {data, {eol, Line}}} ->
 			if
 				Line == Expected -> ok;
-				true -> io:format("Got:~n~10000000p~n", [Line]), exit({bad_output, {Line, DataBin, Expected}})
+				true -> io:format("Got:~n~10000000p~nFrom:~n~1000000p~n", [Line, DataBin]), exit({bad_output, {Line, DataBin, Expected}})
 			end
 	after
 		1000 ->

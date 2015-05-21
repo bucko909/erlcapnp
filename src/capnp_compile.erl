@@ -85,18 +85,44 @@ generate_basic(TypeId, Schema) ->
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	% Start by finding the bit offsets of each field, so that we can order them.
 	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
-	{Groups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, AllFields),
+	{NotUnionFields, UnionFields} = lists:partition(fun (#field_info{discriminant=undefined}) -> true; (_) -> false end, AllFields),
+	{ExplicitGroups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, NotUnionFields),
+	Groups = case UnionFields of
+		[] ->
+			ExplicitGroups;
+		_ ->
+			[#field_info{name= <<>>, type=#group_type{type_id=TypeId}}|ExplicitGroups]
+	end,
 	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, Slots),
 	% We like these sorted by offset.
 	SortedDataFields = lists:sort(DataFields),
 	SortedPtrFields = lists:sort(PtrFields),
 
 	Line = 0, % TODO
-	DecodeFunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
 
 	RecDef = generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema),
 
-	EncodeFunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+	{RecDefs, NonUnionFunDefs} = case UnionFields of
+		[] ->
+			{[RecDef], [
+				generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+				generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema)
+			]};
+		_ when NotUnionFields == [] ->
+			{[], []};
+		_ ->
+			{[RecDef], [
+				generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+				generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema)
+			]}
+	end,
+
+	UnionFunDefs = case UnionFields of
+		[] ->
+			[];
+		_ ->
+			[generate_union_encode_fun(Line, TypeId, UnionFields, Schema)]
+	end,
 
 	EnvelopeFunDef = case IsGroup of
 		0 ->
@@ -108,8 +134,8 @@ generate_basic(TypeId, Schema) ->
 
 	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
-	ExtraTypes3 = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- Groups ],
-	{[RecDef], [EncodeFunDef, DecodeFunDef] ++  EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3}.
+	ExtraTypes3 = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- AllFields ],
+	{RecDefs, NonUnionFunDefs ++ UnionFunDefs ++ EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3}.
 
 generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
 	% TODO types, too!
@@ -192,6 +218,59 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 			FullEncodeBody ++ [ {tuple, Line, [ExtraLen, BodyData, ExtraData]} ]
 	end.
 
+generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
+	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
+
+	EncodeFunDef = {function, Line, inner_encoder_name(TypeId, Schema), 2,
+		[{clause, Line,
+				[
+					{tuple, Line, [
+						{var, Line, 'Discriminant'},
+						{var, Line, 'Var'}
+					]},
+					{var, Line, 'PtrOffsetWordsFromEnd0'}
+				],
+				[],
+				[ {call, Line, {remote, Line, {atom, Line, io}, {atom, Line, format}}, [{string, Line, "~p~n"}, {cons, Line, {var, Line, 'Var'}, {nil, Line}}]} ] ++
+				EncodeBody
+			}]}.
+
+union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
+	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
+	Expected = lists:seq(0, length(Sorted)-1),
+	Expected = [ X || #field_info{discriminant=X} <- Sorted ],
+	EncoderClauses = [ {clause, Line, [{integer, Line, X}], [], generate_union_encoder(Line, Field, TypeId, Schema)} || Field=#field_info{discriminant=X} <- Sorted ],
+	%{'case',8, {var,8,'A'}, [{clause,9,[{integer,9,1}],[],[{atom,9,foo}]}, {clause,10, [{integer,10,2}], [[{atom,10,true}]], [{atom,10,bar}]}]}
+	[{'case', Line, {var, Line, 'Discriminant'}, EncoderClauses}].
+
+generate_union_encoder(Line, Field=#field_info{type=#native_type{}}, TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	[{tuple, Line, [{integer, Line, 0}, {bin, Line, generate_data_binary(0, [Field#field_info{name={override, 'Var'}}], encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)}, {nil, Line}]}];
+generate_union_encoder(Line, Field=#field_info{type=Type=#ptr_type{}}, TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	ast_encode_ptr(1, 1, Type, <<>>, Line) ++
+	[{tuple, Line, [
+				{op, Line, '-', {var, Line, 'PtrOffsetWordsFromEnd1'}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
+				{bin, Line, generate_data_binary(0, [], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
+				{op, Line, '++', {var, Line, 'Data1'}, {var, Line, 'Extra1'}}
+	]}];
+generate_union_encoder(Line, Field=#field_info{type=#group_type{type_id=GroupTypeId}}, _, Schema) ->
+	[{call, Line, {atom, Line, inner_encoder_name(GroupTypeId, Schema)}, [{var, Line, 'Var'}, {var, Line, 'PtrOffsetWordsFromEnd0'}]}].
+
 % Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
 % The difference becomes larger with more elements.
 encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
@@ -226,7 +305,7 @@ group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData
 	NewExtraLen = var_p(Line, "ExtraDataLen", FieldName),
 	NewBodyData = var_p(Line, "BodyData", FieldName),
 	NewExtraData = var_p(Line, "ExtraData", FieldName),
-	GroupEncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
+	GroupEncodeFun = {atom, Line, inner_encoder_name(TypeId, Schema)},
 	ExtraBody = ast_encode_group_(
 		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
 		{out, [NewExtraLen, NewBodyData, NewExtraData]},
@@ -259,6 +338,18 @@ encoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
 	GroupBit = case IsGroup of 1 -> "group_"; 0 -> "" end,
 	list_to_atom("encode_" ++ GroupBit ++ binary_to_list(TypeName)).
+
+inner_encoder_name(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		displayName=Name,
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				isGroup=IsGroup
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	{TypeName, _, _} = node_name(TypeId, Schema),
+	list_to_atom("encode_group_" ++ binary_to_list(TypeName)).
 
 decoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
@@ -331,8 +422,13 @@ ast_encode_ptr_common(N, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
 	AstFun(
 		{in, CommonIn ++ ExtraInputParams},
 		{out, CommonOut},
-		{temp_suffix, binary_to_list(VarName)}
+		{temp_suffix, temp_suffix(VarName)}
 	).
+
+temp_suffix({override, Name}) ->
+	"Temp";
+temp_suffix(Name) ->
+	binary_to_list(Name).
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
@@ -486,6 +582,8 @@ to_list(A) when is_binary(A) -> binary_to_list(A);
 to_list(A) when is_integer(A) -> integer_to_list(A);
 to_list(A) when is_list(A) -> A.
 
+var_p(Line, Prepend, {override, Name}) ->
+	{var, Line, Name};
 var_p(Line, Prepend, Value) ->
 	{var, Line, list_to_atom(to_list(Prepend) ++ to_list(Value))}.
 
