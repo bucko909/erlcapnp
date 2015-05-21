@@ -45,16 +45,13 @@ split_forms([], []) ->
 to_ast([], _Done, Recs, Funs, _Schema) ->
 	Line = 0,
 	Forms = [{attribute,1,file,{"capnp_test.erl",1}},{attribute,Line,module,capnp_test},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
-	io:format("~p~n", [Forms]),
 	Source = erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]),
-	io:format("~s~n", [Source]),
 	file:write_file("/tmp/capnp_test.erl", Source),
 	{ok, Tokens, _} = erl_scan:string(Source),
 	Forms2 = split_forms(Tokens, []),
 	{ok, capnp_test, BinData, []} = compile:forms(Forms2, [debug_info, return]),
 	code:load_binary(capnp_test, "capnp_test.beam", BinData);
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
-	io:format("Job: ~p~n", [Job]),
 	case sets:is_element(Job, Done) of
 		true ->
 			to_ast(Rest, Done, Recs, Funs, Schema);
@@ -130,7 +127,6 @@ generate_basic(TypeId, Schema) ->
 		1 ->
 			[]
 	end,
-	io:format("IsGroup ~p ~p~n", [Name, IsGroup]),
 
 	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
@@ -231,7 +227,6 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
 				],
 				[],
-				[ {call, Line, {remote, Line, {atom, Line, io}, {atom, Line, format}}, [{string, Line, "~p~n"}, {cons, Line, {var, Line, 'Var'}, {nil, Line}}]} ] ++
 				EncodeBody
 			}]}.
 
@@ -772,7 +767,6 @@ enumerant_names(TypeId, Schema) ->
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
 node_name(TypeId, Schema) when is_integer(TypeId) ->
-	io:format("Node name: ~p~n", [TypeId]),
 	#'capnp::namespace::Node'{
 		displayName=Name,
 		''={{1, struct},
