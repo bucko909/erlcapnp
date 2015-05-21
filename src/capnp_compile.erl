@@ -280,12 +280,22 @@ generate_union_encoder(Line, #field_info{offset=Offset}, Field=#field_info{type=
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	DiscriminantBinAsInt = {op, Line, 'bsl', {var, Line, 'VarDiscriminant'}, {integer, Line, Offset}},
-	InnerCall = {call, Line, {atom, Line, inner_encoder_name(GroupTypeId, Schema)}, [{var, Line, 'Var'}, {var, Line, 'PtrOffsetWordsFromEnd0'}]},
-	BinMatch = {bin, Line, [{bin_element, Line, {var, Line, 'DataInt'}, {integer, Line, (DWords+PWords)*64}, [little, unsigned, integer]}]},
-	Match = {match, Line, {tuple, Line, [{var, Line, 'ExtraLen'}, BinMatch, {var, Line, 'ExtraData'}]}, InnerCall},
-	Bin = {bin, Line, [{bin_element, Line, {op, Line, 'bor', {var, Line, 'DataInt'}, DiscriminantBinAsInt}, {integer, Line, (DWords+PWords)*64}, [little, unsigned, integer]}]},
-	[Match, {tuple, Line, [{var, Line, 'ExtraLen'}, Bin, {var, Line, 'ExtraData'}]}].
+	ast_group_in_union_(
+		{in, [{atom, Line, inner_encoder_name(GroupTypeId, Schema)}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
+		{out, []},
+		{temp_suffix, ""}
+	).
+
+% We're not too careful about variable clashes here, since each call to this is made in an independent block.
+-ast_fragment2([]).
+ast_group_in_union_(
+		{in, [EncodeFun, DiscriminantOffset, BitLength]},
+		{out, []},
+		{temp, []}
+		) ->
+	{ExtraLen, <<DataInt:BitLength/little-unsigned-integer>>, ExtraData} = EncodeFun(Var, PtrOffsetWordsFromEnd0),
+	{ExtraLen, <<(DataInt bor (VarDiscriminant bsl DiscriminantOffset)):BitLength/little-unsigned-integer>>, ExtraData}.
+
 
 % Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
 % The difference becomes larger with more elements.
