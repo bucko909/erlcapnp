@@ -225,7 +225,7 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 		[{clause, Line,
 				[
 					{tuple, Line, [
-						{var, Line, 'Discriminant'},
+						{var, Line, 'VarDiscriminant'},
 						{var, Line, 'Var'}
 					]},
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
@@ -236,14 +236,22 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 			}]}.
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				discriminantOffset=DiscriminantOffset
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	DiscriminantField = #field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)},
 	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
 	Expected = lists:seq(0, length(Sorted)-1),
 	Expected = [ X || #field_info{discriminant=X} <- Sorted ],
-	EncoderClauses = [ {clause, Line, [{integer, Line, X}], [], generate_union_encoder(Line, Field, TypeId, Schema)} || Field=#field_info{discriminant=X} <- Sorted ],
+	EncoderClauses = [ {clause, Line, [{integer, Line, X}], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{discriminant=X} <- Sorted ],
 	%{'case',8, {var,8,'A'}, [{clause,9,[{integer,9,1}],[],[{atom,9,foo}]}, {clause,10, [{integer,10,2}], [[{atom,10,true}]], [{atom,10,bar}]}]}
-	[{'case', Line, {var, Line, 'Discriminant'}, EncoderClauses}].
+	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
 
-generate_union_encoder(Line, Field=#field_info{type=#native_type{}}, TypeId, Schema) ->
+generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_type{}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -252,8 +260,8 @@ generate_union_encoder(Line, Field=#field_info{type=#native_type{}}, TypeId, Sch
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	[{tuple, Line, [{integer, Line, 0}, {bin, Line, generate_data_binary(0, [Field#field_info{name={override, 'Var'}}], encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)}, {nil, Line}]}];
-generate_union_encoder(Line, Field=#field_info{type=Type=#ptr_type{}}, TypeId, Schema) ->
+	[{tuple, Line, [{integer, Line, 0}, {bin, Line, generate_data_binary(0, lists:sort([DiscriminantField, Field#field_info{name={override, 'Var'}}]), encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)}, {nil, Line}]}];
+generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr_type{}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -265,11 +273,24 @@ generate_union_encoder(Line, Field=#field_info{type=Type=#ptr_type{}}, TypeId, S
 	ast_encode_ptr(1, 1, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{op, Line, '-', {var, Line, 'PtrOffsetWordsFromEnd1'}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
-				{bin, Line, generate_data_binary(0, [], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
+				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
 				{op, Line, '++', {var, Line, 'Data1'}, {var, Line, 'Extra1'}}
 	]}];
-generate_union_encoder(Line, Field=#field_info{type=#group_type{type_id=GroupTypeId}}, _, Schema) ->
-	[{call, Line, {atom, Line, inner_encoder_name(GroupTypeId, Schema)}, [{var, Line, 'Var'}, {var, Line, 'PtrOffsetWordsFromEnd0'}]}].
+generate_union_encoder(Line, #field_info{offset=Offset}, Field=#field_info{type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	DiscriminantBinAsInt = {op, Line, 'bsl', {var, Line, 'VarDiscriminant'}, {integer, Line, Offset}},
+	InnerCall = {call, Line, {atom, Line, inner_encoder_name(GroupTypeId, Schema)}, [{var, Line, 'Var'}, {var, Line, 'PtrOffsetWordsFromEnd0'}]},
+	BinMatch = {bin, Line, [{bin_element, Line, {var, Line, 'DataInt'}, {integer, Line, (DWords+PWords)*64}, [little, unsigned, integer]}]},
+	Match = {match, Line, {tuple, Line, [{var, Line, 'ExtraLen'}, BinMatch, {var, Line, 'ExtraData'}]}, InnerCall},
+	Bin = {bin, Line, [{bin_element, Line, {op, Line, 'bor', {var, Line, 'DataInt'}, DiscriminantBinAsInt}, {integer, Line, (DWords+PWords)*64}, [little, unsigned, integer]}]},
+	[Match, {tuple, Line, [{var, Line, 'ExtraLen'}, Bin, {var, Line, 'ExtraData'}]}].
 
 % Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
 % The difference becomes larger with more elements.

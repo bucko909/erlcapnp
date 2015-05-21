@@ -58,21 +58,21 @@ test() ->
 			{0, {'data/tests/test1.capnp:TestGroupInUnion.unionVar1', 7, 8}},
 			{0, 1}
 		},
-		<<>>
+		<<"(unionVar1 = (testVar1 = 7, testVar2 = 8), union2 = (testVar1 = 1))">>
 	),
 	do_test(
 		{'data/tests/test1.capnp:TestGroupInUnion',
 			{1, -4},
 			{1, [-5, 2, 3]}
 		},
-		<<>>
+		<<"(unionVar2 = -4, union2 = (testVar2 = [-5, 2, 3]))">>
 	),
 	do_test(
 		{'data/tests/test1.capnp:TestGroupInUnion',
 			{2, -4},
 			{1, [-2, 0, 2]}
 		},
-		<<>>
+		<<"(unionVar3 = -4, union2 = (testVar2 = [-2, 0, 2]))">>
 	).
 
 join([H], _) -> H;
