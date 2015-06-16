@@ -55,20 +55,20 @@ decode_pointers(<<Pointer:8/binary, Rest/binary>>, Message=#message{current_offs
 
 decode_pointer(<<0:64/little-integer>>, _) ->
 	null_pointer;
-decode_pointer(P= <<DataOffsetLSB:6/little-integer, 0:2/little-integer, DataOffsetMSB:24/little-integer, DataSize:16/little-integer, PointerSize:16/little-integer>>, Message=#message{current_offset=CurrentOffset}) ->
+decode_pointer(<<DataOffsetLSB:6/little-integer, 0:2/little-integer, DataOffsetMSB:24/little-integer, DataSize:16/little-integer, PointerSize:16/little-integer>>, Message=#message{current_offset=CurrentOffset}) ->
 	DataOffset = DataOffsetLSB + (DataOffsetMSB bsl 6),
 	%io:format("Struct pointer: ~p, ~p~n", [P, {CurrentOffset+1+DataOffset, DataSize, PointerSize}]),
 	(catch decode_struct(DataSize, PointerSize, Message#message{current_offset=CurrentOffset+1+DataOffset}));
-decode_pointer(P= <<DataOffsetLSB:6/little-integer, 1:2/little-integer, DataOffsetMSB:24/little-integer, ListLengthLSB:5/little-integer, ElementSize:3/little-integer, ListLengthMSB:24/little-integer>>, Message=#message{current_offset=CurrentOffset}) ->
+decode_pointer(<<DataOffsetLSB:6/little-integer, 1:2/little-integer, DataOffsetMSB:24/little-integer, ListLengthLSB:5/little-integer, ElementSize:3/little-integer, ListLengthMSB:24/little-integer>>, Message=#message{current_offset=CurrentOffset}) ->
 	DataOffset = DataOffsetLSB + (DataOffsetMSB bsl 6),
 	ListLength = ListLengthLSB + (ListLengthMSB bsl 5),
 	%io:format("List pointer: ~p, ~p~n", [P, {{CurrentOffset, DataOffsetLSB, DataOffsetMSB, CurrentOffset+1+DataOffset}, {ListLength, ListLengthLSB, ListLengthMSB}}]),
 	(catch decode_list(ElementSize, ListLength, Message#message{current_offset=CurrentOffset+1+DataOffset}));
-decode_pointer(P= <<SegmentOffsetLSB:5/little-integer, LandingPadExtra:1/little-integer, 2:2/little-integer, SegmentOffsetMSB:24/little-integer, SegmentNumber:32/little-integer>>, Message) ->
+decode_pointer(<<SegmentOffsetLSB:5/little-integer, LandingPadExtra:1/little-integer, 2:2/little-integer, SegmentOffsetMSB:24/little-integer, SegmentNumber:32/little-integer>>, Message) ->
 	SegmentOffset = SegmentOffsetLSB + (SegmentOffsetMSB bsl 5),
 	%io:format("Far pointer: ~p, ~p~n", [P, {{SegmentOffset, SegmentOffsetLSB, SegmentOffsetMSB}, SegmentNumber, LandingPadExtra}]),
 	(catch decode_far_pointer(SegmentOffset, SegmentNumber, LandingPadExtra, Message));
-decode_pointer(P= <<0:6/little-integer, 3:2/little-integer, 0:24/little-integer, CapabilityOffset:32/little-integer>>, #message{}) ->
+decode_pointer(<<0:6/little-integer, 3:2/little-integer, 0:24/little-integer, CapabilityOffset:32/little-integer>>, #message{}) ->
 	%io:format("Capability: ~p, ~p~n", [P, CapabilityOffset]),
 	{not_implemented_capabilities, CapabilityOffset};
 decode_pointer(Junk, _) ->

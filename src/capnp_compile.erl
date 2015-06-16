@@ -64,14 +64,10 @@ do_job({generate_name, TypeName}, Schema) ->
 	TypeId = dict:fetch(TypeName, Schema#capnp_context.name_to_id),
 	{[], [], [{generate, TypeId}]};
 do_job({generate, TypeId}, Schema) ->
-	generate_basic(TypeId, Schema);
-do_job({generate_body, TypeId}, Schema) ->
-	erlang:error(foo).
-	%generate_body(TypeId, Schema).
+	generate_basic(TypeId, Schema).
 
 generate_basic(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
-		displayName=Name,
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
 				fields=Fields,
@@ -179,7 +175,7 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%
 	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
-	EncodeFunDef = {function, Line, encoder_name(TypeId, Schema), 2,
+	{function, Line, encoder_name(TypeId, Schema), 2,
 		[{clause, Line,
 				[
 					{record, Line, record_name(TypeId, Schema),
@@ -217,7 +213,7 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
 
-	EncodeFunDef = {function, Line, inner_encoder_name(TypeId, Schema), 2,
+	{function, Line, inner_encoder_name(TypeId, Schema), 2,
 		[{clause, Line,
 				[
 					{tuple, Line, [
@@ -271,7 +267,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
 				{op, Line, '++', {var, Line, 'Data1'}, {var, Line, 'Extra1'}}
 	]}];
-generate_union_encoder(Line, #field_info{offset=Offset}, Field=#field_info{type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
+generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -354,7 +350,6 @@ to_list(Line, List) ->
 
 encoder_name(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
-		displayName=Name,
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
 				isGroup=IsGroup
@@ -367,10 +362,8 @@ encoder_name(TypeId, Schema) ->
 
 inner_encoder_name(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
-		displayName=Name,
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
-				isGroup=IsGroup
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
@@ -451,7 +444,7 @@ ast_encode_ptr_common(N, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
 		{temp_suffix, temp_suffix(VarName)}
 	).
 
-temp_suffix({override, Name}) ->
+temp_suffix({override, _Name}) ->
 	"Temp";
 temp_suffix(Name) ->
 	binary_to_list(Name).
@@ -608,7 +601,7 @@ to_list(A) when is_binary(A) -> binary_to_list(A);
 to_list(A) when is_integer(A) -> integer_to_list(A);
 to_list(A) when is_list(A) -> A.
 
-var_p(Line, Prepend, {override, Name}) ->
+var_p(Line, _Prepend, {override, Name}) ->
 	{var, Line, Name};
 var_p(Line, Prepend, Value) ->
 	{var, Line, list_to_atom(to_list(Prepend) ++ to_list(Value))}.
@@ -751,8 +744,6 @@ type_info(list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}, _Schema) ->
 	erlang:error({not_implemented, list, anyPointer}); % TODO
 type_info(list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}, _Schema) ->
 	erlang:error({not_implemented, list, interface}); % TODO
-% TODO union variables.
-% TODO group variables.
 % TODO decoders for pointers.
 % Data types
 type_info(enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
@@ -801,5 +792,3 @@ builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[floa
 builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[float], list_tag=5};
 builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer], list_tag=1};
 builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer], list_tag=0}.
-
-% TODO lists of lists.
