@@ -73,7 +73,8 @@ test() ->
 			{1, [-2, 0, 2]}
 		},
 		<<"(unionVar3 = -4, union2 = (testVar2 = [-2, 0, 2]))">>
-	).
+	),
+	io:format("Tests passed.~n").
 
 join([H], _) -> H;
 join([H|T], J) -> H ++ J ++ join(T, J);
@@ -81,7 +82,7 @@ join([], _) -> "".
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
-	capnp_compile:to_ast(list_to_binary(RecName), fname()),
+	capnp_compile:load_directly(fname(), capnp_test, list_to_binary(RecName)),
 	EncodeFun = list_to_atom("envelope_" ++ RecName),
 	{match, [FriendlyName]} = re:run(RecName, ".*:(.*)", [{capture, all_but_first, list}]),
 	DataBin = capnp_test:EncodeFun(Rec),
