@@ -324,9 +324,19 @@ id(X) -> X.
 'decode_capnp::namespace::CodeGeneratorRequest::RequestedFile'(S) ->
 	S.
 
-make_objdict(#'capnp::namespace::CodeGeneratorRequest'{nodes=Nodes}) ->
-	ById = dict:from_list([{Id, Node} || Node=#'capnp::namespace::Node'{id=Id} <- Nodes ]),
-	NameToId = dict:from_list([{Name, Id} || #'capnp::namespace::Node'{id=Id, displayName=Name} <- Nodes ]),
+massage_name(Name, Filename) ->
+	String = binary_to_list(Name),
+	case {String == Filename, lists:prefix(Filename, String)} of
+		{false, true} ->
+			list_to_binary(lists:sublist(String, length(Filename) + 2, length(String) - length(Filename) - 1));
+		_ ->
+			Name
+	end.
+
+make_objdict(#'capnp::namespace::CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
+	MassagedNodes = [ X#'capnp::namespace::Node'{displayName=massage_name(Name, Filename)} || X=#'capnp::namespace::Node'{displayName=Name} <- Nodes ],
+	ById = dict:from_list([{Id, Node} || Node=#'capnp::namespace::Node'{id=Id} <- MassagedNodes ]),
+	NameToId = dict:from_list([{Name, Id} || #'capnp::namespace::Node'{id=Id, displayName=Name} <- MassagedNodes ]),
 	#capnp_context{
 		by_id = ById,
 		name_to_id = NameToId
@@ -349,4 +359,4 @@ load_raw_schema(Filename) ->
 	Mes = capnp_raw:read_message(Data),
 	Raw = capnp_raw:decode_pointer(Mes),
 	CGR = 'decode_capnp::namespace::CodeGeneratorRequest'(Raw),
-	make_objdict(CGR).
+	make_objdict(CGR, Filename).
