@@ -9,11 +9,14 @@
 -include_lib("capnp_bootstrap.hrl").
 
 -export([
+		to_ast/1,
 		to_ast/2,
-		load_directly/3,
-		self_contained_source/3,
-		source_with_include/4,
-		header_only/3
+		load_directly/2,
+		self_contained_source/2,
+		output_source_with_include/3,
+		source_with_include/3,
+		output_header/2,
+		header_only/2
 	]).
 
 -record(field_info, {offset, type, name, default, discriminant}).
@@ -23,40 +26,53 @@
 
 -compile({parse_transform, uberpt}).
 
-load_directly(SchemaFile, ModuleName, Root) ->
+load_directly(SchemaFile, ModuleName) ->
 	% We go via source to make sure we didn't generate anything kooky.
-	Source = self_contained_source(SchemaFile, ModuleName, Root),
+	Source = self_contained_source(SchemaFile, ModuleName),
 	{ok, Tokens, _} = erl_scan:string(Source),
 	Forms = split_forms(Tokens, []),
 	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
 
-self_contained_source(SchemaFile, ModuleName, Root) ->
-	{Recs, Funs} = to_ast(Root, SchemaFile),
+self_contained_source(SchemaFile, ModuleName) ->
+	{Recs, Funs} = to_ast(SchemaFile),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
 
-source_with_include(SchemaFile, ModuleName, Path, Root) ->
-	{_Recs, Funs} = to_ast(Root, SchemaFile),
+output_source_with_include(SchemaFile, ModuleName, Path) ->
+	io:format("~s", [source_with_include(SchemaFile, ModuleName, Path)]).
+
+source_with_include(SchemaFile, ModuleName, Path) ->
+	{_Recs, Funs} = to_ast(SchemaFile),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	IncludeFileName = Path ++ "/" ++ atom_to_list(ModuleName) ++ ".hrl",
 	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,include_lib,IncludeFileName},{attribute,Line,compile,[export_all]}] ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
 
-header_only(SchemaFile, ModuleName, Root) ->
-	{Recs, _Funs} = to_ast(Root, SchemaFile),
+output_header(SchemaFile, ModuleName) ->
+	io:format("~s", [header_only(SchemaFile, ModuleName)]).
+
+header_only(SchemaFile, ModuleName) ->
+	{Recs, _Funs} = to_ast(SchemaFile),
 	IncludeFileName = atom_to_list(ModuleName) ++ ".hrl",
 	Forms = [{attribute,1,file,{IncludeFileName,1}}] ++ Recs ++ [{eof,0}],
 	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
 
+to_ast(SchemaFile) when is_list(SchemaFile) ->
+	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
+	Tasks = [ {generate_name, Name} || {_, #'capnp::namespace::Node'{''={{1, struct}, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
+	to_ast(Tasks, Schema).
+
 to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
 	to_ast(Name, Schema);
-to_ast(Name, Schema) ->
-	to_ast([{generate_name, Name}], sets:new(), [], [], Schema).
+to_ast(Name, Schema) when is_binary(Name) ->
+	to_ast([{generate_name, Name}], Schema);
+to_ast(Tasks, Schema) ->
+	to_ast(Tasks, sets:new(), [], [], Schema).
 
 split_forms([Dot={dot,_}|Rest], Acc) ->
 	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
@@ -673,6 +689,8 @@ junkterm(Line, encode) ->
 
 % The code we generate to construct data to put into a binary.
 encoder(#native_type{type=integer}, Var, _Line) ->
+	Var;
+encoder(#native_type{type=void}, Var, _Line) ->
 	Var;
 encoder(#native_type{type=float}, Var, _Line) ->
 	Var;
