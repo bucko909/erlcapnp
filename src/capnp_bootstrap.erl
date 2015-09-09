@@ -345,18 +345,19 @@ make_objdict(#'capnp::namespace::CodeGeneratorRequest'{nodes=Nodes}, Filename) -
 test() ->
 	load_raw_schema("/home/bucko/eclipse-workspace/capnp/data/capnp.raw").
 
-load_raw_schema(Filename) ->
-	Data = case file:read_file(Filename) of
+load_raw_schema(GivenFilename) ->
+	{Data, CapnpFilename} = case file:read_file(GivenFilename) of
 		{ok, Data1= <<0, _/binary>>} ->
-			Data1;
+			"war" ++ Base = lists:reverse(GivenFilename),
+			{Data1, lists:reverse(Base) ++ ".capnp"};
 		{ok, _} ->
-			"pnpac" ++ Base = lists:reverse(Filename),
+			"pnpac" ++ Base = lists:reverse(GivenFilename),
 			RawFilename = lists:reverse(Base) ++ "raw",
-			[] = os:cmd("capnpc -o/bin/cat " ++ Filename ++ " > " ++ RawFilename),
+			[] = os:cmd("capnpc -o/bin/cat " ++ GivenFilename ++ " > " ++ RawFilename),
 			{ok, Data1} = file:read_file(RawFilename),
-			Data1
+			{Data1, GivenFilename}
 	end,
 	Mes = capnp_raw:read_message(Data),
 	Raw = capnp_raw:decode_pointer(Mes),
 	CGR = 'decode_capnp::namespace::CodeGeneratorRequest'(Raw),
-	make_objdict(CGR, Filename).
+	make_objdict(CGR, CapnpFilename).
