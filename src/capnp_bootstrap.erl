@@ -349,7 +349,7 @@ load_raw_schema(GivenFilename) ->
 	{Data, CapnpFilename} = case file:read_file(GivenFilename) of
 		{ok, Data1= <<0, _/binary>>} ->
 			"war" ++ Base = lists:reverse(GivenFilename),
-			{Data1, lists:reverse(Base) ++ ".capnp"};
+			{Data1, lists:reverse(Base) ++ "capnp"};
 		{ok, _} ->
 			"pnpac" ++ Base = lists:reverse(GivenFilename),
 			RawFilename = lists:reverse(Base) ++ "raw",
