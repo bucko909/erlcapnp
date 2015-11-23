@@ -823,7 +823,7 @@ builtin_info(uint64) -> #native_type{type=integer, width=64, binary_options=[lit
 builtin_info(uint32) -> #native_type{type=integer, width=32, binary_options=[little, unsigned, integer], list_tag=4};
 builtin_info(uint16) -> #native_type{type=integer, width=16, binary_options=[little, unsigned, integer], list_tag=3};
 builtin_info(uint8) -> #native_type{type=integer, width=8, binary_options=[little, unsigned, integer], list_tag=8};
-builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[float], list_tag=4};
-builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[float], list_tag=5};
+builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[little, float], list_tag=4};
+builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[little, float], list_tag=5};
 builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer], list_tag=1};
 builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer], list_tag=0}.
