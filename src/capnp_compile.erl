@@ -594,7 +594,7 @@ ast_encode_struct_list_(
 				% Call encode_Name once for each struct element
 				{ExtraLen, ThisData, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
 				% Must remember to account for the fact that next element starts StructLen further along.
-				{ExtraLen + Offset - StructLen, [DataAcc|ThisData], [ExtraAcc|ThisExtra]}
+				{ExtraLen + Offset - StructLen, [DataAcc, ThisData], [ExtraAcc | ThisExtra]}
 		end, {
 			DataLen * StructLen, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
 			[<< ((DataLen bsl 2) + StructSizePreformatted):64/unsigned-little-integer >>], % Struct lists start with a tag word.
