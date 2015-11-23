@@ -298,7 +298,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 	[{tuple, Line, [
 				{op, Line, '-', {var, Line, 'PtrOffsetWordsFromEnd1'}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
 				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
-				{op, Line, '++', {var, Line, 'Data1'}, {var, Line, 'Extra1'}}
+				to_list(Line, [{var, Line, 'Data1'}, {var, Line, 'Extra1'}])
 	]}];
 generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
