@@ -347,7 +347,7 @@ test() ->
 
 load_raw_schema(GivenFilename) ->
 	{Data, CapnpFilename} = case file:read_file(GivenFilename) of
-		{ok, Data1= <<0, _/binary>>} ->
+		{ok, Data1= <<_, 0, _/binary>>} ->
 			"war" ++ Base = lists:reverse(GivenFilename),
 			{Data1, lists:reverse(Base) ++ "capnp"};
 		{ok, _} ->
