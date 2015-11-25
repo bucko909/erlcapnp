@@ -635,7 +635,6 @@ ast_encode_struct_list_(
 			[] % Extra accumulator starts empty!
 		}, ValueToEncode),
 	FinalOffset = round(iolist_size(ExtraData) / 8),
-	DataLen = round(iolist_size(MainData) / 8 / StructLen),
 	PointerAsInt = 1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2) bor (7 bsl 32) bor ((DataLen * StructLen) bsl 35),
 	NewOffsetFromEnd = OldOffsetFromEnd
 				+ 1 % tag word
