@@ -97,7 +97,10 @@ do_job({generate_name, TypeName}, Schema) ->
 	TypeId = dict:fetch(TypeName, Schema#capnp_context.name_to_id),
 	{[], [], [{generate, TypeId}]};
 do_job({generate, TypeId}, Schema) ->
-	generate_basic(TypeId, Schema).
+	generate_basic(TypeId, Schema);
+do_job({generate_text, TextType}, _Schema) ->
+	% Needed when we have a list of text.
+	generate_text().
 
 generate_basic(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
@@ -160,7 +163,8 @@ generate_basic(TypeId, Schema) ->
 	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
 	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
 	ExtraTypes3 = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- AllFields ],
-	{RecDefs, NonUnionFunDefs ++ UnionFunDefs ++ EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3}.
+	ExtraTypes4 = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- SortedPtrFields ],
+	{RecDefs, NonUnionFunDefs ++ UnionFunDefs ++ EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3 ++ ExtraTypes4}.
 
 generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
 	% TODO types, too!
@@ -219,6 +223,31 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 				[],
 				EncodeBody
 			}]}.
+
+generate_text() ->
+	Line = 0,
+	ListVar = {var, Line, 'List'},
+	OffsetVar = {var, Line, 'Offset'},
+	EncodeBody = ast_encode_text_only_({in, [ListVar, OffsetVar]}, {out, []}, {temp_suffix, ""}),
+
+	Func = {function, Line, 'encode_text', 2,
+		[{clause, Line,
+				[ ListVar, OffsetVar ],
+				[],
+				EncodeBody
+			}]},
+	{[], [Func], []}.
+
+-ast_fragment2([]).
+ast_encode_text_only_(
+		{in, [List, Offset]},
+		{out, []},
+		{temp, []}
+		) ->
+	DataLen = iolist_size(List) + 1,
+	Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
+	Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+	{DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
@@ -507,6 +536,11 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=st
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
 	StructSizePreformatted = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
 	StructLen = {integer, Line, DataLen + PtrLen},
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text, TextType}}, VarName, Line) ->
+	EncodeFun = {atom, Line, encode_text},
+	StructSizePreformatted = {integer, Line, 1 bsl 48},
+	StructLen = {integer, Line, 1},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line).
 
 % This are the fragment that are inserted for each pointer.
@@ -757,9 +791,9 @@ type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace
 	% List of enums.
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
-type_info(list, #'capnp::namespace::Type'{''={{_,TextType},void}}, _Schema) when TextType =:= text; TextType =:= data ->
+type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,TextType},void}}}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
-	erlang:error({not_implemented, list, TextType}); % TODO
+	{64, #ptr_type{type=list, extra={text, TextType}}};
 type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,bool},void}}}, _Schema) ->
 	% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
 	% So we need to special case it!
