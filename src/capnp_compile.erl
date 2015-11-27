@@ -323,7 +323,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	ast_encode_ptr(1, 1, Type, <<>>, Line) ++
+	ast_encode_ptr({1, 0}, 1, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{op, Line, '-', {var, Line, 'PtrOffsetWordsFromEnd1'}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
 				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
@@ -361,7 +361,7 @@ encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Sch
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
-	EncodePointers = lists:append([ ast_encode_ptr(N, length(SortedPtrFields), Type, FieldName, Line) || {N, #field_info{name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) || {N, #field_info{offset=Offset, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
 		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
@@ -490,14 +490,15 @@ ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
 			ExtraData
 	]).
 
-ast_encode_ptr_common(N, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
-	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [N-1, N] ],
-	OffsetToEndInt = {integer, Line, PtrLen0 - N},
+ast_encode_ptr_common({PtrVarNum, PtrOffset}, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
+	%case VarName of <<"textualKey">> -> io:format("textualKey: ~p~n", [{N, PtrLen0, AstFun, ExtraInputParams, VarName, Line}]); _ -> ok end,
+	[OldPtrOffsetWordsFromEndVar, NewPtrOffsetWordsFromEndVar] = [ var_p(Line, "PtrOffsetWordsFromEnd", OldOrNew) || OldOrNew <- [PtrVarNum-1, PtrVarNum] ],
+	OffsetToEndInt = {integer, Line, PtrLen0 - PtrOffset - 1},
 	MatchVar = var_p(Line, "Var", VarName),
 	CommonIn = [OldPtrOffsetWordsFromEndVar, OffsetToEndInt, MatchVar],
 
 	PtrVar = var_p(Line, "Ptr", VarName),
-	[DataVar, ExtraVar] = [ var_p(Line, VN, N) || VN <- ["Data", "Extra"] ],
+	[DataVar, ExtraVar] = [ var_p(Line, VN, PtrVarNum) || VN <- ["Data", "Extra"] ],
 	CommonOut = [NewPtrOffsetWordsFromEndVar, PtrVar, DataVar, ExtraVar],
 
 	AstFun(
