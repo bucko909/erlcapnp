@@ -686,6 +686,9 @@ generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type
 			RawVar
 	end,
 	[{bin_element, Line, Var, {integer, Line, Size}, BinType}|generate_data_binary(DesiredOffset+Size, Rest, Direction, DWords)];
+generate_data_binary(CurrentOffset, [#field_info{type=#native_type{width=0}}|Rest], Direction, DWords) ->
+	% Just skip over void entries. They always have offset 0 and mess everything else up...
+	generate_data_binary(CurrentOffset, Rest, Direction, DWords);
 generate_data_binary(CurrentOffset, Rest=[#field_info{offset=DesiredOffset}|_], Direction, DWords) ->
 	% Generate filler junk.
 	Line = 0, % TODO
@@ -697,7 +700,6 @@ generate_data_binary(CurrentOffset, [], Direction, DWords) ->
 	Line = 0, % TODO
 	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64*DWords-CurrentOffset}, [integer]}].
 
-% We shouldn't have gaps in this case, but we sanity check that.
 generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction, PWords) ->
 	% Match an integer.
 	Line = 0, % TODO
@@ -708,6 +710,10 @@ generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_
 			var_p(Line, "Var", Name)
 	end,
 	[{bin_element, Line, Var, {integer, Line, 64}, [little,unsigned,integer]}|generate_ptr_binary(DesiredOffset+64, Rest, Direction, PWords)];
+generate_ptr_binary(CurrentOffset, Rest=[#field_info{offset=DesiredOffset}|_], Direction, PWords) ->
+	% Generate filler junk. We only get this in unions.
+	Line = 0, % TODO
+	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, DesiredOffset-CurrentOffset}, [integer]}|generate_ptr_binary(DesiredOffset, Rest, Direction, PWords)];
 generate_ptr_binary(CurrentOffset, [], _Direction, PWords) when CurrentOffset == PWords * 64 ->
 	[];
 generate_ptr_binary(CurrentOffset, [], Direction, PWords) ->
