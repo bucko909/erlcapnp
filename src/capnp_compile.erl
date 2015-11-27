@@ -137,7 +137,7 @@ generate_basic(TypeId, Schema) ->
 				generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
 				generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema)
 			]};
-		_ when NotUnionFields == [] ->
+		_ when NotUnionFields == [], IsGroup /= 0 ->
 			{[], []};
 		_ ->
 			{[RecDef], [
