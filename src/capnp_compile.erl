@@ -213,7 +213,8 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
 	{function, Line, encoder_name(TypeId, Schema), 2,
-		[{clause, Line,
+		[
+			{clause, Line,
 				[
 					{record, Line, record_name(TypeId, Schema),
 						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
@@ -222,7 +223,23 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 				],
 				[],
 				EncodeBody
-			}]}.
+			},
+			nil_encoder_clause(Line)
+		]}.
+
+nil_encoder_clause(Line) ->
+	Zero = {integer, Line, 0},
+	Empty = {nil, Line},
+	{clause, Line,
+		[
+			{atom, Line, undefined},
+			{var, Line, '_PtrOffsetWordsFromEnd0'}
+		],
+		[],
+		[
+			{tuple, Line, [Zero, Zero, Zero, Empty, Empty]}
+		]
+	}.
 
 generate_text() ->
 	Line = 0,
@@ -247,10 +264,15 @@ ast_encode_text_only_(
 		{out, []},
 		{temp, []}
 		) ->
-	DataLen = iolist_size(List) + 1,
-	Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
-	Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-	{FakePointer, 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}.
+	if
+		is_list(List); is_binary(List) ->
+			DataLen = iolist_size(List) + 1,
+			Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
+			Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+			{FakePointer, 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data};
+		List =:= undefined ->
+			{FakePointer, 1, 0, [<<0:64>>], []}
+	end.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	#'capnp::namespace::Node'{
@@ -565,7 +587,7 @@ ast_encode_struct_(
 		{temp, [ZeroOffsetPtrInt, MainLen, ExtraLen]}
 	) ->
 	{ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData} = EncodeFun(ValueToEncode, 0),
-	PointerAsInt = ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + ZeroOffsetPtrInt,
+	PointerAsInt = case ZeroOffsetPtrInt of 0 -> 0; _ -> ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + ZeroOffsetPtrInt end,
 	NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen.
 
 -ast_fragment2([]).
@@ -574,13 +596,21 @@ ast_encode_text_(
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, [DataLen]}
 	) ->
-	ExtraData = <<>>,
-	DataLen = iolist_size(ValueToEncode)+1,
-	% We need to add a null terminator.
-	% Then we need to add (-L band 7) bytes of padding for alignment.
-	MainData = [ValueToEncode, <<0:8, 0:((-DataLen band 7)*8)/unsigned-little-integer>>],
-	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3).
+	if
+		is_list(ValueToEncode); is_binary(ValueToEncode) ->
+			ExtraData = <<>>,
+			DataLen = iolist_size(ValueToEncode)+1,
+			% We need to add a null terminator.
+			% Then we need to add (-L band 7) bytes of padding for alignment.
+			MainData = [ValueToEncode, <<0:8, 0:((-DataLen band 7)*8)/unsigned-little-integer>>],
+			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3);
+		ValueToEncode =:= undefined ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
 
 -ast_fragment2([]).
 ast_encode_data_(
@@ -588,12 +618,20 @@ ast_encode_data_(
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, [DataLen]}
 	) ->
-	ExtraData = <<>>,
-	DataLen = iolist_size(ValueToEncode),
-	% Then we need to add (-L band 7) bytes of padding for alignment.
-	MainData = [ValueToEncode, <<0:((-DataLen band 7)*8)/unsigned-little-integer>>],
-	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3).
+	if
+		is_list(ValueToEncode); is_binary(ValueToEncode) ->
+			ExtraData = <<>>,
+			DataLen = iolist_size(ValueToEncode),
+			% Then we need to add (-L band 7) bytes of padding for alignment.
+			MainData = [ValueToEncode, <<0:((-DataLen band 7)*8)/unsigned-little-integer>>],
+			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3);
+		ValueToEncode =:= undefined ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
 
 -ast_fragment2([]).
 ast_encode_primitive_list_(
@@ -601,12 +639,20 @@ ast_encode_primitive_list_(
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, [DataLen]}
 	) ->
-	ExtraData = <<>>,
-	DataLen = length(ValueToEncode),
-	% We need to add (-L*W band 63) bytes of padding for alignment.
-	MainData = [EncodedX, <<0:(-DataLen*Width band 63)/unsigned-little-integer>>],
-	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (WidthType bsl 32) bor (DataLen bsl 35),
-	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen * Width + 63) bsr 6).
+	if
+		ValueToEncode =/= undefined ->
+			ExtraData = <<>>,
+			DataLen = length(ValueToEncode),
+			% We need to add (-L*W band 63) bytes of padding for alignment.
+			MainData = [EncodedX, <<0:(-DataLen*Width band 63)/unsigned-little-integer>>],
+			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (WidthType bsl 32) bor (DataLen bsl 35),
+			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen * Width + 63) bsr 6);
+		true ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
 
 -ast_fragment2([]).
 ast_encode_bool_list_(
@@ -614,14 +660,22 @@ ast_encode_bool_list_(
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, [DataLen, DataFixed]}
 	) ->
-	ExtraData = <<>>,
-	DataLen = length(ValueToEncode),
-	% Because Erlang will reverse blocks of 8 bools, we pre-reverse them here.
-	DataFixed = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- ValueToEncode ]),
-	% We need to add (-L band 63) bytes of padding for alignment.
-	MainData = [ << <<X:1>> || X <- DataFixed >>, <<0:(-length(DataFixed) band 63)/unsigned-little-integer>>],
-	PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
-	NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6).
+	if
+		ValueToEncode =/= undefined ->
+			ExtraData = <<>>,
+			DataLen = length(ValueToEncode),
+			% Because Erlang will reverse blocks of 8 bools, we pre-reverse them here.
+			DataFixed = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- ValueToEncode ]),
+			% We need to add (-L band 63) bytes of padding for alignment.
+			MainData = [ << <<X:1>> || X <- DataFixed >>, <<0:(-length(DataFixed) band 63)/unsigned-little-integer>>],
+			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
+			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6);
+		true ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
 
 -ast_fragment2([]).
 ast_encode_struct_list_(
@@ -629,25 +683,33 @@ ast_encode_struct_list_(
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, [DataLen, FinalOffset]}
 	) ->
-	DataLen = length(ValueToEncode),
-	% We need to add (-L band 7) bytes of padding for alignment.
-	{FinalOffset, MainData, ExtraData} = lists:foldl(fun
-			(Element, {Offset, DataAcc, ExtraAcc}) ->
-				% Call encode_Name once for each struct element
-				{StructSizePreformatted, StructLen, ExtraLen, ThisBody, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
-				% Must remember to account for the fact that next element starts StructLen further along.
-				{ExtraLen + Offset - StructLen, [DataAcc, ThisBody], [ExtraAcc | ThisExtra]}
-		end, {
-			DataLen * StructLen, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
-			[<< ((DataLen bsl 2) + StructSizePreformatted):64/unsigned-little-integer >>], % Struct lists start with a tag word.
-			[] % Extra accumulator starts empty!
-		}, ValueToEncode),
-	FinalOffset = round(iolist_size(ExtraData) / 8),
-	PointerAsInt = 1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2) bor (7 bsl 32) bor ((DataLen * StructLen) bsl 35),
-	NewOffsetFromEnd = OldOffsetFromEnd
-				+ 1 % tag word
-				+ DataLen * StructLen % list contents
-				+ FinalOffset. % extra data length.
+	if
+		ValueToEncode =/= undefined ->
+			DataLen = length(ValueToEncode),
+			% We need to add (-L band 7) bytes of padding for alignment.
+			{FinalOffset, MainData, ExtraData} = lists:foldl(fun
+					(Element, {Offset, DataAcc, ExtraAcc}) ->
+						% Call encode_Name once for each struct element
+						{StructSizePreformatted, StructLen, ExtraLen, ThisBody, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
+						% Must remember to account for the fact that next element starts StructLen further along.
+						{ExtraLen + Offset - StructLen, [DataAcc, ThisBody], [ExtraAcc | ThisExtra]}
+				end, {
+					DataLen * StructLen, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
+					[<< ((DataLen bsl 2) + StructSizePreformatted):64/unsigned-little-integer >>], % Struct lists start with a tag word.
+					[] % Extra accumulator starts empty!
+				}, ValueToEncode),
+			FinalOffset = round(iolist_size(ExtraData) / 8),
+			PointerAsInt = 1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2) bor (7 bsl 32) bor ((DataLen * StructLen) bsl 35),
+			NewOffsetFromEnd = OldOffsetFromEnd
+						+ 1 % tag word
+						+ DataLen * StructLen % list contents
+						+ FinalOffset; % extra data length.
+		true ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
 
 massage_bool_list() ->
 	Var = {var, 0, 'List'},
