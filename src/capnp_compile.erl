@@ -226,9 +226,12 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 
 generate_text() ->
 	Line = 0,
+	% This is a pointer to a struct with 1 pointer, which is what the caller /believes/ we are.
+	% We pass it in just so that struct pointers are consistently generated.
+	FakePointerInt = {integer, Line, struct_pointer_header(0, 1)},
 	ListVar = {var, Line, 'List'},
 	OffsetVar = {var, Line, 'Offset'},
-	EncodeBody = ast_encode_text_only_({in, [ListVar, OffsetVar]}, {out, []}, {temp_suffix, ""}),
+	EncodeBody = ast_encode_text_only_({in, [FakePointerInt, ListVar, OffsetVar]}, {out, []}, {temp_suffix, ""}),
 
 	Func = {function, Line, 'encode_text', 2,
 		[{clause, Line,
@@ -240,36 +243,38 @@ generate_text() ->
 
 -ast_fragment2([]).
 ast_encode_text_only_(
-		{in, [List, Offset]},
+		{in, [FakePointer, List, Offset]},
 		{out, []},
 		{temp, []}
 		) ->
 	DataLen = iolist_size(List) + 1,
 	Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
 	Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-	{DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}.
+	{FakePointer, 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				dataWordCount=DWords,
+				pointerCount=PWords
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+	ZeroOffsetPtrInt = {integer, Line, struct_pointer_header(DWords, PWords)},
+	StructSizeInt = {integer, Line, DWords + PWords},
 	if
 		Groups =:= [] ->
 			% Easy case.
-			NoGroupEncodeBody ++ [ {tuple, Line, [NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData]} ];
+			NoGroupEncodeBody ++ [ {tuple, Line, [ZeroOffsetPtrInt, StructSizeInt, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData]} ];
 		true ->
 			NoGroupBodyDataInt = {var, Line, 'NoGroupBodyDataAsInt'},
-			#'capnp::namespace::Node'{
-				''={{1, struct},
-					#'capnp::namespace::Node::::struct'{
-						dataWordCount=DWords,
-						pointerCount=PWords
-					}
-				}
-			} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 			BodyLengthInt = {integer, Line, (PWords+DWords)*64},
 			ToIntBody = [{match, Line, {bin, Line, [{bin_element, Line, NoGroupBodyDataInt, BodyLengthInt, [integer]}]}, NoGroupBodyData}],
 			{FullEncodeBody, ExtraLen, SumBodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
 			BodyData = {bin, Line, [{bin_element, Line, SumBodyData, BodyLengthInt, [integer]}]},
-			FullEncodeBody ++ [ {tuple, Line, [ExtraLen, BodyData, ExtraData]} ]
+			FullEncodeBody ++ [ {tuple, Line, [ZeroOffsetPtrInt, StructSizeInt, ExtraLen, BodyData, ExtraData]} ]
 	end.
 
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
@@ -313,7 +318,13 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_t
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	[{tuple, Line, [{integer, Line, 0}, {bin, Line, generate_data_binary(0, lists:sort([DiscriminantField, Field#field_info{name={override, 'Var'}}]), encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)}, {nil, Line}]}];
+	[{tuple, Line, [
+				{integer, Line, struct_pointer_header(DWords, PWords)},
+				{integer, Line, DWords+PWords},
+				{integer, Line, 0},
+				{bin, Line, generate_data_binary(0, lists:sort([DiscriminantField, Field#field_info{name={override, 'Var'}}]), encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)},
+				{nil, Line}
+	]}];
 generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr_type{}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
@@ -325,6 +336,8 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	ast_encode_ptr({1, 0}, 1, Type, <<>>, Line) ++
 	[{tuple, Line, [
+				{integer, Line, struct_pointer_header(DWords, PWords)},
+				{integer, Line, DWords+PWords},
 				{op, Line, '-', {var, Line, 'PtrOffsetWordsFromEnd1'}, {var, Line, 'PtrOffsetWordsFromEnd0'}},
 				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
 				to_list(Line, [{var, Line, 'Data1'}, {var, Line, 'Extra1'}])
@@ -349,10 +362,10 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group
 ast_group_in_union_(
 		{in, [EncodeFun, DiscriminantOffset, BitLength]},
 		{out, []},
-		{temp, []}
+		{temp, [ZeroOffsetPtrInt, MainLen]}
 		) ->
-	{ExtraLen, <<DataInt:BitLength/little-unsigned-integer>>, ExtraData} = EncodeFun(Var, PtrOffsetWordsFromEnd0),
-	{ExtraLen, <<(DataInt bor (VarDiscriminant bsl DiscriminantOffset)):BitLength/little-unsigned-integer>>, ExtraData}.
+	{ZeroOffsetPtrInt, MainLen, ExtraLen, <<DataInt:BitLength/little-unsigned-integer>>, ExtraData} = EncodeFun(Var, PtrOffsetWordsFromEnd0),
+	{ZeroOffsetPtrInt, MainLen, ExtraLen, <<(DataInt bor (VarDiscriminant bsl DiscriminantOffset)):BitLength/little-unsigned-integer>>, ExtraData}.
 
 
 % Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
@@ -403,9 +416,9 @@ group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData
 ast_encode_group_(
 		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
 		{out, [NewExtraLen, NewBodyData, NewExtraData]},
-		{temp, []}
+		{temp, [_ZeroOffsetPtrInt, _NewBodyLen]} % These are the same as the full struct, since a group can't encode to null.
 	) ->
-	{NewExtraLen, NewBodyData, NewExtraData} = GroupEncodeFun(MatchVar, InitialExtraLen).
+	{_ZeroOffsetPtrInt, _NewBodyLen, NewExtraLen, NewBodyData, NewExtraData} = GroupEncodeFun(MatchVar, InitialExtraLen).
 
 to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
@@ -459,30 +472,20 @@ generate_envelope_fun(Line, TypeId, Schema) ->
 			}]}.
 
 generate_envelope_body(Line, TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
-				dataWordCount=DWords,
-				pointerCount=PWords
-			}
-		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	EncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
-	ast_envelope_({integer, Line, DWords}, {integer, Line, PWords}, {integer, Line, 1+DWords+PWords}, {var, Line, 'Input'}, EncodeFun).
+	ast_envelope_({var, Line, 'Input'}, EncodeFun).
 
 -ast_fragment([]).
-ast_envelope_(DWordsInt, PWordsInt, CommonLenInt, InputVar, EncodeFun) ->
-	{ExtraDataLen, MainData, ExtraData} = EncodeFun(InputVar, 0),
+ast_envelope_(InputVar, EncodeFun) ->
+	{ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} = EncodeFun(InputVar, 0),
 	list_to_binary([
 			<<
 				% Segment envelope
 				0:32/unsigned-little-integer, % Segcount - 1. Always 0 for us.
-				(CommonLenInt+ExtraDataLen):32/unsigned-little-integer, % Seglen = 1 + DWords + PWords + ExtraLen
+				(1+MainDataLen+ExtraDataLen):32/unsigned-little-integer, % Seglen = 1 (our pointer) + (all encoded data)
 
-				% Pointer to first struct
-				0:32/unsigned-little-integer, % Offset of data, starting from end of this pointer, after the struct-type tag. Always 0 for us.
-				DWordsInt:16/unsigned-little-integer, % Number of data words in the struct.
-				PWordsInt:16/unsigned-little-integer % Number of pointer words in the struct.
+				% Pointer to first struct. It's actually zero-offset, so we can just use the canonical pointer returned from the encoder.
+				ZeroOffsetPtrInt:64/unsigned-little-integer % Number of data words in the struct.
 			>>,
 
 			% Now the actual data. This may be an io_list, so we can't just /binary it in.
@@ -512,12 +515,14 @@ temp_suffix({override, _Name}) ->
 temp_suffix(Name) ->
 	binary_to_list(Name).
 
+struct_pointer_header(DWords, PWords) ->
+	% Tag is zero.
+	0 + (DWords bsl 32) + (PWords bsl 48).
+
 % This is just a variable aligning function which passes through to ast_encode_ptr_
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
-	StructHeaderNumbers = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
-	StructLen = {integer, Line, DataLen + PtrLen},
-	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun, StructHeaderNumbers, StructLen], VarName, Line);
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_text_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
@@ -535,12 +540,14 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
 	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
-	StructSizePreformatted = {integer, Line, (DataLen bsl 32) + (PtrLen bsl 48)},
+	StructSizePreformatted = {integer, Line, struct_pointer_header(DataLen, PtrLen)},
 	StructLen = {integer, Line, DataLen + PtrLen},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text, TextType}}, VarName, Line) ->
+	% This is a bit of a hack; we encode a list of text fields as a list of structs which have the first field being text.
+	% They should really be anyPointer, I think, which doesn't need a header tag word.
 	EncodeFun = {atom, Line, encode_text},
-	StructSizePreformatted = {integer, Line, 1 bsl 48},
+	StructSizePreformatted = {integer, Line, struct_pointer_header(0, 1)},
 	StructLen = {integer, Line, 1},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line).
 
@@ -553,13 +560,13 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text, TextType}}, VarName
 % The distinction between Data{N} and Extra{N} is important for list contents; Data should contain /just/ the thing that would be put into the list; Extra /just/ the thing that isn't.
 -ast_fragment2([]).
 ast_encode_struct_(
-		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun, StructSizePreformatted, StructLen]},
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [ExtraLen]}
+		{temp, [ZeroOffsetPtrInt, MainLen, ExtraLen]}
 	) ->
-	{ExtraLen, MainData, ExtraData} = EncodeFun(ValueToEncode, 0),
-	PointerAsInt = ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + StructSizePreformatted,
-	NewOffsetFromEnd = OldOffsetFromEnd + ExtraLen + StructLen.
+	{ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData} = EncodeFun(ValueToEncode, 0),
+	PointerAsInt = ((OldOffsetFromEnd + OffsetToEnd) bsl 2) + ZeroOffsetPtrInt,
+	NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen.
 
 -ast_fragment2([]).
 ast_encode_text_(
@@ -627,9 +634,9 @@ ast_encode_struct_list_(
 	{FinalOffset, MainData, ExtraData} = lists:foldl(fun
 			(Element, {Offset, DataAcc, ExtraAcc}) ->
 				% Call encode_Name once for each struct element
-				{ExtraLen, ThisData, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
+				{StructSizePreformatted, StructLen, ExtraLen, ThisBody, ThisExtra} = EncodeFun(Element, Offset - StructLen), % The function wants an offset from the /end/ of this struct
 				% Must remember to account for the fact that next element starts StructLen further along.
-				{ExtraLen + Offset - StructLen, [DataAcc, ThisData], [ExtraAcc | ThisExtra]}
+				{ExtraLen + Offset - StructLen, [DataAcc, ThisBody], [ExtraAcc | ThisExtra]}
 		end, {
 			DataLen * StructLen, % This is the offset from the start of the first embedded struct, to the first word that will be after all embedded structs.
 			[<< ((DataLen bsl 2) + StructSizePreformatted):64/unsigned-little-integer >>], % Struct lists start with a tag word.
