@@ -799,8 +799,8 @@ junkterm(Line, encode) ->
 % The code we generate to construct data to put into a binary.
 encoder(#native_type{type=integer}, Var, _Line) ->
 	Var;
-encoder(#native_type{type=void}, Var, _Line) ->
-	Var;
+encoder(#native_type{type=void}, Var, Line) ->
+	{'if',Line,[{clause,Line,[],[[{op, Line, '=:=', Var, {atom, Line, undefined}}]],[{integer,Line,0}]}]};
 encoder(#native_type{type=float}, Var, _Line) ->
 	Var;
 encoder(#native_type{type=boolean}, Var, Line) ->
