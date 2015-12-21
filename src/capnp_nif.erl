@@ -5,7 +5,11 @@
 -compile([export_all]).
 
 init() ->
-	ok = erlang:load_nif("./capnp_nif", 0).
+	FName = "/tmp/" ++ atom_to_list(?MODULE) ++ "_" ++ integer_to_list(erlang:unique_integer()),
+	file:copy("./capnp_nif.so", FName ++ ".so"),
+	ok = erlang:load_nif(FName, 0),
+	file:delete(FName ++ ".so"),
+	ok.
 
 new_message_builder() ->
 	erlang:error(nif_not_loaded).
@@ -26,26 +30,44 @@ set_TestTextType_testVar2(_TestTextType, _String) ->
 	erlang:error(nif_not_loaded).
 
 bench2(X) ->
-	M=capnp_nif:new_message_builder(),
-	capnp_nif:initRoot_TestTextType(M),
-	capnp_nif:to_binary(M),
+	M=new_message_builder(),
+	initRoot_TestTextType(M),
+	to_binary(M),
 	bench2(X, M).
 bench2(0, _) -> ok;
 bench2(X, M2) ->
-	M=capnp_nif:new_message_builder(),
-	capnp_nif:initRoot_TestTextType(M),
-	capnp_nif:to_binary(M),
+	M=new_message_builder(),
+	initRoot_TestTextType(M),
+	to_binary(M),
 	2,
 	bench2(X-1,M2).
 
 bench(0) -> ok;
 bench(X) ->
-	M=capnp_nif:new_message_builder(),
-	capnp_nif:initRoot_TestTextType(M),
-	capnp_nif:to_binary(M),
+	M=new_message_builder(),
+	initRoot_TestTextType(M),
+	to_binary(M),
 	bench(X-1).
+
+bench_set(0) -> ok;
+bench_set(X) ->
+	M=new_message_builder(),
+	TTT=initRoot_TestTextType(M),
+	set_TestTextType_testVar1(TTT, "Foooooooo"),
+	set_TestTextType_testVar2(TTT, "Bar"),
+	to_binary(M),
+	bench_set(X-1).
 
 benchlol(0) -> ok;
 benchlol(X) ->
-	capnp_nif:lol(),
+	lol(),
 	benchlol(X-1).
+
+raise() -> 0=1.
+
+test(A, B) ->
+	M=new_message_builder(),
+	TTT=initRoot_TestTextType(M),
+	set_TestTextType_testVar1(TTT, A),
+	set_TestTextType_testVar2(TTT, B),
+	to_binary(M).

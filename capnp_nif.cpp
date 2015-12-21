@@ -8,30 +8,18 @@
 extern "C" {
 ErlNifResourceType* TestTextType_TYPE;
 ErlNifResourceType* MallocMessageBuilder_TYPE;
-ERL_NIF_TERM atom_ok;
-ERL_NIF_TERM atom_error;
-ERL_NIF_TERM atom_internal_error;
-ERL_NIF_TERM term_internal_error;
 
 void MallocMessageBuilder_free(ErlNifEnv* env, void* obj)
 {
-	printf("free message %#18llx\r\n", (long long)obj);
-	fflush(stdout);
 	::capnp::MallocMessageBuilder *builder = (::capnp::MallocMessageBuilder *)obj;
 	builder->~MallocMessageBuilder();
-	printf("done free message %#18llx\r\n", (long long)obj);
-	fflush(stdout);
 }
 
 void TestTextType_Builder_free(ErlNifEnv* env, void* obj)
 {
 	// Don't actually need to dealloc these! Woo!
-	printf("free builder %#18llx\r\n", (long long)obj);
-	fflush(stdout);
 	TestTextType::Builder *builder = (TestTextType::Builder *)obj;
 	builder->~Builder();
-	printf("done free builder %#18llx\r\n", (long long)obj);
-	fflush(stdout);
 }
 
 // There are four functions that may be called during the lifetime
@@ -46,19 +34,16 @@ void TestTextType_Builder_free(ErlNifEnv* env, void* obj)
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
-	printf("load\r\n");
-	fflush(stdout);
 	const char *mod = "capnp_nif";
 	const char *MallocMessageBuilder_name = "MallocMessageBuilder";
 	const char *TestTextType_name = "TestTextType";
 	ErlNifResourceFlags flags = (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER);
 
 	MallocMessageBuilder_TYPE = enif_open_resource_type(env, mod, MallocMessageBuilder_name, MallocMessageBuilder_free, flags, NULL);
+	if (MallocMessageBuilder_TYPE == NULL) return -1;
 	TestTextType_TYPE = enif_open_resource_type(env, mod, TestTextType_name, TestTextType_Builder_free, flags, NULL);
-	atom_ok = enif_make_atom(env, "ok");
-	atom_error = enif_make_atom(env, "error");
-	atom_internal_error = enif_make_atom(env, "internal_error");
-	term_internal_error = enif_make_tuple2(env, atom_error, atom_internal_error);
+	if (TestTextType_TYPE == NULL) return -1;
+
 	return 0;
 }
 
@@ -71,9 +56,7 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 static int
 upgrade(ErlNifEnv* env, void** priv, void** old_priv, ERL_NIF_TERM load_info)
 {
-	printf("upgrade\r\n");
-	fflush(stdout);
-    return 0;
+	return load(env, priv, load_info);
 }
 
 // Called when the library is unloaded. Not called after a reload
@@ -85,57 +68,84 @@ upgrade(ErlNifEnv* env, void** priv, void** old_priv, ERL_NIF_TERM load_info)
 static void
 unload(ErlNifEnv* env, void* priv)
 {
-	printf("unload\r\n");
-	fflush(stdout);
     return;
+}
+
+ERL_NIF_TERM raise_internal_error(ErlNifEnv *env, const char *text="internal_error") {
+	ERL_NIF_TERM atom_error = enif_make_atom(env, "error");
+	ERL_NIF_TERM atom_internal_error = enif_make_atom(env, text);
+	return enif_raise_exception(env, enif_make_tuple2(env, atom_error, atom_internal_error));
 }
 
 // The actual C implementation of an Erlang function.
 //
 // Docs: http://erlang.org/doc/man/erl_nif.html#ErlNifFunc
 static ERL_NIF_TERM new_message_builder(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-	printf(">>>new_message_builder\r\n");
-	fflush(stdout);
 	::capnp::MallocMessageBuilder *messageBuilder = (::capnp::MallocMessageBuilder *)enif_alloc_resource(MallocMessageBuilder_TYPE, sizeof(::capnp::MallocMessageBuilder));
-	if (messageBuilder == NULL) return enif_raise_exception(env, term_internal_error);
+	if (messageBuilder == NULL) return raise_internal_error(env);
 
-	printf("alloc message %#18llx\r\n", (long long)messageBuilder);
-	fflush(stdout);
 	new((void *)messageBuilder) ::capnp::MallocMessageBuilder;
 
 	ERL_NIF_TERM x = enif_make_resource(env, messageBuilder);
-	printf("return message %#18llx\r\n", (long long)messageBuilder);
-	fflush(stdout);
+	//enif_release_resource(messageBuilder);
 	return x;
 }
 
 static ERL_NIF_TERM initRoot_TestTextType(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-	printf(">>>initRoot_TestTextType\r\n");
 	::capnp::MallocMessageBuilder *messageBuilder;
 	if (!enif_get_resource(env, argv[0], MallocMessageBuilder_TYPE, (void**)&messageBuilder)) return enif_make_badarg(env);
 
 	TestTextType::Builder *builder = (TestTextType::Builder *)enif_alloc_resource(TestTextType_TYPE, sizeof(TestTextType::Builder));
-	if (builder == NULL) return enif_raise_exception(env, term_internal_error);
+	if (builder == NULL) return raise_internal_error(env);
 
-	printf("alloc builder %#18llx\r\n", (long long)builder);
-	fflush(stdout);
 	*builder = messageBuilder->initRoot<TestTextType>();
 
 	ERL_NIF_TERM r = enif_make_resource(env, messageBuilder);
 	enif_release_resource(messageBuilder);
 	ERL_NIF_TERM r2 = enif_make_resource(env, builder);
 	enif_release_resource(builder);
-	printf("return builder %#18llx\r\n", (long long)builder);
-	fflush(stdout);
 	return enif_make_tuple2(env, r, r2);
 }
 
+static ERL_NIF_TERM set_TestTextType_testVar1(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	int arity;
+	const ERL_NIF_TERM *tuple_terms;
+	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
+	if (arity != 2) return enif_make_badarg(env);
+
+	TestTextType::Builder *builder;
+	if (!enif_get_resource(env, tuple_terms[1], TestTextType_TYPE, (void**)&builder)) return raise_internal_error(env, "argument_1_elt_2_not_builder");
+
+	ErlNifBinary param;
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &param)) return raise_internal_error(env, "argument_2_not_binary");
+
+	::capnp::Text::Builder textBuilder = builder->initTestVar1(param.size);
+	memcpy(textBuilder.begin(), &param.data[0], param.size);
+
+	return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM set_TestTextType_testVar2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	int arity;
+	const ERL_NIF_TERM *tuple_terms;
+	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
+	if (arity != 2) return enif_make_badarg(env);
+
+	TestTextType::Builder *builder;
+	if (!enif_get_resource(env, tuple_terms[1], TestTextType_TYPE, (void**)&builder)) return raise_internal_error(env, "argument_1_elt_2_not_builder");
+
+	ErlNifBinary param;
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &param)) return raise_internal_error(env, "argument_2_not_binary");
+
+	::capnp::Data::Builder dataBuilder = builder->initTestVar2(param.size);
+	memcpy(dataBuilder.begin(), &param.data[0], param.size);
+
+	return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM to_binary(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-	printf(">>>to_binary\r\n");
 	::capnp::MallocMessageBuilder *messageBuilder;
 	if (!enif_get_resource(env, argv[0], MallocMessageBuilder_TYPE, (void **)&messageBuilder)) return enif_make_badarg(env);
-	printf("make binary %#18llx\r\n", (long long)messageBuilder);
-	fflush(stdout);
 	kj::ArrayPtr<const kj::ArrayPtr<const capnp::word>> segments = messageBuilder->getSegmentsForOutput();
 
 	int size = sizeof(uint32_t);
@@ -149,7 +159,7 @@ static ERL_NIF_TERM to_binary(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 	}
 
 	ErlNifBinary bin;
-	if (!enif_alloc_binary(size, &bin)) return enif_raise_exception(env, term_internal_error);
+	if (!enif_alloc_binary(size, &bin)) return raise_internal_error(env);
 
 	uint32_t *table = (uint32_t *)bin.data;
 	*(table++) = segments.size() - 1;
@@ -168,8 +178,6 @@ static ERL_NIF_TERM to_binary(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 		pieces += len;
 	}
 
-	printf("return binary %#18llx\r\n", (long long)messageBuilder);
-	fflush(stdout);
 	return enif_make_binary(env, &bin);
 }
 
@@ -190,7 +198,7 @@ static ERL_NIF_TERM lol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 	}
 
 	ErlNifBinary bin;
-	if (!enif_alloc_binary(size, &bin)) return enif_raise_exception(env, term_internal_error);
+	if (!enif_alloc_binary(size, &bin)) return raise_internal_error(env);
 
 	uint32_t *table = (uint32_t *)bin.data;
 	*(table++) = segments.size() - 1;
@@ -211,10 +219,13 @@ static ERL_NIF_TERM lol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 
 	return enif_make_binary(env, &bin);
 }
+
 static ErlNifFunc nif_funcs[] = {
     {"new_message_builder", 0, new_message_builder},
     {"initRoot_TestTextType", 1, initRoot_TestTextType},
     {"to_binary", 1, to_binary},
+	{"set_TestTextType_testVar1", 2, set_TestTextType_testVar1},
+	{"set_TestTextType_testVar2", 2, set_TestTextType_testVar2},
     {"lol", 0, lol}
 };
 
