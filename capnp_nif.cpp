@@ -7,7 +7,9 @@
 
 extern "C" {
 ErlNifResourceType* TestTextType_TYPE;
+ErlNifResourceType* TestMultipleIntegers_TYPE;
 ErlNifResourceType* MallocMessageBuilder_TYPE;
+ERL_NIF_TERM atom_ok;
 
 void MallocMessageBuilder_free(ErlNifEnv* env, void* obj)
 {
@@ -19,6 +21,13 @@ void TestTextType_Builder_free(ErlNifEnv* env, void* obj)
 {
 	// Don't actually need to dealloc these! Woo!
 	TestTextType::Builder *builder = (TestTextType::Builder *)obj;
+	builder->~Builder();
+}
+
+void TestMultipleIntegers_Builder_free(ErlNifEnv* env, void* obj)
+{
+	// Don't actually need to dealloc these! Woo!
+	TestMultipleIntegers::Builder *builder = (TestMultipleIntegers::Builder *)obj;
 	builder->~Builder();
 }
 
@@ -37,12 +46,17 @@ load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 	const char *mod = "capnp_nif";
 	const char *MallocMessageBuilder_name = "MallocMessageBuilder";
 	const char *TestTextType_name = "TestTextType";
+	const char *TestMultipleIntegers_name = "TestMultipleIntegers";
 	ErlNifResourceFlags flags = (ErlNifResourceFlags)(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER);
 
 	MallocMessageBuilder_TYPE = enif_open_resource_type(env, mod, MallocMessageBuilder_name, MallocMessageBuilder_free, flags, NULL);
 	if (MallocMessageBuilder_TYPE == NULL) return -1;
 	TestTextType_TYPE = enif_open_resource_type(env, mod, TestTextType_name, TestTextType_Builder_free, flags, NULL);
 	if (TestTextType_TYPE == NULL) return -1;
+	TestMultipleIntegers_TYPE = enif_open_resource_type(env, mod, TestMultipleIntegers_name, TestMultipleIntegers_Builder_free, flags, NULL);
+	if (TestMultipleIntegers_TYPE == NULL) return -1;
+
+	atom_ok = enif_make_atom(env, "ok");
 
 	return 0;
 }
@@ -87,7 +101,7 @@ static ERL_NIF_TERM new_message_builder(ErlNifEnv* env, int argc, const ERL_NIF_
 	new((void *)messageBuilder) ::capnp::MallocMessageBuilder;
 
 	ERL_NIF_TERM x = enif_make_resource(env, messageBuilder);
-	//enif_release_resource(messageBuilder);
+	enif_release_resource(messageBuilder);
 	return x;
 }
 
@@ -101,7 +115,6 @@ static ERL_NIF_TERM initRoot_TestTextType(ErlNifEnv* env, int argc, const ERL_NI
 	*builder = messageBuilder->initRoot<TestTextType>();
 
 	ERL_NIF_TERM r = enif_make_resource(env, messageBuilder);
-	enif_release_resource(messageBuilder);
 	ERL_NIF_TERM r2 = enif_make_resource(env, builder);
 	enif_release_resource(builder);
 	return enif_make_tuple2(env, r, r2);
@@ -122,7 +135,7 @@ static ERL_NIF_TERM set_TestTextType_testVar1(ErlNifEnv* env, int argc, const ER
 	::capnp::Text::Builder textBuilder = builder->initTestVar1(param.size);
 	memcpy(textBuilder.begin(), &param.data[0], param.size);
 
-	return enif_make_atom(env, "ok");
+	return atom_ok;
 }
 
 static ERL_NIF_TERM set_TestTextType_testVar2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -140,7 +153,56 @@ static ERL_NIF_TERM set_TestTextType_testVar2(ErlNifEnv* env, int argc, const ER
 	::capnp::Data::Builder dataBuilder = builder->initTestVar2(param.size);
 	memcpy(dataBuilder.begin(), &param.data[0], param.size);
 
-	return enif_make_atom(env, "ok");
+	return atom_ok;
+}
+
+static ERL_NIF_TERM initRoot_TestMultipleIntegers(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	::capnp::MallocMessageBuilder *messageBuilder;
+	if (!enif_get_resource(env, argv[0], MallocMessageBuilder_TYPE, (void**)&messageBuilder)) return enif_make_badarg(env);
+
+	TestMultipleIntegers::Builder *builder = (TestMultipleIntegers::Builder *)enif_alloc_resource(TestMultipleIntegers_TYPE, sizeof(TestMultipleIntegers::Builder));
+	if (builder == NULL) return raise_internal_error(env);
+
+	*builder = messageBuilder->initRoot<TestMultipleIntegers>();
+
+	ERL_NIF_TERM r = enif_make_resource(env, messageBuilder);
+	ERL_NIF_TERM r2 = enif_make_resource(env, builder);
+	enif_release_resource(builder);
+	return enif_make_tuple2(env, r, r2);
+}
+
+static ERL_NIF_TERM set_TestMultipleIntegers_testVar1(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	int arity;
+	const ERL_NIF_TERM *tuple_terms;
+	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
+	if (arity != 2) return enif_make_badarg(env);
+
+	TestMultipleIntegers::Builder *builder;
+	if (!enif_get_resource(env, tuple_terms[1], TestMultipleIntegers_TYPE, (void**)&builder)) return raise_internal_error(env, "argument_1_elt_2_not_builder");
+
+	int param;
+	if (!enif_get_int(env, argv[1], &param)) return raise_internal_error(env, "argument_2_not_int");
+
+	builder->setTestVar1(param);
+
+	return atom_ok;
+}
+
+static ERL_NIF_TERM set_TestMultipleIntegers_testVar2(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	int arity;
+	const ERL_NIF_TERM *tuple_terms;
+	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
+	if (arity != 2) return enif_make_badarg(env);
+
+	TestMultipleIntegers::Builder *builder;
+	if (!enif_get_resource(env, tuple_terms[1], TestMultipleIntegers_TYPE, (void**)&builder)) return raise_internal_error(env, "argument_1_elt_2_not_builder");
+
+	int param;
+	if (!enif_get_int(env, argv[1], &param)) return raise_internal_error(env, "argument_2_not_int");
+
+	builder->setTestVar2(param);
+
+	return atom_ok;
 }
 
 static ERL_NIF_TERM to_binary(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -223,9 +285,12 @@ static ERL_NIF_TERM lol(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 static ErlNifFunc nif_funcs[] = {
     {"new_message_builder", 0, new_message_builder},
     {"initRoot_TestTextType", 1, initRoot_TestTextType},
+    {"initRoot_TestMultipleIntegers", 1, initRoot_TestMultipleIntegers},
     {"to_binary", 1, to_binary},
 	{"set_TestTextType_testVar1", 2, set_TestTextType_testVar1},
 	{"set_TestTextType_testVar2", 2, set_TestTextType_testVar2},
+	{"set_TestMultipleIntegers_testVar1", 2, set_TestMultipleIntegers_testVar1},
+	{"set_TestMultipleIntegers_testVar2", 2, set_TestMultipleIntegers_testVar2},
     {"lol", 0, lol}
 };
 
