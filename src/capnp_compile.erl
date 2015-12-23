@@ -83,7 +83,7 @@ split_forms([], []) ->
 	[].
 
 to_ast([], _Done, Recs, Funs, _Schema) ->
-	{Recs, Funs};
+	{lists:sort(Recs), lists:sort(Funs)};
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
 	case sets:is_element(Job, Done) of
 		true ->
