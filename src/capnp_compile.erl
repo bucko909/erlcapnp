@@ -19,6 +19,7 @@
 		header_only/2
 	]).
 
+% Be sure offset is first in #field_info{} to get a nice ordering.
 -record(field_info, {offset, type, name, default, discriminant}).
 -record(native_type, {type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
@@ -188,32 +189,20 @@ find_slots(TypeId, Schema) ->
 	% Start by finding the bit offsets of each field, so that we can order them.
 	[ field_info(Field, Schema) || Field <- Fields ].
 
-generate_basic(TypeId, Schema) ->
+is_group(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
-				fields=Fields,
-				isGroup=IsGroup,
-				discriminantCount=_DiscriminantCount % 0 if there is no anonymous union.
+				isGroup=IsGroup
 			}
 		}
 	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	% Start by finding the bit offsets of each field, so that we can order them.
-	AllFields = [ field_info(Field, Schema) || Field <- Fields ],
-	{NotUnionFields, UnionFields} = lists:partition(fun (#field_info{discriminant=undefined}) -> true; (_) -> false end, AllFields),
-	{ExplicitGroups, Slots} = lists:partition(fun (#field_info{type=#group_type{}}) -> true; (_) -> false end, NotUnionFields),
-	Groups = case UnionFields of
-		[] ->
-			ExplicitGroups;
-		_ ->
-			[#field_info{name= <<>>, type=#group_type{type_id=TypeId}}|ExplicitGroups]
-	end,
-	{PtrFields, DataFields} = lists:partition(fun (#field_info{type=#native_type{}}) -> false; (_) -> true end, Slots),
-	% We like these sorted by offset.
-	SortedDataFields = lists:sort(DataFields),
-	SortedPtrFields = lists:sort(PtrFields),
+	case IsGroup of 0 -> false; 1 -> true end.
 
-	Line = 0, % TODO
+generate_basic(TypeId, Schema) ->
+	IsGroup = is_group(TypeId, Schema),
+	UnionFields = find_union_fields(TypeId, Schema),
+	NotUnionFields = find_notag_slots(TypeId, Schema),
 
 	% For any group/union fields in our struct, we generate an extra encode
 	% function. We then recombine all of the generated struct data to make
@@ -242,7 +231,7 @@ generate_basic(TypeId, Schema) ->
 	% TODO if we already knew what we were meant to generate at this point,
 	% we wouldn't need this hacky if.
 	RawEncodersNeeded = if
-		UnionFields =:= [] orelse NotUnionFields /= [] orelse IsGroup == 0 ->
+		UnionFields =:= [] orelse NotUnionFields /= [] orelse not IsGroup ->
 			[ {generate_record, TypeId}, {generate_decode, TypeId}, {generate_encode, TypeId} ];
 		true ->
 			[]
@@ -256,16 +245,16 @@ generate_basic(TypeId, Schema) ->
 	end,
 
 	EnvelopesNeeded = if
-		IsGroup =:= 0 ->
+		not IsGroup ->
 			[ {generate_envelope, TypeId} ];
 		true ->
 			[]
 	end,
 
-	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
-	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
-	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- AllFields ],
-	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- SortedPtrFields ],
+	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_slots(TypeId, Schema) ],
+	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
 	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText,
 
@@ -551,15 +540,8 @@ to_list(Line, List) ->
 	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
 
 encoder_name(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
-				isGroup=IsGroup
-			}
-		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	GroupBit = case IsGroup of 1 -> "group_"; 0 -> "" end,
+	GroupBit = case is_group(TypeId, Schema) of true -> "group_"; false -> "" end,
 	list_to_atom("encode_" ++ GroupBit ++ binary_to_list(TypeName)).
 
 inner_encoder_name(TypeId, Schema) ->
