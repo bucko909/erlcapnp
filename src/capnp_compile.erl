@@ -98,9 +98,95 @@ do_job({generate_name, TypeName}, Schema) ->
 	{[], [], [{generate, TypeId}]};
 do_job({generate, TypeId}, Schema) ->
 	generate_basic(TypeId, Schema);
+do_job({generate_record, TypeId}, Schema) ->
+	Line = 0,
+	SortedFields = find_record_fields(TypeId, Schema),
+	RecDef = generate_record_def(Line, TypeId, SortedFields, Schema),
+	{[RecDef], [], []};
+do_job({generate_decode, TypeId}, Schema) ->
+	Line = 0,
+	SortedDataFields = find_notag_data_fields(TypeId, Schema),
+	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
+	FunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+	{[], [FunDef], []};
+do_job({generate_encode, TypeId}, Schema) ->
+	Line = 0,
+	SortedDataFields = find_notag_data_fields(TypeId, Schema),
+	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
+	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
+	FunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+	{[], [FunDef], []};
+do_job({generate_group_encode, TypeId}, Schema) ->
+	Line = 0,
+	UnionFields = find_union_fields(TypeId, Schema),
+	FunDef = generate_union_encode_fun(Line, TypeId, UnionFields, Schema),
+	{[], [FunDef], []};
+do_job({generate_envelope, TypeId}, Schema) ->
+	Line = 0,
+	FunDef = generate_envelope_fun(Line, TypeId, Schema),
+	{[], [FunDef], []};
 do_job({generate_text, TextType}, _Schema) ->
 	% Needed when we have a list of text.
 	generate_text().
+
+find_record_fields(TypeId, Schema) ->
+	find_notag_data_fields(TypeId, Schema) ++ find_notag_pointer_fields(TypeId, Schema) ++ find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema).
+
+is_native_type(#field_info{type=#native_type{}}) -> true;
+is_native_type(#field_info{}) -> false.
+
+is_pointer_type(#field_info{type=#ptr_type{}}) -> true;
+is_pointer_type(#field_info{}) -> false.
+
+is_group_type(#field_info{type=#group_type{}}) -> true;
+is_group_type(#field_info{}) -> false.
+
+find_notag_data_fields(TypeId, Schema) ->
+	lists:sort(lists:filter(fun is_native_type/1, find_notag_slots(TypeId, Schema))).
+
+find_notag_pointer_fields(TypeId, Schema) ->
+	lists:sort(lists:filter(fun is_pointer_type/1, find_notag_slots(TypeId, Schema))).
+
+find_notag_groups(TypeId, Schema) ->
+	% TODO SORT!!!
+	lists:filter(fun is_group_type/1, find_notag_slots(TypeId, Schema)).
+
+has_discriminant(#field_info{discriminant=undefined}) -> false;
+has_discriminant(#field_info{}) -> true.
+
+has_no_discriminant(F) -> not has_discriminant(F).
+
+find_notag_slots(TypeId, Schema) ->
+	lists:filter(fun has_no_discriminant/1, find_slots(TypeId, Schema)).
+
+find_union_fields(TypeId, Schema) ->
+	lists:filter(fun has_discriminant/1, find_slots(TypeId, Schema)).
+
+find_anon_union(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				discriminantCount=DiscriminantCount
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	case DiscriminantCount of
+		0 ->
+			[];
+		X when X > 0 ->
+			[ #field_info{name= <<>>, type=#group_type{type_id=TypeId}} ]
+	end.
+
+find_slots(TypeId, Schema) ->
+	#'capnp::namespace::Node'{
+		''={{1, struct},
+			#'capnp::namespace::Node::::struct'{
+				fields=Fields
+			}
+		}
+	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	% Start by finding the bit offsets of each field, so that we can order them.
+	[ field_info(Field, Schema) || Field <- Fields ].
 
 generate_basic(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
@@ -129,47 +215,66 @@ generate_basic(TypeId, Schema) ->
 
 	Line = 0, % TODO
 
-	RecDef = generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema),
+	% For any group/union fields in our struct, we generate an extra encode
+	% function. We then recombine all of the generated struct data to make
+	% the final result. It's a bit ugly, but it makes for some nice-ish code
+	% separation -- we can switch on the group inside the group encoder.
 
-	{RecDefs, NonUnionFunDefs} = case UnionFields of
-		[] ->
-			{[RecDef], [
-				generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
-				generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema)
-			]};
-		_ when NotUnionFields == [], IsGroup /= 0 ->
-			{[], []};
-		_ ->
-			{[RecDef], [
-				generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
-				generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema)
-			]}
-	end,
+	% Later, these might be called by the struct encoder directly to retrieve
+	% its data, but it means that the struct encoder needs a better
+	% understanding of what fields are meant to come from where.
 
-	UnionFunDefs = case UnionFields of
-		[] ->
-			[];
-		_ ->
-			[generate_union_encode_fun(Line, TypeId, UnionFields, Schema)]
-	end,
+	% Where there is an anonymous union, the struct itself is effectively also
+	% a group! We need an encoder for the struct itself (which will join the
+	% common parts of the struct and the union), and an encoder for the union
+	% part.
 
-	EnvelopeFunDef = case IsGroup of
-		0 ->
-			[generate_envelope_fun(Line, TypeId, Schema)];
-		1 ->
+	% TODO we name the union and group encoders the same thing. So an anonymous
+	% union inside a group which has variables not in the union will generate
+	% two conflicting group encoders (an anon union inside a group is OK; that
+	% just makes the group believe it's a union -- which is basically correct,
+	% but still makes a special case in the struct shape; what should be
+	%   group=#Group{''={Tag, UnionVal}}
+	% becomes
+	%   group={Tag, UnionVal}
+	% ).
+
+	% TODO if we already knew what we were meant to generate at this point,
+	% we wouldn't need this hacky if.
+	RawEncodersNeeded = if
+		UnionFields =:= [] orelse NotUnionFields /= [] orelse IsGroup == 0 ->
+			[ {generate_record, TypeId}, {generate_decode, TypeId}, {generate_encode, TypeId} ];
+		true ->
 			[]
 	end,
 
-	ExtraTypes1 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
-	ExtraTypes2 = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
-	ExtraTypes3 = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- AllFields ],
-	ExtraTypes4 = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- SortedPtrFields ],
-	{RecDefs, NonUnionFunDefs ++ UnionFunDefs ++ EnvelopeFunDef, ExtraTypes1 ++ ExtraTypes2 ++ ExtraTypes3 ++ ExtraTypes4}.
+	UnionEncodersNeeded = if
+		UnionFields =/= [] ->
+			[ {generate_group_encode, TypeId} ];
+		true ->
+			[]
+	end,
 
-generate_record_def(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
+	EnvelopesNeeded = if
+		IsGroup =:= 0 ->
+			[ {generate_envelope, TypeId} ];
+		true ->
+			[]
+	end,
+
+	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- SortedPtrFields ],
+	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- SortedPtrFields ],
+	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- AllFields ],
+	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- SortedPtrFields ],
+
+	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText,
+
+	{ [], [], Jobs }.
+
+generate_record_def(Line, TypeId, RecordFields, Schema) ->
 	% TODO types, too!
 	RecordName = record_name(TypeId, Schema),
-	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- SortedDataFields ++ SortedPtrFields ++ Groups]}}.
+	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- RecordFields]}}.
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
