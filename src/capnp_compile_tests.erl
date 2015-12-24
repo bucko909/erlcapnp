@@ -82,7 +82,7 @@ join([], _) -> "".
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
-	capnp_compile:load_directly(fname(), capnp_test, list_to_binary(RecName)),
+	capnp_compile:load_directly(fname(), capnp_test),
 	EncodeFun = list_to_atom("envelope_" ++ RecName),
 	case re:run(RecName, ".*:(.*)", [{capture, all_but_first, list}]) of
 		{match, [FriendlyName]} ->
