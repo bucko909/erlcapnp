@@ -20,7 +20,7 @@
 	]).
 
 % Be sure offset is first in #field_info{} to get a nice ordering.
--record(field_info, {offset, type, name, default, discriminant}).
+-record(field_info, {offset, type, name, default, discriminant, override}).
 -record(native_type, {type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
 -record(group_type, {type_id}).
@@ -397,6 +397,10 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 			}]}.
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
+	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
+	Expected = lists:seq(0, length(Sorted)-1),
+	{Expected, Expected} = {Expected, [ X || #field_info{discriminant=X} <- Sorted ]},
+
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -405,14 +409,11 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 		}
 	} = schema_lookup(TypeId, Schema),
 	DiscriminantField = #field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)},
-	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
-	Expected = lists:seq(0, length(Sorted)-1),
-	Expected = [ X || #field_info{discriminant=X} <- Sorted ],
-	EncoderClauses = [ {clause, Line, [{integer, Line, X}], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{discriminant=X} <- Sorted ],
-	%{'case',8, {var,8,'A'}, [{clause,9,[{integer,9,1}],[],[{atom,9,foo}]}, {clause,10, [{integer,10,2}], [[{atom,10,true}]], [{atom,10,bar}]}]}
+
+	EncoderClauses = [ {clause, Line, [{atom, Line, list_to_atom(binary_to_list(Name))}], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{name=Name} <- Sorted ],
 	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
 
-generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_type{}}, TypeId, Schema) ->
+generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=#native_type{}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -421,6 +422,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_t
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
+	DiscriminantField = DiscriminantFieldRaw#field_info{override={integer, Line, Discriminant}},
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
 				{integer, Line, DWords+PWords},
@@ -428,7 +430,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_t
 				{bin, Line, generate_data_binary(0, lists:sort([DiscriminantField, Field#field_info{name={override, 'Var'}}]), encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)},
 				{nil, Line}
 	]}];
-generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr_type{}}, TypeId, Schema) ->
+generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=Type=#ptr_type{}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -437,6 +439,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
+	DiscriminantField = DiscriminantFieldRaw#field_info{override={integer, Line, Discriminant}},
 	ast_encode_ptr({1, 0}, 1, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
@@ -445,7 +448,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 				{bin, Line, generate_data_binary(0, [DiscriminantField], encode, DWords) ++ generate_ptr_binary(0, [Field#field_info{name= <<>>}], encode, PWords)},
 				to_list(Line, [{var, Line, 'Data1'}, {var, Line, 'Extra1'}])
 	]}];
-generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
+generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{discriminant=Discriminant, type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -455,7 +458,7 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group
 		}
 	} = schema_lookup(TypeId, Schema),
 	ast_group_in_union_(
-		{in, [{atom, Line, encoder_name(GroupTypeId, Schema)}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
+		{in, [{atom, Line, encoder_name(GroupTypeId, Schema)}, {integer, Line, Discriminant}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
 		{out, []},
 		{temp_suffix, ""}
 	).
@@ -463,12 +466,12 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group
 % We're not too careful about variable clashes here, since each call to this is made in an independent block.
 -ast_fragment2([]).
 ast_group_in_union_(
-		{in, [EncodeFun, DiscriminantOffset, BitLength]},
+		{in, [EncodeFun, Discriminant, DiscriminantOffset, BitLength]},
 		{out, []},
 		{temp, [ZeroOffsetPtrInt, MainLen]}
 		) ->
 	{ZeroOffsetPtrInt, MainLen, ExtraLen, <<DataInt:BitLength/little-unsigned-integer>>, ExtraData} = EncodeFun(Var, PtrOffsetWordsFromEnd0),
-	{ZeroOffsetPtrInt, MainLen, ExtraLen, <<(DataInt bor (VarDiscriminant bsl DiscriminantOffset)):BitLength/little-unsigned-integer>>, ExtraData}.
+	{ZeroOffsetPtrInt, MainLen, ExtraLen, <<(DataInt bor (Discriminant bsl DiscriminantOffset)):BitLength/little-unsigned-integer>>, ExtraData}.
 
 
 % Combining directly to a binary as we do here is faster than using 'bsl' on the values as integers, by about a factor of 3 on a 6 element list (0.13 micros vs 0.38 micros).
@@ -808,10 +811,10 @@ var_p(Line, Prepend, Value) ->
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
 % Also support only ints for now.
-generate_data_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction, DWords) ->
+generate_data_binary(DesiredOffset, [#field_info{override=Override, offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction, DWords) ->
 	% Match an integer.
 	Line = 0, % TODO
-	RawVar = var_p(Line, "Var", Name),
+	RawVar = if Override =:= undefined -> var_p(Line, "Var", Name); true -> Override end,
 	Var = case Direction of
 		encode ->
 			encoder(Type, RawVar, Line);
@@ -833,7 +836,7 @@ generate_data_binary(CurrentOffset, [], Direction, DWords) ->
 	Line = 0, % TODO
 	[{bin_element, Line, junkterm(Line, Direction), {integer, Line, 64*DWords-CurrentOffset}, [integer]}].
 
-generate_ptr_binary(DesiredOffset, [#field_info{offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction, PWords) ->
+generate_ptr_binary(DesiredOffset, [#field_info{override=undefined, offset=DesiredOffset, type=#ptr_type{}, name=Name}|Rest], Direction, PWords) ->
 	% Match an integer.
 	Line = 0, % TODO
 	Var = case Direction of

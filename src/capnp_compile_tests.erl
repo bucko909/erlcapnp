@@ -55,22 +55,22 @@ test() ->
 	),
 	do_test(
 		{'TestGroupInUnion',
-			{0, {'TestGroupInUnion.unionVar1', 7, 8}},
-			{0, 1}
+			{unionVar1, {'TestGroupInUnion.unionVar1', 7, 8}},
+			{testVar1, 1}
 		},
 		<<"(unionVar1 = (testVar1 = 7, testVar2 = 8), union2 = (testVar1 = 1))">>
 	),
 	do_test(
 		{'TestGroupInUnion',
-			{1, -4},
-			{1, [-5, 2, 3]}
+			{unionVar2, -4},
+			{testVar2, [-5, 2, 3]}
 		},
 		<<"(unionVar2 = -4, union2 = (testVar2 = [-5, 2, 3]))">>
 	),
 	do_test(
 		{'TestGroupInUnion',
-			{2, -4},
-			{1, [-2, 0, 2]}
+			{unionVar3, -4},
+			{testVar2, [-2, 0, 2]}
 		},
 		<<"(unionVar3 = -4, union2 = (testVar2 = [-2, 0, 2]))">>
 	),
