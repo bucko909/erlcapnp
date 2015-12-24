@@ -117,7 +117,7 @@ do_job({generate_encode, TypeId}, Schema) ->
 	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
 	FunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 	{[], [FunDef], []};
-do_job({generate_group_encode, TypeId}, Schema) ->
+do_job({generate_union_encode, TypeId}, Schema) ->
 	Line = 0,
 	UnionFields = find_tag_fields(TypeId, Schema),
 	FunDef = generate_union_encode_fun(Line, TypeId, UnionFields, Schema),
@@ -157,6 +157,8 @@ has_discriminant(#field_info{}) -> true.
 
 has_no_discriminant(F) -> not has_discriminant(F).
 
+find_notag_fields({anonunion, TypeId}, Schema) ->
+	[];
 find_notag_fields(TypeId, Schema) ->
 	lists:filter(fun has_no_discriminant/1, find_fields(TypeId, Schema)).
 
@@ -175,7 +177,7 @@ find_anon_union(TypeId, Schema) ->
 		0 ->
 			[];
 		X when X > 0 ->
-			[ #field_info{name= <<>>, type=#group_type{type_id=TypeId}} ]
+			[ #field_info{name= <<>>, type=#group_type{type_id={anonunion, TypeId}}} ]
 	end.
 
 find_fields(TypeId, Schema) ->
@@ -213,23 +215,6 @@ generate_basic(TypeId, Schema) ->
 	% its data, but it means that the struct encoder needs a better
 	% understanding of what fields are meant to come from where.
 
-	% Where there is an anonymous union, the struct itself is effectively also
-	% a group! We need an encoder for the struct itself (which will join the
-	% common parts of the struct and the union), and an encoder for the union
-	% part.
-
-	% TODO we name the union and group encoders the same thing. So an anonymous
-	% union inside a group which has variables not in the union will generate
-	% two conflicting group encoders (an anon union inside a group is OK; that
-	% just makes the group believe it's a union -- which is basically correct,
-	% but still makes a special case in the struct shape; what should be
-	%   group=#Group{''={Tag, UnionVal}}
-	% becomes
-	%   group={Tag, UnionVal}
-	% ).
-
-	% TODO if we already knew what we were meant to generate at this point,
-	% we wouldn't need this hacky if.
 	RawEncodersNeeded = if
 		UnionFields =:= [] orelse NotUnionFields /= [] orelse not IsGroup ->
 			[ {generate_record, TypeId}, {generate_decode, TypeId}, {generate_encode, TypeId} ];
@@ -238,10 +223,12 @@ generate_basic(TypeId, Schema) ->
 	end,
 
 	UnionEncodersNeeded = if
-		UnionFields =/= [] ->
-			[ {generate_group_encode, TypeId} ];
+		UnionFields =:= [] ->
+			[];
+		NotUnionFields /= [] ->
+			[ {generate_union_encode, {anonunion, TypeId}} ];
 		true ->
-			[]
+			[ {generate_union_encode, TypeId} ]
 	end,
 
 	EnvelopesNeeded = if
@@ -396,7 +383,7 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
 
-	{function, Line, inner_encoder_name(TypeId, Schema), 2,
+	{function, Line, encoder_name(TypeId, Schema), 2,
 		[{clause, Line,
 				[
 					{tuple, Line, [
@@ -468,7 +455,7 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group
 		}
 	} = schema_lookup(TypeId, Schema),
 	ast_group_in_union_(
-		{in, [{atom, Line, inner_encoder_name(GroupTypeId, Schema)}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
+		{in, [{atom, Line, encoder_name(GroupTypeId, Schema)}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
 		{out, []},
 		{temp_suffix, ""}
 	).
@@ -518,7 +505,7 @@ group_encoder(InitialBody, InitialExtraLen, InitialBodyDataInt, InitialExtraData
 	NewExtraLen = var_p(Line, "ExtraDataLen", FieldName),
 	NewBodyData = var_p(Line, "BodyData", FieldName),
 	NewExtraData = var_p(Line, "ExtraData", FieldName),
-	GroupEncodeFun = {atom, Line, inner_encoder_name(TypeId, Schema)},
+	GroupEncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
 	ExtraBody = ast_encode_group_(
 		{in, [MatchVar, GroupEncodeFun, InitialExtraLen]},
 		{out, [NewExtraLen, NewBodyData, NewExtraData]},
@@ -541,18 +528,7 @@ to_list(Line, List) ->
 
 encoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	GroupBit = case is_group(TypeId, Schema) of true -> "group_"; false -> "" end,
-	list_to_atom("encode_" ++ GroupBit ++ binary_to_list(TypeName)).
-
-inner_encoder_name(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
-			}
-		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("encode_group_" ++ binary_to_list(TypeName)).
+	list_to_atom("encode_" ++ binary_to_list(TypeName)).
 
 decoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
@@ -988,6 +964,8 @@ type_info(TypeClass, TypeDescription, _Schema) ->
 	io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
 	{64, #ptr_type{type=unknown}}.
 
+schema_lookup({anonunion, TypeId}, Schema) ->
+	schema_lookup(TypeId, Schema);
 schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
 	dict:fetch(TypeId, Schema#capnp_context.by_id).
 
@@ -1002,6 +980,9 @@ enumerant_names(TypeId, Schema) ->
 	} = schema_lookup(TypeId, Schema),
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
+node_name({anonunion, TypeId}, Schema) ->
+	{Name, DWords, PWords} = node_name(TypeId, Schema),
+	{<<Name/binary, $.>>, DWords, PWords};
 node_name(TypeId, Schema) when is_integer(TypeId) ->
 	#'capnp::namespace::Node'{
 		displayName=Name,
