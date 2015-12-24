@@ -170,7 +170,7 @@ find_anon_union(TypeId, Schema) ->
 				discriminantCount=DiscriminantCount
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	case DiscriminantCount of
 		0 ->
 			[];
@@ -185,7 +185,7 @@ find_fields(TypeId, Schema) ->
 				fields=Fields
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	% Start by finding the bit offsets of each field, so that we can order them.
 	[ field_info(Field, Schema) || Field <- Fields ].
 
@@ -196,7 +196,7 @@ is_group(TypeId, Schema) ->
 				isGroup=IsGroup
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	case IsGroup of 0 -> false; 1 -> true end.
 
 generate_basic(TypeId, Schema) ->
@@ -376,7 +376,7 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 				pointerCount=PWords
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	{NoGroupEncodeBody, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData} = encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
 	ZeroOffsetPtrInt = {integer, Line, struct_pointer_header(DWords, PWords)},
 	StructSizeInt = {integer, Line, DWords + PWords},
@@ -416,7 +416,7 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 				discriminantOffset=DiscriminantOffset
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	DiscriminantField = #field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)},
 	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
 	Expected = lists:seq(0, length(Sorted)-1),
@@ -433,7 +433,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=#native_t
 				pointerCount=PWords
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
 				{integer, Line, DWords+PWords},
@@ -449,7 +449,7 @@ generate_union_encoder(Line, DiscriminantField, Field=#field_info{type=Type=#ptr
 				pointerCount=PWords
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	ast_encode_ptr({1, 0}, 1, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
@@ -466,7 +466,7 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{type=#group
 				pointerCount=PWords
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	ast_group_in_union_(
 		{in, [{atom, Line, inner_encoder_name(GroupTypeId, Schema)}, {integer, Line, Offset}, {integer, Line, (DWords+PWords)*64}]},
 		{out, []},
@@ -988,6 +988,10 @@ type_info(TypeClass, TypeDescription, _Schema) ->
 	io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
 	{64, #ptr_type{type=unknown}}.
 
+schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
+	dict:fetch(TypeId, Schema#capnp_context.by_id).
+
+
 enumerant_names(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{2, enum},
@@ -995,7 +999,7 @@ enumerant_names(TypeId, Schema) ->
 				enumerants=Enumerants
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
 node_name(TypeId, Schema) when is_integer(TypeId) ->
@@ -1007,7 +1011,7 @@ node_name(TypeId, Schema) when is_integer(TypeId) ->
 				pointerCount=PWords
 			}
 		}
-	} = dict:fetch(TypeId, Schema#capnp_context.by_id),
+	} = schema_lookup(TypeId, Schema),
 	{Name, DWords, PWords}.
 
 % {BroadType, Bits, BinaryType}
