@@ -910,9 +910,20 @@ field_info(#'capnp::namespace::Field'{
 				typeId=TypeId
 			}
 		}
-	}, _Schema) ->
-	% Groups and unions.
-	#field_info{offset=undefined, type=#group_type{type_id=TypeId}, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end}.
+	}, Schema) ->
+	Fields = find_fields(TypeId, Schema),
+	% If there are no fields, destroy this group.
+	% If there's just one field, replace this group with it.
+	% If there's multiple fields, generate a group_type field.
+	case Fields of
+		[] ->
+			#field_info{offset=undefined, type=deleted};
+		[Field=#field_info{}] ->
+			Field#field_info{name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end};
+		_ ->
+			% Groups and unions.
+			#field_info{offset=undefined, type=#group_type{type_id=TypeId}, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end}
+	end.
 
 type_info(#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}, Schema) ->
 	type_info(TypeClass, TypeDescription, Schema).
