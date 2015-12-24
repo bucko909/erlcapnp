@@ -119,7 +119,7 @@ do_job({generate_encode, TypeId}, Schema) ->
 	{[], [FunDef], []};
 do_job({generate_group_encode, TypeId}, Schema) ->
 	Line = 0,
-	UnionFields = find_union_fields(TypeId, Schema),
+	UnionFields = find_tag_fields(TypeId, Schema),
 	FunDef = generate_union_encode_fun(Line, TypeId, UnionFields, Schema),
 	{[], [FunDef], []};
 do_job({generate_envelope, TypeId}, Schema) ->
@@ -143,25 +143,25 @@ is_group_type(#field_info{type=#group_type{}}) -> true;
 is_group_type(#field_info{}) -> false.
 
 find_notag_data_fields(TypeId, Schema) ->
-	lists:sort(lists:filter(fun is_native_type/1, find_notag_slots(TypeId, Schema))).
+	lists:sort(lists:filter(fun is_native_type/1, find_notag_fields(TypeId, Schema))).
 
 find_notag_pointer_fields(TypeId, Schema) ->
-	lists:sort(lists:filter(fun is_pointer_type/1, find_notag_slots(TypeId, Schema))).
+	lists:sort(lists:filter(fun is_pointer_type/1, find_notag_fields(TypeId, Schema))).
 
 find_notag_groups(TypeId, Schema) ->
 	% TODO SORT!!!
-	lists:filter(fun is_group_type/1, find_notag_slots(TypeId, Schema)).
+	lists:filter(fun is_group_type/1, find_notag_fields(TypeId, Schema)).
 
 has_discriminant(#field_info{discriminant=undefined}) -> false;
 has_discriminant(#field_info{}) -> true.
 
 has_no_discriminant(F) -> not has_discriminant(F).
 
-find_notag_slots(TypeId, Schema) ->
-	lists:filter(fun has_no_discriminant/1, find_slots(TypeId, Schema)).
+find_notag_fields(TypeId, Schema) ->
+	lists:filter(fun has_no_discriminant/1, find_fields(TypeId, Schema)).
 
-find_union_fields(TypeId, Schema) ->
-	lists:filter(fun has_discriminant/1, find_slots(TypeId, Schema)).
+find_tag_fields(TypeId, Schema) ->
+	lists:filter(fun has_discriminant/1, find_fields(TypeId, Schema)).
 
 find_anon_union(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
@@ -178,7 +178,7 @@ find_anon_union(TypeId, Schema) ->
 			[ #field_info{name= <<>>, type=#group_type{type_id=TypeId}} ]
 	end.
 
-find_slots(TypeId, Schema) ->
+find_fields(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -201,8 +201,8 @@ is_group(TypeId, Schema) ->
 
 generate_basic(TypeId, Schema) ->
 	IsGroup = is_group(TypeId, Schema),
-	UnionFields = find_union_fields(TypeId, Schema),
-	NotUnionFields = find_notag_slots(TypeId, Schema),
+	UnionFields = find_tag_fields(TypeId, Schema),
+	NotUnionFields = find_notag_fields(TypeId, Schema),
 
 	% For any group/union fields in our struct, we generate an extra encode
 	% function. We then recombine all of the generated struct data to make
@@ -253,7 +253,7 @@ generate_basic(TypeId, Schema) ->
 
 	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_slots(TypeId, Schema) ],
+	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
 	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
 	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText,
