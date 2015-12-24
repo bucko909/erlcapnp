@@ -4,7 +4,7 @@ capnproto library in erlang.
 
 Provides ability to generate a .hrl and .erl file for your code, which, with as little code between them and the binary as possible, will let you turn records of the shape #CapnpStruct{field=Value} into valid unpacked capnp messages, and (in future) vice versa. As the only operation on a message right now is to decode it, it does not and cannot support RPC.
 
-The development of this library is largely driven by the needs of my employer, who only need the encode part, so expect slower development on anything unrelated to this. Use ecapnp if you want something more feature-complete.
+The development of this library is largely driven by the needs of my employer, who only needs the encode part, so expect slower development on anything unrelated to this. Use ecapnp if you want something more feature-complete.
 
 Preliminary indications are that the encode speed is more than 10 times as fast as ecapnp (tested 2015-12 on the AddressBook example).
 
@@ -14,12 +14,12 @@ Preliminary indications are that the encode speed is more than 10 times as fast 
 |---|---|
 | struct A {} | -record('A', {}). |
 | struct B { a @0 :UInt64; } | -record('B', { a :: integer() }). |
-| enum EnumType { a @0; b @1; } | -type 'EnumType'() :: a \| b |
+| enum EnumType { a @0; b @1; } | -type 'EnumType'() :: a \| b. |
 | struct C { a @0 :EnumType; } | -record('C', { a :: 'EnumType'() }). |
 | struct D { a @0 :Text; } | -record('D', { a :: binary() }). |
 | struct E { a @0 :Data; } | -record('E', { a :: binary() }). |
 | struct F { a @0 :A; } | -record('F', { a :: #'A'{} }). |
-| struct G { a :group { b @0 :B; c @1 :C; } } | -record('G.a', { a :: #'A'{}, b, #'B'{} }).<br/>-record('G', { a :: #'G.a'{} }). |
+| struct G { a :group { b @0 :B; c @1 :C; } } | -record('G.a', { a :: #'A'{}, b :: #'B'{} }).<br/>-record('G', { a :: #'G.a'{} }). |
 | struct H { union { a @0 :A; b @1 :B; } } | -type 'H'() :: { a, #'A'{} } \| { b, #'B'{} } }. |
 | struct I { a @0 :UInt64; union { a @0 :A; b @1 :B; } } | -record('I', { a :: integer(), '' :: H() }). |
 | struct J { a @0 :UInt64; b :union { a @0 :A; b @1 :B; } } | -record('J', { a :: integer(), b :: H() }). |
