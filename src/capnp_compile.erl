@@ -35,12 +35,15 @@ load_directly(SchemaFile, ModuleName) ->
 	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
 
+format_erl(Forms) ->
+	[ [ erl_pp:form(erl_syntax:revert(Form)), $\n ] || Form <- Forms ].
+
 self_contained_source(SchemaFile, ModuleName) ->
 	{Recs, Funs} = to_ast(SchemaFile),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
-	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
+	format_erl(Forms).
 
 output_source_with_include(SchemaFile, ModuleName, Path) ->
 	io:format("~s", [source_with_include(SchemaFile, ModuleName, Path)]).
@@ -51,7 +54,7 @@ source_with_include(SchemaFile, ModuleName, Path) ->
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	IncludeFileName = Path ++ "/" ++ atom_to_list(ModuleName) ++ ".hrl",
 	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,include_lib,IncludeFileName},{attribute,Line,compile,[export_all]}] ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
-	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
+	format_erl(Forms).
 
 output_header(SchemaFile, ModuleName) ->
 	io:format("~s", [header_only(SchemaFile, ModuleName)]).
@@ -60,7 +63,7 @@ header_only(SchemaFile, ModuleName) ->
 	{Recs, _Funs} = to_ast(SchemaFile),
 	IncludeFileName = atom_to_list(ModuleName) ++ ".hrl",
 	Forms = [{attribute,1,file,{IncludeFileName,1}}] ++ Recs ++ [{eof,0}],
-	erl_prettypr:format(erl_syntax:form_list(Forms), [{paper, 200}, {ribbon, 200}]).
+	format_erl(Forms).
 
 to_ast(SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
