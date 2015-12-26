@@ -31,7 +31,6 @@ Note that pure-anonymous unions are collapsed into their owning scope, as are si
 Very much WIP!
 
 * Namespacing (by prefixing type names?).
-* Generation of types in schema HRL file (currently everything has type any()).
 * Defaults. Right now they are entirely ignored!
 * A prettier compile interface (so that capnpc can be used).
 * Decoding of anything more than the simplest messages.

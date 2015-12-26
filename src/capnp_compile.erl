@@ -86,11 +86,41 @@ split_forms([Other|Rest], Acc) ->
 split_forms([], []) ->
 	[].
 
+type_depends(L) when is_list(L) ->
+	lists:append(lists:map(fun type_depends/1, L));
+type_depends({integer, _, _}) ->
+	[];
+type_depends({atom, _, _}) ->
+	[];
+type_depends({type, _, record, [{atom, _, N}]}) ->
+	[{record, N}];
+type_depends({type, _, _, Deps}) ->
+	lists:append(lists:map(fun type_depends/1, Deps));
+type_depends({typed_record_field, _Field, T}) ->
+	type_depends(T);
+type_depends({user_type, _, T, Deps}) ->
+	[{type, T} | type_depends(Deps)].
+
+shuffle_forms(Forms) ->
+	{New, _, []} = shuffle_forms(Forms, [], [], []),
+	New.
+
+shuffle_forms([A={attribute, _, T, {N, AV}}|Rest], Seen, Buffer, Acc) when T =:= record; T =:= type ->
+	case [ bad || D <- type_depends(AV), not lists:member(D, Seen) ] of
+		[] ->
+			{New, NewSeen, NewBuffer} = shuffle_forms(Buffer, [{T, N}|Seen], [], []),
+			shuffle_forms(Rest, NewSeen, NewBuffer, Acc ++ [A|New]);
+		_ ->
+			shuffle_forms(Rest, Seen, Buffer ++ [A], Acc)
+	end;
+shuffle_forms([], Seen, Buffer, Acc) ->
+	{Acc, Seen, Buffer}.
+
 ignore_line(A, B) ->
 	setelement(2, A, 0) =< setelement(2, B, 0).
 
 to_ast([], _Done, Recs, Funs, _Schema) ->
-	{lists:sort(fun ignore_line/2, Recs), lists:sort(fun ignore_line/2, Funs)};
+	{shuffle_forms(lists:sort(fun ignore_line/2, Recs)), lists:sort(fun ignore_line/2, Funs)};
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
 	case sets:is_element(Job, Done) of
 		true ->
@@ -197,6 +227,9 @@ find_fields(TypeId, Schema) ->
 	% Start by finding the bit offsets of each field, so that we can order them.
 	[ field_info(Field, Schema) || Field <- Fields ].
 
+is_union(TypeId, Schema) ->
+	find_notag_fields(TypeId, Schema) == [] andalso find_tag_fields(TypeId, Schema) /= [].
+
 is_group(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
@@ -253,10 +286,54 @@ generate_basic(TypeId, Schema) ->
 
 	{ [], [], Jobs }.
 
+or_undefined(Line, Type) ->
+	{type, Line, union, [make_atom(Line, undefined), Type]}.
+
+is_signed(#native_type{binary_options=Opts}) ->
+	lists:member(signed, Opts).
+
+field_type(Line, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
+	RawRange = 1 bsl Bits,
+	{Min, Max} = case is_signed(Type) of
+		true ->
+			{-(RawRange bsr 1), (RawRange bsr 1) - 1};
+		false ->
+			{0, RawRange - 1}
+	end,
+	{type, Line, range, [{integer, Line, Min}, {integer, Line, Max}]};
+field_type(Line, #field_info{type=#native_type{type=float}}, _Schema) ->
+	{type, Line, float, []};
+field_type(Line, #field_info{type=#native_type{type=boolean}}, _Schema) ->
+	{type, Line, union, [{atom, Line, true}, {atom, Line, false}]};
+field_type(Line, #field_info{type=#native_type{type=void}}, _Schema) ->
+	{atom, Line, undefined};
+field_type(Line, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
+	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
+field_type(Line, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}}, _Schema) ->
+	or_undefined(Line, {type, Line, binary, []});
+field_type(Line, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, _Schema) ->
+	or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]});
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, bool}}}, Schema) ->
+	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
+	or_undefined(Line, {type, Line, list, [field_type(Line, #field_info{type=Inner}, Schema)]});
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={text, TextType}}}, _Schema) ->
+	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, binary, []})]});
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
+	% Recursive call is or_undefined, which is not allowed here!
+	or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});
+field_type(Line, #field_info{type=#group_type{type_id=TypeId}}, Schema) ->
+	case is_union(TypeId, Schema) of
+		true ->
+			UnionFields = find_tag_fields(TypeId, Schema),
+			{type, Line, union, [ {type, Line, tuple, [make_atom(Line, Name), field_type(Line, Field, Schema)]} || Field=#field_info{name=Name} <- UnionFields ]};
+		false ->
+			{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
+	end.
+
 generate_record_def(Line, TypeId, RecordFields, Schema) ->
-	% TODO types, too!
 	RecordName = record_name(TypeId, Schema),
-	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- RecordFields]}}.
+	{attribute, Line, record, {RecordName, [{typed_record_field, {record_field, Line, {atom, Line, field_name(Info)}}, field_type(Line, Info, Schema)} || Info=#field_info{} <- RecordFields]}}.
 
 append(A, B) -> to_list(A) ++ to_list(B).
 
