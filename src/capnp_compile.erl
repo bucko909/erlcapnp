@@ -350,18 +350,10 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
 
-	{function, Line, encoder_name(TypeId, Schema), 2,
-		[{clause, Line,
-				[
-					{tuple, Line, [
-						{var, Line, 'VarDiscriminant'},
-						{var, Line, 'Var'}
-					]},
-					{var, Line, 'PtrOffsetWordsFromEnd0'}
-				],
-				[],
-				EncodeBody
-			}]}.
+	ast_function(
+		quote(encoder_name(TypeId, Schema)),
+		fun ({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody) end
+	).
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
@@ -517,36 +509,28 @@ field_name(#field_info{name=FieldName}) ->
 
 
 generate_envelope_fun(Line, TypeId, Schema) ->
-	{function, Line, envelope_fun_name(TypeId, Schema), 1,
-		[{clause, Line,
-				[
-					{var, Line, 'Input'}
-				],
-				[],
-				generate_envelope_body(Line, TypeId, Schema)
-			}]}.
-
-generate_envelope_body(Line, TypeId, Schema) ->
 	EncodeFun = {atom, Line, encoder_name(TypeId, Schema)},
-	ast_envelope_({var, Line, 'Input'}, EncodeFun).
+	ast_function(
+		quote(envelope_fun_name(TypeId, Schema)),
+		fun
+			(Input) ->
+				{ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} = (quote(EncodeFun))(Input, 0),
+				list_to_binary([
+						<<
+							% Segment envelope
+							0:32/unsigned-little-integer, % Segcount - 1. Always 0 for us.
+							(1+MainDataLen+ExtraDataLen):32/unsigned-little-integer, % Seglen = 1 (our pointer) + (all encoded data)
 
--ast_fragment([]).
-ast_envelope_(InputVar, EncodeFun) ->
-	{ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} = EncodeFun(InputVar, 0),
-	list_to_binary([
-			<<
-				% Segment envelope
-				0:32/unsigned-little-integer, % Segcount - 1. Always 0 for us.
-				(1+MainDataLen+ExtraDataLen):32/unsigned-little-integer, % Seglen = 1 (our pointer) + (all encoded data)
+							% Pointer to first struct. It's actually zero-offset, so we can just use the canonical pointer returned from the encoder.
+							ZeroOffsetPtrInt:64/unsigned-little-integer % Number of data words in the struct.
+						>>,
 
-				% Pointer to first struct. It's actually zero-offset, so we can just use the canonical pointer returned from the encoder.
-				ZeroOffsetPtrInt:64/unsigned-little-integer % Number of data words in the struct.
-			>>,
-
-			% Now the actual data. This may be an io_list, so we can't just /binary it in.
-			MainData,
-			ExtraData
-	]).
+						% Now the actual data. This may be an io_list, so we can't just /binary it in.
+						MainData,
+						ExtraData
+				])
+		end
+	).
 
 ast_encode_ptr_common({PtrVarNum, PtrOffset}, PtrLen0, AstFun, ExtraInputParams, VarName, Line) ->
 	%case VarName of <<"textualKey">> -> io:format("textualKey: ~p~n", [{N, PtrLen0, AstFun, ExtraInputParams, VarName, Line}]); _ -> ok end,
@@ -745,25 +729,18 @@ ast_encode_struct_list_(
 	end.
 
 massage_bool_list() ->
-	Var = {var, 0, 'List'},
-	[{function, 0, massage_bool_list, 1,
-		[{clause, 0,
-				[
-					Var
-				],
-				[],
-				ast_massage_bool_list_(Var)
-			}]}].
-
--ast_fragment([]).
-ast_massage_bool_list_(List) ->
-	try lists:split(8, List) of
-		{First, Last} ->
-			lists:reverse(First) ++ massage_bool_list(Last)
-	catch
-		error:badarg ->
-			lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
-	end.
+	[ast_function(
+		quote(massage_bool_list),
+		fun (List) ->
+			try lists:split(8, List) of
+				{First, Last} ->
+					lists:reverse(First) ++ massage_bool_list(Last)
+			catch
+				error:badarg ->
+					lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
+			end
+		end
+	)].
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
 to_list(A) when is_binary(A) -> binary_to_list(A);
