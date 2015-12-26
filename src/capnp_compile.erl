@@ -299,34 +299,10 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%
 	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
-	{function, Line, encoder_name(TypeId, Schema), 2,
-		[
-			{clause, Line,
-				[
-					{record, Line, record_name(TypeId, Schema),
-						[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
-					},
-					{var, Line, 'PtrOffsetWordsFromEnd0'}
-				],
-				[],
-				EncodeBody
-			},
-			nil_encoder_clause(Line)
-		]}.
-
-nil_encoder_clause(Line) ->
-	Zero = {integer, Line, 0},
-	Empty = {nil, Line},
-	{clause, Line,
-		[
-			{atom, Line, undefined},
-			{var, Line, '_PtrOffsetWordsFromEnd0'}
-		],
-		[],
-		[
-			{tuple, Line, [Zero, Zero, Zero, Empty, Empty]}
-		]
-	}.
+	Matcher = {record, Line, record_name(TypeId, Schema),
+		[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+	},
+	ast_function(quote(encoder_name(TypeId, Schema)), fun (quote(Matcher), PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody); (undefined, _PtrOffsetWordsFromEnd0) -> {0, 0, 0, [], []} end).
 
 generate_text() ->
 	Line = 0,
