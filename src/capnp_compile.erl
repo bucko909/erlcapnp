@@ -255,20 +255,21 @@ generate_record_def(Line, TypeId, RecordFields, Schema) ->
 	RecordName = record_name(TypeId, Schema),
 	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- RecordFields]}}.
 
+make_atom(Line, B) when is_binary(B) -> make_atom(Line, binary_to_list(B));
+make_atom(Line, L) when is_list(L) -> make_atom(Line, list_to_atom(L));
+make_atom(Line, A) when is_atom(A) -> {atom, Line, A}.
+
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 	% We just take the binary for now and break if we get a pointer type.
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
 	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
-	{function, Line, decoder_name(TypeId, Schema), 1,
-		[{clause, Line,
-				[{bin, Line, DataMatcher ++ PtrMatcher}],
-				[],
-				[{record, Line, record_name(TypeId, Schema),
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, decoder(Type, var_p(Line, "Var", FieldName), Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
-					}]
-			}]}.
+	Matcher = {bin, Line, DataMatcher ++ PtrMatcher},
+	Body = {record, Line, record_name(TypeId, Schema),
+		[{record_field, Line, make_atom(Line, FieldName), decoder(Type, var_p(Line, "Var", FieldName), Line)} || #field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
+	},
+	ast_function(quote(decoder_name(TypeId, Schema)), fun (quote(Matcher)) -> quote(Body) end).
 
 
 generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
