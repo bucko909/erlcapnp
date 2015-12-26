@@ -83,8 +83,11 @@ split_forms([Other|Rest], Acc) ->
 split_forms([], []) ->
 	[].
 
+ignore_line(A, B) ->
+	setelement(2, A, 0) =< setelement(2, B, 0).
+
 to_ast([], _Done, Recs, Funs, _Schema) ->
-	{lists:sort(Recs), lists:sort(Funs)};
+	{lists:sort(fun ignore_line/2, Recs), lists:sort(fun ignore_line/2, Funs)};
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
 	case sets:is_element(Job, Done) of
 		true ->
