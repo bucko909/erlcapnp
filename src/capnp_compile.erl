@@ -255,9 +255,11 @@ generate_record_def(Line, TypeId, RecordFields, Schema) ->
 	RecordName = record_name(TypeId, Schema),
 	{attribute, Line, record, {RecordName, [{record_field, Line, {atom, Line, field_name(Info)}} || Info=#field_info{} <- RecordFields]}}.
 
-make_atom(Line, B) when is_binary(B) -> make_atom(Line, binary_to_list(B));
-make_atom(Line, L) when is_list(L) -> make_atom(Line, list_to_atom(L));
-make_atom(Line, A) when is_atom(A) -> {atom, Line, A}.
+append(A, B) -> to_list(A) ++ to_list(B).
+
+to_atom(Val) -> list_to_atom(to_list(Val)).
+
+make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
@@ -302,7 +304,7 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 			{clause, Line,
 				[
 					{record, Line, record_name(TypeId, Schema),
-						[{record_field, Line, {atom, Line, list_to_atom(binary_to_list(FieldName))}, var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+						[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 					},
 					{var, Line, 'PtrOffsetWordsFromEnd0'}
 				],
@@ -414,7 +416,7 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	} = schema_lookup(TypeId, Schema),
 	DiscriminantField = #field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)},
 
-	EncoderClauses = [ {clause, Line, [{atom, Line, list_to_atom(binary_to_list(Name))}], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{name=Name} <- Sorted ],
+	EncoderClauses = [ {clause, Line, [make_atom(Line, Name)], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{name=Name} <- Sorted ],
 	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
 
 generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=#native_type{}}, TypeId, Schema) ->
@@ -535,22 +537,22 @@ to_list(Line, List) ->
 
 encoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("encode_" ++ binary_to_list(TypeName)).
+	to_atom(append("encode_", TypeName)).
 
 decoder_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("decode_" ++ binary_to_list(TypeName)).
+	to_atom(append("decode_", TypeName)).
 
 record_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom(binary_to_list(TypeName)).
+	to_atom(TypeName).
 
 envelope_fun_name(TypeId, Schema) ->
 	{TypeName, _, _} = node_name(TypeId, Schema),
-	list_to_atom("envelope_" ++ binary_to_list(TypeName)).
+	to_atom(append("envelope_", TypeName)).
 
 field_name(#field_info{name=FieldName}) ->
-	list_to_atom(binary_to_list(FieldName)).
+	to_atom(FieldName).
 
 
 generate_envelope_fun(Line, TypeId, Schema) ->
@@ -613,7 +615,7 @@ struct_pointer_header(DWords, PWords) ->
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
-	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
+	EncodeFun = make_atom(Line, append("encode_", TypeName)),
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_text_/3, [], VarName, Line);
@@ -631,7 +633,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
-	EncodeFun = {atom, Line, list_to_atom("encode_" ++ binary_to_list(TypeName))},
+	EncodeFun = make_atom(Line, append("encode_", TypeName)),
 	StructSizePreformatted = {integer, Line, struct_pointer_header(DataLen, PtrLen)},
 	StructLen = {integer, Line, DataLen + PtrLen},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line);
@@ -810,7 +812,7 @@ to_list(A) when is_list(A) -> A.
 var_p(Line, _Prepend, {override, Name}) ->
 	{var, Line, Name};
 var_p(Line, Prepend, Value) ->
-	{var, Line, list_to_atom(to_list(Prepend) ++ to_list(Value))}.
+	{var, Line, to_atom(append(Prepend, Value))}.
 
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
@@ -996,7 +998,7 @@ enumerant_names(TypeId, Schema) ->
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
-	[ list_to_atom(binary_to_list(EName)) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
+	[ to_atom(EName) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
 
 node_name({anonunion, TypeId}, Schema) ->
 	{Name, DWords, PWords} = node_name(TypeId, Schema),
