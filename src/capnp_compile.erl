@@ -309,33 +309,18 @@ generate_text() ->
 	% This is a pointer to a struct with 1 pointer, which is what the caller /believes/ we are.
 	% We pass it in just so that struct pointers are consistently generated.
 	FakePointerInt = {integer, Line, struct_pointer_header(0, 1)},
-	ListVar = {var, Line, 'List'},
-	OffsetVar = {var, Line, 'Offset'},
-	EncodeBody = ast_encode_text_only_({in, [FakePointerInt, ListVar, OffsetVar]}, {out, []}, {temp_suffix, ""}),
 
-	Func = {function, Line, 'encode_text', 2,
-		[{clause, Line,
-				[ ListVar, OffsetVar ],
-				[],
-				EncodeBody
-			}]},
+	Func = ast_function(quote(encode_text),
+		fun
+			(undefined, _Offset) ->
+				{quote(FakePointerInt), 1, 0, [<<0:64>>], []};
+			(List, Offset) ->
+				DataLen = iolist_size(List) + 1,
+				Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
+				Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
+				{quote(FakePointerInt), 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}
+		end),
 	{[], [Func], []}.
-
--ast_fragment2([]).
-ast_encode_text_only_(
-		{in, [FakePointer, List, Offset]},
-		{out, []},
-		{temp, []}
-		) ->
-	if
-		is_list(List); is_binary(List) ->
-			DataLen = iolist_size(List) + 1,
-			Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
-			Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-			{FakePointer, 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data};
-		List =:= undefined ->
-			{FakePointer, 1, 0, [<<0:64>>], []}
-	end.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	#'capnp::namespace::Node'{
