@@ -21,7 +21,7 @@
 
 % Be sure offset is first in #field_info{} to get a nice ordering.
 -record(field_info, {offset, type, name, default, discriminant, override}).
--record(native_type, {type, width, extra, binary_options, list_tag}).
+-record(native_type, {name, type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
 -record(group_type, {type_id}).
 
@@ -172,6 +172,9 @@ do_job(generate_follow_struct_pointer, _Schema) ->
 	generate_follow_struct_pointer();
 do_job(generate_follow_struct_list_pointer, _Schema) ->
 	generate_follow_struct_list_pointer();
+do_job({generate_follow_primitive_list_pointer, Type}, _Schema) ->
+	Line = 0,
+	generate_follow_primitive_list_pointer(Line, Type);
 do_job(generate_decode_envelope_fun, _Schema) ->
 	generate_decode_envelope_fun().
 
@@ -292,8 +295,9 @@ generate_basic(TypeId, Schema) ->
 	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra={primitive, N=#native_type{}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
-	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList,
+	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
 
 	{ [], [], Jobs }.
 
@@ -461,6 +465,48 @@ generate_follow_struct_list_pointer() ->
 		end
 	),
 	{ [], [TaggedFunDef, ListFunDef], [] }.
+
+generate_follow_primitive_list_pointer(Line, #native_type{type=void}) ->
+	FunDef = ast_function(
+		quote(follow_void_list_pointer),
+		fun
+			(0, _) ->
+				undefined;
+			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 0 ->
+				Length = PointerInt bsr 35,
+				[ undefined || _ <- lists:seq(1, Length) ]
+		end
+	),
+	{ [], [FunDef], [] };
+generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, width=Width, binary_options=BinaryOpts, list_tag=Tag, extra=Extra}) ->
+	Match = {b_generate, Line, {bin, Line, [{bin_element, Line, ast(X), {integer, Line, Width}, BinaryOpts}]}, ast(ListData)},
+	Decode = case Type of
+		integer ->
+			ast(X);
+		float ->
+			ast(X);
+		boolean ->
+			ast(case X of 0 -> false; 1 -> true end);
+		enum ->
+			Tuple = {tuple, Line, [ make_atom(Line, X) || X <- Extra ]},
+			ast(element(X+1, quote(Tuple)))
+	end,
+	FunDef = ast_function(
+		quote(to_atom(append(follow_, append(Name, "_list_pointer")))),
+		fun
+			(0, _) ->
+				undefined;
+			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= quote({integer, Line, Tag}) ->
+				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				Offset = MessageRef#message_ref.current_offset + PointerOffset,
+				SkipBits = Offset * 64,
+				Length = PointerInt bsr 35,
+				MessageBits = Length * quote({integer, Line, Width}),
+				<<_:SkipBits, ListData:MessageBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
+				[ quote(Decode) || quote(Match) ]
+		end
+	),
+	{ [], [FunDef], [] }.
 
 generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	% We're going to encode by encoding each type as close to its contents as possible.
@@ -1031,6 +1077,9 @@ decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, Var, Line, MessageRef, _
 decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, Var, Line, MessageRef, Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
+decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, Var, Line, MessageRef, Schema) ->
+	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
+	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{}, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
@@ -1148,15 +1197,15 @@ node_name(TypeId, Schema) when is_integer(TypeId) ->
 	{Name, DWords, PWords}.
 
 % {BroadType, Bits, BinaryType}
-builtin_info(int64) -> #native_type{type=integer, width=64, binary_options=[little, signed, integer], list_tag=5};
-builtin_info(int32) -> #native_type{type=integer, width=32, binary_options=[little, signed, integer], list_tag=4};
-builtin_info(int16) -> #native_type{type=integer, width=16, binary_options=[little, signed, integer], list_tag=3};
-builtin_info(int8) -> #native_type{type=integer, width=8, binary_options=[little, signed, integer], list_tag=2};
-builtin_info(uint64) -> #native_type{type=integer, width=64, binary_options=[little, unsigned, integer], list_tag=5};
-builtin_info(uint32) -> #native_type{type=integer, width=32, binary_options=[little, unsigned, integer], list_tag=4};
-builtin_info(uint16) -> #native_type{type=integer, width=16, binary_options=[little, unsigned, integer], list_tag=3};
-builtin_info(uint8) -> #native_type{type=integer, width=8, binary_options=[little, unsigned, integer], list_tag=2};
-builtin_info(float32) -> #native_type{type=float, width=32, binary_options=[little, float], list_tag=4};
-builtin_info(float64) -> #native_type{type=float, width=64, binary_options=[little, float], list_tag=5};
-builtin_info(bool) -> #native_type{type=boolean, width=1, binary_options=[integer], list_tag=1};
-builtin_info(void) -> #native_type{type=void, width=0, binary_options=[integer], list_tag=0}.
+builtin_info(int64) -> #native_type{name=int64, type=integer, width=64, binary_options=[little, signed, integer], list_tag=5};
+builtin_info(int32) -> #native_type{name=int32, type=integer, width=32, binary_options=[little, signed, integer], list_tag=4};
+builtin_info(int16) -> #native_type{name=int16, type=integer, width=16, binary_options=[little, signed, integer], list_tag=3};
+builtin_info(int8) -> #native_type{name=int8, type=integer, width=8, binary_options=[little, signed, integer], list_tag=2};
+builtin_info(uint64) -> #native_type{name=uint64, type=integer, width=64, binary_options=[little, unsigned, integer], list_tag=5};
+builtin_info(uint32) -> #native_type{name=uint32, type=integer, width=32, binary_options=[little, unsigned, integer], list_tag=4};
+builtin_info(uint16) -> #native_type{name=uint16, type=integer, width=16, binary_options=[little, unsigned, integer], list_tag=3};
+builtin_info(uint8) -> #native_type{name=uint8, type=integer, width=8, binary_options=[little, unsigned, integer], list_tag=2};
+builtin_info(float32) -> #native_type{name=float32, type=float, width=32, binary_options=[little, float], list_tag=4};
+builtin_info(float64) -> #native_type{name=float64, type=float, width=64, binary_options=[little, float], list_tag=5};
+builtin_info(bool) -> #native_type{name=bool, type=boolean, width=1, binary_options=[integer], list_tag=1};
+builtin_info(void) -> #native_type{name=void, type=void, width=0, binary_options=[integer], list_tag=0}.
