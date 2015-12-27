@@ -381,8 +381,41 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			},
 			ast_function(quote(decoder_name(TypeId, Schema)), fun (All=quote(Matcher), MessageRef) -> quote(Body) end);
 		true ->
-			ast_function(quote(decoder_name(TypeId, Schema)), fun (_Body, _MessageRef) -> not_implemented end)
+			{_, DWords, _} = node_name(TypeId, Schema),
+			UnionFields = find_tag_fields(TypeId, Schema),
+			Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
+			Expected = lists:seq(0, length(Sorted)-1),
+			{Expected, Expected} = {Expected, [ X || #field_info{discriminant=X} <- Sorted ]},
+
+			#field_info{offset=Offset} = discriminant_field(TypeId, Schema),
+			DiscriminantSkip = {integer, Line, Offset},
+			Matcher = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _/bitstring>> = Body),
+			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, DWords, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
+			Decoder = {'case', Line, ast(Discriminant), DecoderClauses},
+			ast_function(quote(decoder_name(TypeId, Schema)), fun (Body, MessageRef) -> quote(Matcher), quote(Decoder) end)
 	end.
+
+generate_union_decoder(Line, DWords, #field_info{name=Name, type=#group_type{type_id=TypeId}}, Schema) ->
+	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
+	[
+		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Body, MessageRef)})
+	];
+generate_union_decoder(Line, DWords, Field=#field_info{name=Name, type=Type}, Schema) ->
+	Var = ast(Var),
+	[
+		ast(quote(generate_union_matcher(Line, DWords, Field, Schema)) = Body),
+		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Var, Line, message_ref(Line, DWords, Field), Schema))})
+	].
+
+generate_union_matcher(Line, _DWords, #field_info{offset=Offset, type=Type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
+	Skip = {integer, Line, Offset},
+	Junk = junkterm(Line, decode),
+	{bin, Line, [{bin_element, Line, Junk, Skip, default}, {bin_element, Line, ast(Var), {integer, Line, Width}, BinaryOptions}, {bin_element, Line, Junk, default, [bitstring]}]};
+generate_union_matcher(Line, DWords, #field_info{offset=Offset, type=Type=#ptr_type{}}, _Schema) ->
+	Skip = {integer, Line, Offset + DWords * 64},
+	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>>);
+generate_union_matcher(Line, _DWords, #field_info{offset=Offset, type=Type=#ptr_type{type=list}}, _Schema) ->
+	ast(not_implemented).
 
 generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
@@ -612,11 +645,7 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 		fun ({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody) end
 	).
 
-union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
-	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
-	Expected = lists:seq(0, length(Sorted)-1),
-	{Expected, Expected} = {Expected, [ X || #field_info{discriminant=X} <- Sorted ]},
-
+discriminant_field(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		''={{1, struct},
 			#'capnp::namespace::Node::::struct'{
@@ -624,7 +653,14 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
-	DiscriminantField = #field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)},
+	#field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)}.
+
+union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
+	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
+	Expected = lists:seq(0, length(Sorted)-1),
+	{Expected, Expected} = {Expected, [ X || #field_info{discriminant=X} <- Sorted ]},
+
+	DiscriminantField = discriminant_field(TypeId, Schema),
 
 	EncoderClauses = [ {clause, Line, [make_atom(Line, Name)], [], generate_union_encoder(Line, DiscriminantField, Field, TypeId, Schema)} || Field=#field_info{name=Name} <- Sorted ],
 	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
@@ -1084,6 +1120,8 @@ encoder(#ptr_type{}, Var, _Line) ->
 	Var.
 
 % The code we generate after matching a binary to put data into a record.
+decoder(#native_type{type=void}, _Var, _Line, _MessageRef, _Schema) ->
+	ast(undefined);
 decoder(#native_type{type=integer}, Var, _Line, _MessageRef, _Schema) ->
 	Var;
 decoder(#native_type{type=float}, Var, _Line, _MessageRef, _Schema) ->
