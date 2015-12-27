@@ -169,10 +169,10 @@ do_job({generate_text, TextType}, _Schema) ->
 	% Needed when we have a list of text.
 	generate_text();
 do_job(generate_follow_struct_pointer, _Schema) ->
-	% Needed when we have a list of text.
 	generate_follow_struct_pointer();
+do_job(generate_follow_struct_list_pointer, _Schema) ->
+	generate_follow_struct_list_pointer();
 do_job(generate_decode_envelope_fun, _Schema) ->
-	% Needed when we have a list of text.
 	generate_decode_envelope_fun().
 
 find_record_fields(TypeId, Schema) ->
@@ -290,9 +290,10 @@ generate_basic(TypeId, Schema) ->
 	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
 	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
-	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText ++ ExtraFollowStruct,
+	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList,
 
 	{ [], [], Jobs }.
 
@@ -385,6 +386,7 @@ generate_full_decoder_fun(Line, TypeId, Schema) ->
 	).
 
 generate_decode_envelope_fun() ->
+	RecDef = {attribute, 0, record, {message_ref, [{record_field, 0, ast(current_offset)}, {record_field, 0, ast(current_segment)}, {record_field, 0, ast(segments)}]}},
 	FunDef = ast_function(
 		quote(decode_envelope),
 		fun (<<RawSegCount:32/little-unsigned-integer, Rest/binary>>) ->
@@ -397,10 +399,9 @@ generate_decode_envelope_fun() ->
 			{#message_ref{current_offset=0, current_segment=hd(Segs), segments=Segs}, Ptr, Dregs}
 		end
 	),
-	{ [], [FunDef], [] }.
+	{ [RecDef], [FunDef], [] }.
 
 generate_follow_struct_pointer() ->
-	RecDef = {attribute, 0, record, {message_ref, [{record_field, 0, ast(current_offset)}, {record_field, 0, ast(current_segment)}, {record_field, 0, ast(segments)}]}},
 	FunDef = ast_function(
 		quote(follow_struct_pointer),
 		fun
@@ -418,7 +419,48 @@ generate_follow_struct_pointer() ->
 				DecodeFun(Binary, NewMessageRef)
 		end
 	),
-	{ [RecDef], [FunDef], [] }.
+	{ [], [FunDef], [] }.
+
+generate_follow_struct_list_pointer() ->
+	TaggedFunDef = ast_function(
+		quote(follow_tagged_struct_list_pointer),
+		fun
+			(DecodeFun, 0, MessageRef) ->
+				undefined;
+			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
+				PointerOffset = ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1,
+				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
+				SkipBits = NewOffset bsl 6,
+				<<_:SkipBits, Tag:64/little-unsigned-integer, Rest/binary>> = MessageRef#message_ref.current_segment,
+				Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
+				DWords = (Tag bsr 32) band (1 bsl 16 - 1),
+				PWords = (Tag bsr 48) band (1 bsl 16 - 1),
+				decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1})
+		end
+	),
+	ListFunDef = ast_function(
+		quote(decode_struct_list),
+		fun
+			(DecodeFun, Length, DWords, PWords, MessageRef) ->
+				Offset = MessageRef#message_ref.current_offset,
+				SkipBits = Offset * 64,
+				<<_:SkipBits, Rest/binary>> = MessageRef#message_ref.current_segment,
+				Words = DWords + PWords,
+				Bits = Words * 64,
+				{_, ListR} = lists:foldl(
+					fun
+						(N, {OldRest, Acc}) ->
+							<<ThisData:Bits/bitstring, NewRest/binary>> = OldRest,
+							New = DecodeFun(ThisData, MessageRef#message_ref{current_offset=Offset+Words*N}),
+							{NewRest, [New|Acc]}
+					end,
+					{Rest, []},
+					lists:seq(0, Length-1)
+				),
+				lists:reverse(ListR)
+		end
+	),
+	{ [], [TaggedFunDef, ListFunDef], [] }.
 
 generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	% We're going to encode by encoding each type as close to its contents as possible.
@@ -983,9 +1025,12 @@ decoder(#native_type{type=enum, extra=Enumerants}, Var, Line, _MessageRef, _Sche
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
 	% erlang:element(Var+1, {V1, ...})
 	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]};
-decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, Var, Line, MessageRef, Schema) ->
+decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
+decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, Var, Line, MessageRef, Schema) ->
+	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
+	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{}, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
