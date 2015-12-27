@@ -324,7 +324,7 @@ field_type(Line, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}},
 	or_undefined(Line, {type, Line, binary, []});
 field_type(Line, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, _Schema) ->
 	or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, bool}}}, Schema) ->
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=bool}}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
 field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [field_type(Line, #field_info{type=Inner}, Schema)]});
@@ -1088,10 +1088,6 @@ type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace
 type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,TextType},void}}}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	{64, #ptr_type{type=list, extra={text, TextType}}};
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,bool},void}}}, _Schema) ->
-	% List of bools. While this /could/ encode a list of 1-bit ints, erlang makes it hard by reversing our bits.
-	% So we need to special case it!
-	{64, #ptr_type{type=list, extra={primitive, bool}}};
 type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PrimitiveType},void}}}, _Schema) ->
 	% List of any normal primitive type.
 	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
