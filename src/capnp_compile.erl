@@ -146,7 +146,8 @@ do_job({generate_decode, TypeId}, Schema) ->
 	Line = 0,
 	SortedDataFields = find_notag_data_fields(TypeId, Schema),
 	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
-	FunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
+	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
+	FunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema),
 	EnvFunDef = generate_full_decoder_fun(Line, TypeId, Schema),
 	{[], [FunDef, EnvFunDef], []};
 do_job({generate_encode, TypeId}, Schema) ->
@@ -277,9 +278,9 @@ generate_basic(TypeId, Schema) ->
 		UnionFields =:= [] ->
 			[];
 		NotUnionFields /= [] ->
-			[ {generate_union_encode, {anonunion, TypeId}} ];
+			[ {generate_union_encode, {anonunion, TypeId}}, {generate_decode, {anonunion, TypeId}} ];
 		true ->
-			[ {generate_union_encode, TypeId} ]
+			[ {generate_union_encode, TypeId}, {generate_decode, TypeId} ]
 	end,
 
 	EnvelopesNeeded = if
@@ -358,23 +359,30 @@ make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
 
 % This points all pointers in the data segment at somewhat junk, but
 % data decoders never need this information!
-message_ref(_, _, undefined) ->
+message_ref(_, _, #field_info{type=#group_type{}}) ->
+	ast(MessageRef);
+message_ref(_, _, #field_info{type=#native_type{}}) ->
 	undefined;
-message_ref(Line, DWords, Offset) ->
+message_ref(Line, DWords, #field_info{type=#ptr_type{}, offset=Offset}) ->
 	WordOffset = {integer, 0, (Offset bsr 6)},
 	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote({integer, Line, DWords}) + quote(WordOffset)}).
 
-generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
-	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
-	% We just take the binary for now and break if we get a pointer type.
-	{_, DWords, PWords} = node_name(TypeId, Schema),
-	DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
-	PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
-	Matcher = {bin, Line, DataMatcher ++ PtrMatcher},
-	Body = {record, Line, record_name(TypeId, Schema),
-		[{record_field, Line, make_atom(Line, FieldName), decoder(Type, var_p(Line, "Var", FieldName), Line, message_ref(Line, DWords, Offset), Schema)} || #field_info{offset=Offset, name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ]
-	},
-	ast_function(quote(decoder_name(TypeId, Schema)), fun (quote(Matcher), MessageRef) -> quote(Body) end).
+generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
+	case is_union(TypeId, Schema) of
+		false ->
+			% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
+			% We just take the binary for now and break if we get a pointer type.
+			{_, DWords, PWords} = node_name(TypeId, Schema),
+			DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
+			PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
+			Matcher = {bin, Line, DataMatcher ++ PtrMatcher},
+			Body = {record, Line, record_name(TypeId, Schema),
+				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, var_p(Line, "Var", FieldName), Line, message_ref(Line, DWords, Info), Schema)} || Info=#field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+			},
+			ast_function(quote(decoder_name(TypeId, Schema)), fun (All=quote(Matcher), MessageRef) -> quote(Body) end);
+		true ->
+			ast_function(quote(decoder_name(TypeId, Schema)), fun (_Body, _MessageRef) -> not_implemented end)
+	end.
 
 generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
@@ -1095,6 +1103,9 @@ decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeNa
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
+decoder(#group_type{type_id=TypeId}, _Var, Line, MessageRef, Schema) ->
+	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
+	ast((quote(Decoder))(All, quote(MessageRef)));
 decoder(#ptr_type{}, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
