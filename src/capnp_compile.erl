@@ -328,7 +328,7 @@ field_type(Line, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}},
 	or_undefined(Line, {type, Line, binary, []});
 field_type(Line, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, _Schema) ->
 	or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=bool}}}}, Schema) ->
+field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
 field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [field_type(Line, #field_info{type=Inner}, Schema)]});
@@ -804,7 +804,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Li
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_text_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_data_/3, [], VarName, Line);
-ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, bool}}, VarName, Line) ->
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_bool_list_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarName, Line) ->
 	#native_type{list_tag=WidthType, width=Width, binary_options=BinType} = Type,
@@ -922,7 +922,7 @@ ast_encode_bool_list_(
 			% Because Erlang will reverse blocks of 8 bools, we pre-reverse them here.
 			DataFixed = massage_bool_list([ if Y =:= true -> 1; true -> 0 end || Y <- ValueToEncode ]),
 			% We need to add (-L band 63) bytes of padding for alignment.
-			MainData = [ << <<X:1>> || X <- DataFixed >>, <<0:(-length(DataFixed) band 63)/unsigned-little-integer>>],
+			MainData = << (<< <<X:1>> || X <- DataFixed >>)/bitstring, 0:(-length(DataFixed) band 63)/unsigned-little-integer>>,
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6);
 		true ->
