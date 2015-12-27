@@ -68,7 +68,7 @@ header_only(SchemaFile, ModuleName) ->
 to_ast(SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
 	Tasks = [ {generate_name, Name} || {_, #'capnp::namespace::Node'{''={{1, struct}, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
-	to_ast(Tasks, Schema).
+	to_ast([ generate_decode_envelope_fun | Tasks ], Schema).
 
 to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
@@ -147,7 +147,7 @@ do_job({generate_decode, TypeId}, Schema) ->
 	SortedDataFields = find_notag_data_fields(TypeId, Schema),
 	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
 	FunDef = generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema),
-	EnvFunDef = generate_decode_envelope_fun(Line, TypeId, Schema),
+	EnvFunDef = generate_full_decoder_fun(Line, TypeId, Schema),
 	{[], [FunDef, EnvFunDef], []};
 do_job({generate_encode, TypeId}, Schema) ->
 	Line = 0,
@@ -170,7 +170,10 @@ do_job({generate_text, TextType}, _Schema) ->
 	generate_text();
 do_job(generate_follow_struct_pointer, _Schema) ->
 	% Needed when we have a list of text.
-	generate_follow_struct_pointer().
+	generate_follow_struct_pointer();
+do_job(generate_decode_envelope_fun, _Schema) ->
+	% Needed when we have a list of text.
+	generate_decode_envelope_fun().
 
 find_record_fields(TypeId, Schema) ->
 	find_notag_data_fields(TypeId, Schema) ++ find_notag_pointer_fields(TypeId, Schema) ++ find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema).
@@ -353,7 +356,7 @@ make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
 message_ref(_, _, undefined) ->
 	undefined;
 message_ref(Line, DWords, Offset) ->
-	WordOffset = {integer, 0, (Offset bsr 6) + 1},
+	WordOffset = {integer, 0, (Offset bsr 6)},
 	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote({integer, Line, DWords}) + quote(WordOffset)}).
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
@@ -368,12 +371,22 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Schema) ->
 	},
 	ast_function(quote(decoder_name(TypeId, Schema)), fun (quote(Matcher), MessageRef) -> quote(Body) end).
 
-generate_decode_envelope_fun(Line, TypeId, Schema) ->
+generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 	% We just take the binary for now and break if we get a pointer type.
 	Decoder = {'fun', Line, {function, to_atom(decoder_name(TypeId, Schema)), 2}},
 	FunDef = ast_function(
 		quote(full_decoder_name(TypeId, Schema)),
+		fun (Data) ->
+			{MessageRef, Ptr, Dregs} = decode_envelope(Data),
+			Decoded = follow_struct_pointer(quote(Decoder), Ptr, MessageRef),
+			{Decoded, Dregs}
+		end
+	).
+
+generate_decode_envelope_fun() ->
+	FunDef = ast_function(
+		quote(decode_envelope),
 		fun (<<RawSegCount:32/little-unsigned-integer, Rest/binary>>) ->
 			SegLengthLength = ((((RawSegCount + 1) bsr 1) bsl 1) + 1) bsl 2,
 			<<SegLengthData:SegLengthLength/binary, SegData/binary>> = Rest,
@@ -381,10 +394,10 @@ generate_decode_envelope_fun(Line, TypeId, Schema) ->
 			{SegsR, Dregs} = lists:foldl(fun (Length, {SplitSegs, Data}) -> <<Seg:Length/binary, Remain/binary>> = Data, {[Seg|SplitSegs], Remain} end, {[], SegData}, SegLengths),
 			Segs = lists:reverse(SegsR),
 			<<Ptr:64/little-unsigned-integer, _/binary>> = hd(Segs),
-			Decoded = follow_struct_pointer(quote(Decoder), Ptr, #message_ref{current_offset=1, current_segment=hd(Segs), segments=Segs}),
-			{Decoded, Dregs}
+			{#message_ref{current_offset=0, current_segment=hd(Segs), segments=Segs}, Ptr, Dregs}
 		end
-	).
+	),
+	{ [], [FunDef], [] }.
 
 generate_follow_struct_pointer() ->
 	RecDef = {attribute, 0, record, {message_ref, [{record_field, 0, ast(current_offset)}, {record_field, 0, ast(current_segment)}, {record_field, 0, ast(segments)}]}},
@@ -394,7 +407,7 @@ generate_follow_struct_pointer() ->
 			(DecodeFun, 0, MessageRef) ->
 				undefined;
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
-				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1),
+				PointerOffset = ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1,
 				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
 				NewMessageRef = MessageRef#message_ref{current_offset=NewOffset},
 				DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
