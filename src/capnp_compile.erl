@@ -478,6 +478,23 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=void}) ->
 		end
 	),
 	{ [], [FunDef], [] };
+generate_follow_primitive_list_pointer(Line, #native_type{type=boolean}) ->
+	FunDef = ast_function(
+		quote(follow_bool_list_pointer),
+		fun
+			(0, _) ->
+				undefined;
+			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 1 ->
+				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				Offset = MessageRef#message_ref.current_offset + PointerOffset,
+				SkipBits = Offset * 64,
+				Length = PointerInt bsr 35,
+				WholeParts = ((Length + 7) bsr 3) bsl 3,
+				<<_:SkipBits, ListData:WholeParts/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
+				lists:sublist(lists:append([ lists:reverse([case Bit of 0 -> false; 1 -> true end || <<Bit:1>> <= Byte ]) || <<Byte:8/bitstring>> <= ListData ]), Length)
+		end
+	),
+	{ [], [FunDef], [] };
 generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, width=Width, binary_options=BinaryOpts, list_tag=Tag, extra=Extra}) ->
 	Match = {b_generate, Line, {bin, Line, [{bin_element, Line, ast(X), {integer, Line, Width}, BinaryOpts}]}, ast(ListData)},
 	Decode = case Type of
@@ -485,8 +502,6 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 			ast(X);
 		float ->
 			ast(X);
-		boolean ->
-			ast(case X of 0 -> false; 1 -> true end);
 		enum ->
 			Tuple = {tuple, Line, [ make_atom(Line, X) || X <- Extra ]},
 			ast(element(X+1, quote(Tuple)))
@@ -502,7 +517,7 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 				SkipBits = Offset * 64,
 				Length = PointerInt bsr 35,
 				MessageBits = Length * quote({integer, Line, Width}),
-				<<_:SkipBits, ListData:MessageBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
+				<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
 				[ quote(Decode) || quote(Match) ]
 		end
 	),
