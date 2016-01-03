@@ -151,19 +151,19 @@
 
 -record('schema.capnp:Node.Parameter',{name :: undefined | binary()}).
 
--record('schema.capnp:Node.annotation',{targetsFile :: true | false,
-                                        targetsConst :: true | false,
-                                        targetsEnum :: true | false,
-                                        targetsEnumerant :: true | false,
-                                        targetsStruct :: true | false,
-                                        targetsField :: true | false,
+-record('schema.capnp:Node.annotation',{targetsGroup :: true | false,
                                         targetsUnion :: true | false,
-                                        targetsGroup :: true | false,
-                                        targetsInterface :: true | false,
-                                        targetsMethod :: true | false,
-                                        targetsParam :: true | false,
+                                        targetsField :: true | false,
+                                        targetsStruct :: true | false,
+                                        targetsEnumerant :: true | false,
+                                        targetsEnum :: true | false,
+                                        targetsConst :: true | false,
+                                        targetsFile :: true | false,
                                         targetsAnnotation ::
                                             true | false,
+                                        targetsParam :: true | false,
+                                        targetsMethod :: true | false,
+                                        targetsInterface :: true | false,
                                         type ::
                                             {void, undefined} |
                                             {bool, undefined} |

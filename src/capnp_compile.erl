@@ -1241,7 +1241,14 @@ field_info(#'capnp::namespace::Field'{
 		}
 	}, Schema) ->
 	{Size, Info} = type_info(Type, Schema),
-	#field_info{offset=Size*N, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of null_pointer -> undefined; _ -> DefaultValue end};
+	Offset = case Size of
+		1 ->
+			% Correct for erlang's endianness
+			(N band -8) + (7 - (N band 7));
+		_ ->
+			Size * N
+	end,
+	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of null_pointer -> undefined; _ -> DefaultValue end};
 field_info(#'capnp::namespace::Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,

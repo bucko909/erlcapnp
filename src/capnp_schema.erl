@@ -1037,14 +1037,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<0:32/integer,
        Varoffset:32/little-unsigned-integer,
-       0:64/integer,
+       0:71/integer,
        case VarhadExplicitDefault of
            false ->
                0;
            true ->
                1
        end:1/integer,
-       0:63/integer,
+       0:56/integer,
        0:128/integer,
        Ptrtype:64/little-unsigned-integer,
        PtrdefaultValue:64/little-unsigned-integer>>,
@@ -1378,14 +1378,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
           VardisplayNamePrefixLength:32/little-unsigned-integer,
           0:32/integer,
           VarscopeId:64/little-unsigned-integer,
-          0:96/integer,
+          0:103/integer,
           case VarisGeneric of
               false ->
                   0;
               true ->
                   1
           end:1/integer,
-          0:31/integer,
+          0:24/integer,
           PtrdisplayName:64/little-unsigned-integer,
           PtrnestedNodes:64/little-unsigned-integer,
           Ptrannotations:64/little-unsigned-integer,
@@ -1592,30 +1592,30 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
 'encode_schema.capnp:Node.Parameter'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.annotation'(#'schema.capnp:Node.annotation'{targetsFile =
-                                                                          VartargetsFile,
-                                                                      targetsConst =
-                                                                          VartargetsConst,
-                                                                      targetsEnum =
-                                                                          VartargetsEnum,
-                                                                      targetsEnumerant =
-                                                                          VartargetsEnumerant,
-                                                                      targetsStruct =
-                                                                          VartargetsStruct,
-                                                                      targetsField =
-                                                                          VartargetsField,
+'encode_schema.capnp:Node.annotation'(#'schema.capnp:Node.annotation'{targetsGroup =
+                                                                          VartargetsGroup,
                                                                       targetsUnion =
                                                                           VartargetsUnion,
-                                                                      targetsGroup =
-                                                                          VartargetsGroup,
-                                                                      targetsInterface =
-                                                                          VartargetsInterface,
-                                                                      targetsMethod =
-                                                                          VartargetsMethod,
-                                                                      targetsParam =
-                                                                          VartargetsParam,
+                                                                      targetsField =
+                                                                          VartargetsField,
+                                                                      targetsStruct =
+                                                                          VartargetsStruct,
+                                                                      targetsEnumerant =
+                                                                          VartargetsEnumerant,
+                                                                      targetsEnum =
+                                                                          VartargetsEnum,
+                                                                      targetsConst =
+                                                                          VartargetsConst,
+                                                                      targetsFile =
+                                                                          VartargetsFile,
                                                                       targetsAnnotation =
                                                                           VartargetsAnnotation,
+                                                                      targetsParam =
+                                                                          VartargetsParam,
+                                                                      targetsMethod =
+                                                                          VartargetsMethod,
+                                                                      targetsInterface =
+                                                                          VartargetsInterface,
                                                                       type =
                                                                           Vartype},
                                       PtrOffsetWordsFromEnd0) ->
@@ -1634,37 +1634,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      11,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:112/integer,
-       case VartargetsFile of
-           false ->
-               0;
-           true ->
-               1
-       end:1/integer,
-       case VartargetsConst of
-           false ->
-               0;
-           true ->
-               1
-       end:1/integer,
-       case VartargetsEnum of
-           false ->
-               0;
-           true ->
-               1
-       end:1/integer,
-       case VartargetsEnumerant of
-           false ->
-               0;
-           true ->
-               1
-       end:1/integer,
-       case VartargetsStruct of
-           false ->
-               0;
-           true ->
-               1
-       end:1/integer,
-       case VartargetsField of
+       case VartargetsGroup of
            false ->
                0;
            true ->
@@ -1676,19 +1646,44 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
            true ->
                1
        end:1/integer,
-       case VartargetsGroup of
+       case VartargetsField of
            false ->
                0;
            true ->
                1
        end:1/integer,
-       case VartargetsInterface of
+       case VartargetsStruct of
            false ->
                0;
            true ->
                1
        end:1/integer,
-       case VartargetsMethod of
+       case VartargetsEnumerant of
+           false ->
+               0;
+           true ->
+               1
+       end:1/integer,
+       case VartargetsEnum of
+           false ->
+               0;
+           true ->
+               1
+       end:1/integer,
+       case VartargetsConst of
+           false ->
+               0;
+           true ->
+               1
+       end:1/integer,
+       case VartargetsFile of
+           false ->
+               0;
+           true ->
+               1
+       end:1/integer,
+       0:4/integer,
+       case VartargetsAnnotation of
            false ->
                0;
            true ->
@@ -1700,13 +1695,19 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
            true ->
                1
        end:1/integer,
-       case VartargetsAnnotation of
+       case VartargetsMethod of
            false ->
                0;
            true ->
                1
        end:1/integer,
-       0:196/integer,
+       case VartargetsInterface of
+           false ->
+               0;
+           true ->
+               1
+       end:1/integer,
+       0:192/integer,
        0:192/integer,
        Ptrtype:64/little-unsigned-integer,
        0:128/integer>>,
@@ -1977,13 +1978,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
            inlineComposite ->
                7
        end:16/little-unsigned-integer,
+       0:7/integer,
        case VarisGroup of
            false ->
                0;
            true ->
                1
        end:1/integer,
-       0:15/integer,
+       0:8/integer,
        VardiscriminantCount:16/little-unsigned-integer,
        VardiscriminantOffset:32/little-unsigned-integer,
        0:32/integer,
@@ -2379,13 +2381,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              3,
              0,
              <<1:16/little-unsigned-integer,
+               0:7/integer,
                case Var of
                    false ->
                        0;
                    true ->
                        1
                end:1/integer,
-               0:111/integer,
+               0:104/integer,
                0:64/integer>>,
              []};
         int8 ->
@@ -3053,9 +3056,9 @@ follow_text_pointer(PointerInt, MessageRef)
 'internal_decode_schema.capnp:Field.slot'(All =
                                               <<_:32/integer,
                                                 Varoffset:32/little-unsigned-integer,
-                                                _:64/integer,
+                                                _:71/integer,
                                                 VarhadExplicitDefault:1/integer,
-                                                _:63/integer,
+                                                _:56/integer,
                                                 _:128/integer,
                                                 Vartype:64/little-unsigned-integer,
                                                 VardefaultValue:64/little-unsigned-integer>>,
@@ -3151,9 +3154,9 @@ follow_text_pointer(PointerInt, MessageRef)
                                           VardisplayNamePrefixLength:32/little-unsigned-integer,
                                           _:32/integer,
                                           VarscopeId:64/little-unsigned-integer,
-                                          _:96/integer,
+                                          _:103/integer,
                                           VarisGeneric:1/integer,
-                                          _:31/integer,
+                                          _:24/integer,
                                           VardisplayName:64/little-unsigned-integer,
                                           VarnestedNodes:64/little-unsigned-integer,
                                           Varannotations:64/little-unsigned-integer,
@@ -3272,60 +3275,26 @@ follow_text_pointer(PointerInt, MessageRef)
 
 'internal_decode_schema.capnp:Node.annotation'(All =
                                                    <<_:112/integer,
-                                                     VartargetsFile:1/integer,
-                                                     VartargetsConst:1/integer,
-                                                     VartargetsEnum:1/integer,
-                                                     VartargetsEnumerant:1/integer,
-                                                     VartargetsStruct:1/integer,
-                                                     VartargetsField:1/integer,
-                                                     VartargetsUnion:1/integer,
                                                      VartargetsGroup:1/integer,
-                                                     VartargetsInterface:1/integer,
-                                                     VartargetsMethod:1/integer,
-                                                     VartargetsParam:1/integer,
+                                                     VartargetsUnion:1/integer,
+                                                     VartargetsField:1/integer,
+                                                     VartargetsStruct:1/integer,
+                                                     VartargetsEnumerant:1/integer,
+                                                     VartargetsEnum:1/integer,
+                                                     VartargetsConst:1/integer,
+                                                     VartargetsFile:1/integer,
+                                                     _:4/integer,
                                                      VartargetsAnnotation:1/integer,
-                                                     _:196/integer,
+                                                     VartargetsParam:1/integer,
+                                                     VartargetsMethod:1/integer,
+                                                     VartargetsInterface:1/integer,
+                                                     _:192/integer,
                                                      _:192/integer,
                                                      Vartype:64/little-unsigned-integer,
                                                      _:128/integer>>,
                                                MessageRef) ->
-    #'schema.capnp:Node.annotation'{targetsFile =
-                                        case VartargetsFile of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsConst =
-                                        case VartargetsConst of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsEnum =
-                                        case VartargetsEnum of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsEnumerant =
-                                        case VartargetsEnumerant of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsStruct =
-                                        case VartargetsStruct of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsField =
-                                        case VartargetsField of
+    #'schema.capnp:Node.annotation'{targetsGroup =
+                                        case VartargetsGroup of
                                             0 ->
                                                 false;
                                             1 ->
@@ -3338,22 +3307,50 @@ follow_text_pointer(PointerInt, MessageRef)
                                             1 ->
                                                 true
                                         end,
-                                    targetsGroup =
-                                        case VartargetsGroup of
+                                    targetsField =
+                                        case VartargetsField of
                                             0 ->
                                                 false;
                                             1 ->
                                                 true
                                         end,
-                                    targetsInterface =
-                                        case VartargetsInterface of
+                                    targetsStruct =
+                                        case VartargetsStruct of
                                             0 ->
                                                 false;
                                             1 ->
                                                 true
                                         end,
-                                    targetsMethod =
-                                        case VartargetsMethod of
+                                    targetsEnumerant =
+                                        case VartargetsEnumerant of
+                                            0 ->
+                                                false;
+                                            1 ->
+                                                true
+                                        end,
+                                    targetsEnum =
+                                        case VartargetsEnum of
+                                            0 ->
+                                                false;
+                                            1 ->
+                                                true
+                                        end,
+                                    targetsConst =
+                                        case VartargetsConst of
+                                            0 ->
+                                                false;
+                                            1 ->
+                                                true
+                                        end,
+                                    targetsFile =
+                                        case VartargetsFile of
+                                            0 ->
+                                                false;
+                                            1 ->
+                                                true
+                                        end,
+                                    targetsAnnotation =
+                                        case VartargetsAnnotation of
                                             0 ->
                                                 false;
                                             1 ->
@@ -3366,8 +3363,15 @@ follow_text_pointer(PointerInt, MessageRef)
                                             1 ->
                                                 true
                                         end,
-                                    targetsAnnotation =
-                                        case VartargetsAnnotation of
+                                    targetsMethod =
+                                        case VartargetsMethod of
+                                            0 ->
+                                                false;
+                                            1 ->
+                                                true
+                                        end,
+                                    targetsInterface =
+                                        case VartargetsInterface of
                                             0 ->
                                                 false;
                                             1 ->
@@ -3457,7 +3461,7 @@ follow_text_pointer(PointerInt, MessageRef)
                                                  _:64/integer,
                                                  VarpointerCount:16/little-unsigned-integer,
                                                  VarpreferredListEncoding:16/little-unsigned-integer,
-												 _:7/integer,
+                                                 _:7/integer,
                                                  VarisGroup:1/integer,
                                                  _:8/integer,
                                                  VardiscriminantCount:16/little-unsigned-integer,
@@ -3694,7 +3698,7 @@ follow_text_pointer(PointerInt, MessageRef)
             <<_:0,Var:0/integer,_/bitstring>> = Body,
             {void,undefined};
         1 ->
-            <<_:16,Var:1/integer,_/bitstring>> = Body,
+            <<_:23,Var:1/integer,_/bitstring>> = Body,
             {bool,
              case Var of
                  0 ->
