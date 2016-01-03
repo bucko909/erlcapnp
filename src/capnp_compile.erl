@@ -269,20 +269,28 @@ generate_basic(TypeId, Schema) ->
 	% its data, but it means that the struct encoder needs a better
 	% understanding of what fields are meant to come from where.
 
-	RawEncodersNeeded = if
-		UnionFields =:= [] orelse NotUnionFields /= [] orelse not IsGroup ->
-			[ {generate_record, TypeId}, {generate_decode, TypeId}, {generate_encode, TypeId} ];
-		true ->
-			[]
-	end,
-
-	UnionEncodersNeeded = if
+	EncodersNeeded = if
 		UnionFields =:= [] ->
-			[];
+			[
+				{generate_record, TypeId},
+				{generate_decode, TypeId},
+				{generate_encode, TypeId}
+			];
 		NotUnionFields /= [] ->
-			[ {generate_union_encode, {anonunion, TypeId}}, {generate_decode, {anonunion, TypeId}} ];
+			[
+				% Generate both the anon union version /and/ the plain version.
+				{generate_record, TypeId},
+				{generate_decode, TypeId},
+				{generate_encode, TypeId},
+				{generate_union_encode, {anonunion, TypeId}},
+				{generate_decode, {anonunion, TypeId}}
+			];
 		true ->
-			[ {generate_union_encode, TypeId}, {generate_decode, TypeId} ]
+			[
+				% We are just an anonymous union. We don't need a record.
+				{generate_union_encode, TypeId},
+				{generate_decode, TypeId}
+			]
 	end,
 
 	EnvelopesNeeded = if
@@ -301,7 +309,7 @@ generate_basic(TypeId, Schema) ->
 	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra={primitive, N=#native_type{}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
-	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraTextList ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
+	Jobs = EncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraTextList ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
 
 	{ [], [], Jobs }.
 
@@ -311,7 +319,7 @@ or_undefined(Line, Type) ->
 is_signed(#native_type{binary_options=Opts}) ->
 	lists:member(signed, Opts).
 
-field_type(Line, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
 	RawRange = 1 bsl Bits,
 	{Min, Max} = case is_signed(Type) of
 		true ->
@@ -320,39 +328,55 @@ field_type(Line, #field_info{type=Type=#native_type{type=integer, width=Bits}}, 
 			{0, RawRange - 1}
 	end,
 	{type, Line, range, [{integer, Line, Min}, {integer, Line, Max}]};
-field_type(Line, #field_info{type=#native_type{type=float}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#native_type{type=float}}, _Schema) ->
 	{type, Line, float, []};
-field_type(Line, #field_info{type=#native_type{type=boolean}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#native_type{type=boolean}}, _Schema) ->
 	{type, Line, union, [{atom, Line, true}, {atom, Line, false}]};
-field_type(Line, #field_info{type=#native_type{type=void}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#native_type{type=void}}, _Schema) ->
 	{atom, Line, undefined};
-field_type(Line, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
 	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
-field_type(Line, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}}, _Schema) ->
 	or_undefined(Line, {type, Line, binary, []});
-field_type(Line, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, _Schema) ->
-	or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, Schema) ->
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, Schema) ->
+	case TypeName of
+		RecordName ->
+			% Avoid mutual recursion.
+			{type, Line, any, []};
+		_ ->
+			case is_union(TypeName, Schema) of
+				true ->
+					field_type(Line, TypeName, #field_info{type=#group_type{type_id=TypeName}}, Schema);
+				false ->
+					{type, Line, any, []}
+					%or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]})
+			end
+	end;
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
-	or_undefined(Line, {type, Line, list, [field_type(Line, #field_info{type=Inner}, Schema)]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={text, TextType}}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
+	or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]});
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={text, TextType}}}, _Schema) ->
 	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, binary, []})]});
-field_type(Line, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!
-	or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});
-field_type(Line, #field_info{type=#group_type{type_id=TypeId}}, Schema) ->
+	{type, Line, any, []};
+	%or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});
+field_type(Line, RecordName, #field_info{type=#group_type{type_id=TypeId}}, Schema) ->
 	case is_union(TypeId, Schema) of
 		true ->
 			UnionFields = find_tag_fields(TypeId, Schema),
-			{type, Line, union, [ {type, Line, tuple, [make_atom(Line, Name), field_type(Line, Field, Schema)]} || Field=#field_info{name=Name} <- UnionFields ]};
+			{type, Line, union, [ {type, Line, tuple, [make_atom(Line, Name), field_type(Line, RecordName, Field, Schema)]} || Field=#field_info{name=Name} <- UnionFields ]};
 		false ->
-			{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
-	end.
+			{type, Line, any, []}
+			%{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
+	end;
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=unknown}, default=null_pointer}, _Schema) ->
+	{atom, Line, undefined}.
 
 generate_record_def(Line, TypeId, RecordFields, Schema) ->
 	RecordName = record_name(TypeId, Schema),
-	{attribute, Line, record, {RecordName, [{typed_record_field, {record_field, Line, {atom, Line, field_name(Info)}}, field_type(Line, Info, Schema)} || Info=#field_info{} <- RecordFields]}}.
+	{attribute, Line, record, {RecordName, [{typed_record_field, {record_field, Line, {atom, Line, field_name(Info)}}, field_type(Line, RecordName, Info, Schema)} || Info=#field_info{} <- RecordFields]}}.
 
 append(A, B) -> to_list(A) ++ to_list(B).
 
@@ -884,6 +908,8 @@ struct_pointer_header(DWords, PWords) ->
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
 	EncodeFun = make_atom(Line, append("encode_", TypeName)),
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun], VarName, Line);
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=unknown}, VarName, Line) ->
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_anyPointer_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=text}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_text_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Line) ->
@@ -965,6 +991,20 @@ ast_encode_data_(
 			MainData = [ValueToEncode, <<0:((-DataLen band 7)*8)/unsigned-little-integer>>],
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 7) bsr 3);
+		ValueToEncode =:= undefined ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd
+	end.
+
+-ast_fragment2([]).
+ast_encode_anyPointer_(
+		{in, [OldOffsetFromEnd, _OffsetToEnd, ValueToEncode]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, []}
+	) ->
+	if
 		ValueToEncode =:= undefined ->
 			ExtraData = <<>>,
 			MainData = [],
@@ -1260,6 +1300,9 @@ type_info(TypeClass, TypeDescription, _Schema) ->
 
 schema_lookup({anonunion, TypeId}, Schema) ->
 	schema_lookup(TypeId, Schema);
+schema_lookup(Name, Schema) when is_binary(Name) ->
+	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
+	schema_lookup(TypeId, Schema);
 schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
 	dict:fetch(TypeId, Schema#capnp_context.by_id).
 
@@ -1277,7 +1320,7 @@ enumerant_names(TypeId, Schema) ->
 node_name({anonunion, TypeId}, Schema) ->
 	{Name, DWords, PWords} = node_name(TypeId, Schema),
 	{<<Name/binary, $.>>, DWords, PWords};
-node_name(TypeId, Schema) when is_integer(TypeId) ->
+node_name(TypeId, Schema) ->
 	#'capnp::namespace::Node'{
 		displayName=Name,
 		''={{1, struct},
