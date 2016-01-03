@@ -87,7 +87,7 @@ id(X) -> X.
 'decode_capnp::namespace::Node::::interface'(_, _) ->
 	% Not in schema.
 	{'decode_capnp::namespace::Node::::interface'}.
-'decode_capnp::namespace::Node::::const'(_, [_, _, _, Type, Value]) ->
+'decode_capnp::namespace::Node::::const'(_, [_, _, _, Type, Value|_]) ->
 	#'capnp::namespace::Node::::const'{
 		type='decode_capnp::namespace::Type'(Type),
 		value='decode_capnp::namespace::Value'(Value)

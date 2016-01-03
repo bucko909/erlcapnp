@@ -171,6 +171,8 @@ do_job({generate_text, TextType}, _Schema) ->
 	generate_text();
 do_job(generate_follow_struct_pointer, _Schema) ->
 	generate_follow_struct_pointer();
+do_job({generate_follow_text_pointer, Type}, _Schema) ->
+	generate_follow_text_pointer(Type);
 do_job(generate_follow_struct_list_pointer, _Schema) ->
 	generate_follow_struct_list_pointer();
 do_job({generate_follow_primitive_list_pointer, Type}, _Schema) ->
@@ -293,12 +295,13 @@ generate_basic(TypeId, Schema) ->
 	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
-	ExtraText = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraTextList = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra={primitive, N=#native_type{}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
 
-	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
+	Jobs = RawEncodersNeeded ++ UnionEncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraTextList ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
 
 	{ [], [], Jobs }.
 
@@ -462,6 +465,28 @@ generate_follow_struct_pointer() ->
 				Bits = (DWords + PWords) bsl 6,
 				<<_:SkipBits, Binary:Bits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
 				DecodeFun(Binary, NewMessageRef)
+		end
+	),
+	{ [], [FunDef], [] }.
+
+generate_follow_text_pointer(Type) ->
+	{Name, Trail} = case Type of
+		text -> {follow_text_pointer, ast(1)};
+		data -> {follow_data_pointer, ast(0)}
+	end,
+	FunDef = ast_function(
+		quote(Name),
+		fun
+			(0, _) ->
+				undefined;
+			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 2 ->
+				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				Offset = MessageRef#message_ref.current_offset + PointerOffset,
+				SkipBits = Offset bsl 6,
+				Length = (PointerInt bsr 35) - quote(Trail),
+				MessageBits = Length bsl 3,
+				<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
+				ListData
 		end
 	),
 	{ [], [FunDef], [] }.
@@ -1141,6 +1166,10 @@ decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeNa
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
+decoder(#ptr_type{type=text_or_data, type=text}, Var, _Line, MessageRef, _Schema) ->
+	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
+decoder(#ptr_type{type=text_or_data, type=data}, Var, _Line, MessageRef, _Schema) ->
+	ast(follow_data_pointer(quote(Var), quote(MessageRef)));
 decoder(#group_type{type_id=TypeId}, _Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	ast((quote(Decoder))(All, quote(MessageRef)));
