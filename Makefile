@@ -1,7 +1,12 @@
 all:
 	make contrib_r
+	sleep 1
 	mkdir -p ebin
-	erlc -pa contrib/uberpt/ebin -o ebin -I include src/*.erl
+	erlc -pa contrib/uberpt/ebin -o ebin -I include src/capnp_compile.erl
+	erlc -o ebin -I include src/capnp_schema.erl
+	erlc -o ebin -I include src/capnp_raw.erl
+	erlc -o ebin -I include src/capnp_compile_tests.erl
+	erlc -o ebin -I include src/test_capnp.erl
 
 contrib_r:
 	$(MAKE) -C contrib

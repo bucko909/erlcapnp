@@ -7,6 +7,7 @@
 -include_lib("capnp.hrl").
 -include_lib("capnp_raw.hrl").
 -include_lib("capnp_bootstrap.hrl").
+-include_lib("capnp_schema.hrl").
 
 -export([
 		to_ast/1,
@@ -65,9 +66,32 @@ header_only(SchemaFile, ModuleName) ->
 	Forms = [{attribute,1,file,{IncludeFileName,1}}] ++ Recs ++ [{eof,0}],
 	format_erl(Forms).
 
+massage_name(Name, Filename) ->
+	String = binary_to_list(Name),
+	case {String == Filename, lists:prefix(Filename, String)} of
+		{false, true} ->
+			list_to_binary(lists:sublist(String, length(Filename) + 2, length(String) - length(Filename) - 1));
+		_ ->
+			Name
+	end.
+
+make_objdict(#'schema.capnp:CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
+	MassagedNodes = [ X#'schema.capnp:Node'{displayName=massage_name(Name, Filename)} || X=#'schema.capnp:Node'{displayName=Name} <- Nodes ],
+	ById = dict:from_list([{Id, Node} || Node=#'schema.capnp:Node'{id=Id} <- MassagedNodes ]),
+	NameToId = dict:from_list([{Name, Id} || #'schema.capnp:Node'{id=Id, displayName=Name} <- MassagedNodes ]),
+	#capnp_context{
+		by_id = ById,
+		name_to_id = NameToId
+	}.
+
+load_raw(Filename) ->
+	{ok, Raw} = file:read_file(Filename),
+	{Schema, <<>>} = capnp_schema:'decode_schema.capnp:CodeGeneratorRequest'(Raw),
+	make_objdict(Schema, Filename).
+
 to_ast(SchemaFile) when is_list(SchemaFile) ->
-	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
-	Tasks = [ {generate_name, Name} || {_, #'capnp::namespace::Node'{''={{1, struct}, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
+	Schema = load_raw(SchemaFile),
+	Tasks = [ {generate_name, Name} || {_, #'schema.capnp:Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
 	to_ast([ generate_decode_envelope_fun | Tasks ], Schema).
 
 to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
@@ -217,9 +241,10 @@ find_tag_fields(TypeId, Schema) ->
 	lists:filter(fun has_discriminant/1, find_fields(TypeId, Schema)).
 
 find_anon_union(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				discriminantCount=DiscriminantCount
 			}
 		}
@@ -232,9 +257,10 @@ find_anon_union(TypeId, Schema) ->
 	end.
 
 find_fields(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				fields=Fields
 			}
 		}
@@ -246,14 +272,15 @@ is_union(TypeId, Schema) ->
 	find_notag_fields(TypeId, Schema) == [] andalso find_tag_fields(TypeId, Schema) /= [].
 
 is_group(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				isGroup=IsGroup
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
-	case IsGroup of 0 -> false; 1 -> true end.
+	IsGroup.
 
 generate_basic(TypeId, Schema) ->
 	IsGroup = is_group(TypeId, Schema),
@@ -662,9 +689,10 @@ generate_text() ->
 	{[], [Func], []}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -695,9 +723,10 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	).
 
 discriminant_field(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				discriminantOffset=DiscriminantOffset
 			}
 		}
@@ -715,9 +744,10 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
 
 generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=#native_type{}}, TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -732,9 +762,10 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 				{nil, Line}
 	]}];
 generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=Type=#ptr_type{}}, TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -750,9 +781,10 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 				to_list(Line, [{var, Line, 'Data1'}, {var, Line, 'Extra1'}])
 	]}];
 generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{discriminant=Discriminant, type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+	#'schema.capnp:Node'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -781,7 +813,7 @@ encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Sch
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
-	EncodePointers = lists:append([ begin undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, #field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ begin io:format("~p~n", [I]), undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, I=#field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
 		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
@@ -1169,7 +1201,7 @@ junkterm(Line, encode) ->
 	{integer, Line, 0}.
 
 % The code we generate to construct data to put into a binary.
-encoder(#native_type{type=void}, void, Var, _Line) ->
+encoder(#native_type{type=void}, undefined, Var, _Line) ->
 	ast(case quote(Var) of undefined -> 0 end);
 encoder(#native_type{type=integer}, 0, Var, _Line) ->
 	Var;
@@ -1177,9 +1209,9 @@ encoder(#native_type{type=integer}, Default, Var, Line) ->
 	ast(quote(Var) bxor quote({integer, Line, Default}));
 encoder(#native_type{type=float}, 0.0, Var, _Line) ->
 	Var;
-encoder(#native_type{type=boolean}, 0, Var, _Line) ->
+encoder(#native_type{type=boolean}, false, Var, _Line) ->
 	ast(case quote(Var) of false -> 0; true -> 1 end);
-encoder(#native_type{type=boolean}, 1, Var, _Line) ->
+encoder(#native_type{type=boolean}, true, Var, _Line) ->
 	ast(case quote(Var) of false -> 1; true -> 0 end);
 encoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line) ->
 	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N bxor Default, Elt}, N+1} end, 0, Enumerants),
@@ -1199,8 +1231,7 @@ decoder(#native_type{type=integer}, Default, Var, Line, _MessageRef, _Schema) ->
 decoder(#native_type{type=float}, 0.0, Var, _Line, _MessageRef, _Schema) ->
 	% TODO nonzero defaults. They are ugly!
 	Var;
-decoder(#native_type{type=boolean}, DefaultI, Var, Line, _MessageRef, _Schema) ->
-	Default = DefaultI =:= 1,
+decoder(#native_type{type=boolean}, Default, Var, Line, _MessageRef, _Schema) ->
 	ZeroValue = {atom, Line, Default},
 	OneValue = {atom, Line, not Default},
 	ast(case quote(Var) of 0 -> quote(ZeroValue); 1 -> quote(OneValue) end);
@@ -1229,14 +1260,15 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
-field_info(#'capnp::namespace::Field'{
+field_info(#'schema.capnp:Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,
-		''={{0,slot},
-			#'capnp::namespace::Field::::slot'{
+		''={
+			slot,
+			#'schema.capnp:Field.slot'{
 				offset=N,
-				defaultValue=#'capnp::namespace::Value'{''={{_,TypeClass},DefaultValue}},
-				type=Type=#'capnp::namespace::Type'{''={{_,TypeClass},_TypeDescription}}
+				defaultValue={TypeClass, DefaultValue},
+				type=Type={TypeClass, _TypeDescription}
 			}
 		}
 	}, Schema) ->
@@ -1248,14 +1280,13 @@ field_info(#'capnp::namespace::Field'{
 		_ ->
 			Size * N
 	end,
-	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of null_pointer -> undefined; _ -> DefaultValue end};
-field_info(#'capnp::namespace::Field'{
+	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of not_implemented -> undefined; _ -> DefaultValue end};
+field_info(#'schema.capnp:Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,
-		''={{1,group},
-			#'capnp::namespace::Field::::group'{
-				typeId=TypeId
-			}
+		''={
+			group,
+			TypeId
 		}
 	}, Schema) ->
 	Fields = find_fields(TypeId, Schema),
@@ -1272,45 +1303,45 @@ field_info(#'capnp::namespace::Field'{
 			#field_info{offset=undefined, type=#group_type{type_id=TypeId}, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end}
 	end.
 
-type_info(#'capnp::namespace::Type'{''={{_,TypeClass},TypeDescription}}, Schema) ->
+type_info({TypeClass, TypeDescription}, Schema) ->
 	type_info(TypeClass, TypeDescription, Schema).
 
 % Pointer types (composite/list)
-type_info(TextType, void, _Schema) when TextType =:= text; TextType =:= data ->
+type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= data ->
 	{64, #ptr_type{type=text_or_data, extra=TextType}};
-type_info(anyPointer, void, _Schema) ->
+type_info(anyPointer, undefined, _Schema) ->
 	{64, #ptr_type{type=unknown}}; % Not really possible
-type_info(struct, #'capnp::namespace::Type::::struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(struct, #'schema.capnp:Type.struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,enum},#'capnp::namespace::Type::::enum'{typeId=TypeId}}}}, Schema) ->
+type_info(list, {enum, #'schema.capnp:Type.enum'{typeId=TypeId}}, Schema) ->
 	% List of enums.
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,TextType},void}}}, _Schema) when TextType =:= text; TextType =:= data ->
+type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	{64, #ptr_type{type=list, extra={text, TextType}}};
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PrimitiveType},void}}}, _Schema) ->
-	% List of any normal primitive type.
-	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
-type_info(list, #'capnp::namespace::Type::::list'{elementType=#'capnp::namespace::Type'{''={{_,PtrType},_LTypeDescription}}}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+type_info(list, {PtrType, _LTypeDescription}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
 	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 	erlang:error({not_implemented, list, list}); % TODO
-type_info(list, #'capnp::namespace::Type::::list'{elementType=InnerType=#'capnp::namespace::Type'{''={{_,struct},_}}}, Schema) ->
+type_info(list, {PrimitiveType, undefined}, _Schema) ->
+	% List of any normal primitive type.
+	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
+type_info(list, InnerType={struct, _}, Schema) ->
 	% List of structs.
 	% These will be encoded in-line.
 	{64, TypeInfo} = type_info(InnerType, Schema),
 	{64, #ptr_type{type=list, extra={struct, TypeInfo}}};
-type_info(list, #'capnp::namespace::Type'{''={{_,anyPointer},void}}, _Schema) ->
+type_info(list, {anyPointer, undefined}, _Schema) ->
 	erlang:error({not_implemented, list, anyPointer}); % TODO
-type_info(list, #'capnp::namespace::Type'{''={{_,interface},_LTypeId}}, _Schema) ->
+type_info(list, {interface,_LTypeId}, _Schema) ->
 	erlang:error({not_implemented, list, interface}); % TODO
 % TODO decoders for pointers.
 % Data types
-type_info(enum, #'capnp::namespace::Type::::enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(enum, #'schema.capnp:Type.enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
-type_info(TypeClass, void, _Schema) ->
+type_info(TypeClass, undefined, _Schema) ->
 	Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
 	{Size1, Info1};
 % Catchall
@@ -1328,23 +1359,23 @@ schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
 
 
 enumerant_names(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
-		''={{2, enum},
-			#'capnp::namespace::Node::::enum'{
-				enumerants=Enumerants
-			}
+	#'schema.capnp:Node'{
+		''={
+			enum,
+			Enumerants
 		}
 	} = schema_lookup(TypeId, Schema),
-	[ to_atom(EName) || #'capnp::namespace::Enumerant'{name=EName} <- Enumerants ].
+	[ to_atom(EName) || #'schema.capnp:Enumerant'{name=EName} <- Enumerants ].
 
 node_name({anonunion, TypeId}, Schema) ->
 	{Name, DWords, PWords} = node_name(TypeId, Schema),
 	{<<Name/binary, $.>>, DWords, PWords};
 node_name(TypeId, Schema) ->
-	#'capnp::namespace::Node'{
+	#'schema.capnp:Node'{
 		displayName=Name,
-		''={{1, struct},
-			#'capnp::namespace::Node::::struct'{
+		''={
+			struct,
+			#'schema.capnp:Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
