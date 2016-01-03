@@ -300,14 +300,14 @@ generate_basic(TypeId, Schema) ->
 			[]
 	end,
 
-	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_fields(TypeId, Schema) ],
+	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_fields(TypeId, Schema) ],
 	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
-	ExtraTextList = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_notag_pointer_fields(TypeId, Schema) ],
-	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra={primitive, N=#native_type{}}}} <- find_notag_pointer_fields(TypeId, Schema) ],
+	ExtraTextList = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_fields(TypeId, Schema) ],
+	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_fields(TypeId, Schema) ],
+	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_fields(TypeId, Schema) ],
+	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_fields(TypeId, Schema) ],
+	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra={primitive, N=#native_type{}}}} <- find_fields(TypeId, Schema) ],
 
 	Jobs = EncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraTextList ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
 
