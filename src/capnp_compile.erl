@@ -371,7 +371,7 @@ field_type(Line, RecordName, #field_info{type=#group_type{type_id=TypeId}}, Sche
 			{type, Line, any, []}
 			%{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
 	end;
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=unknown}, default=null_pointer}, _Schema) ->
+field_type(Line, RecordName, #field_info{type=#ptr_type{type=unknown}, default=undefined}, _Schema) ->
 	{atom, Line, undefined}.
 
 generate_record_def(Line, TypeId, RecordFields, Schema) ->
@@ -1228,7 +1228,7 @@ field_info(#'capnp::namespace::Field'{
 		}
 	}, Schema) ->
 	{Size, Info} = type_info(Type, Schema),
-	#field_info{offset=Size*N, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=DefaultValue};
+	#field_info{offset=Size*N, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of null_pointer -> undefined; _ -> DefaultValue end};
 field_info(#'capnp::namespace::Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,
