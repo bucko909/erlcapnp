@@ -404,7 +404,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
 			Matcher = {bin, Line, DataMatcher ++ PtrMatcher},
 			Body = {record, Line, record_name(TypeId, Schema),
-				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, var_p(Line, "Var", FieldName), Line, message_ref(Line, DWords, Info), Schema)} || Info=#field_info{name=FieldName, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Line, DWords, Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 			},
 			ast_function(quote(decoder_name(TypeId, Schema)), fun (All=quote(Matcher), MessageRef) -> quote(Body) end);
 		true ->
@@ -422,16 +422,16 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			ast_function(quote(decoder_name(TypeId, Schema)), fun (Body, MessageRef) -> quote(Matcher), quote(Decoder) end)
 	end.
 
-generate_union_decoder(Line, DWords, #field_info{name=Name, type=#group_type{type_id=TypeId}}, Schema) ->
+generate_union_decoder(Line, DWords, #field_info{name=Name, default=undefined, type=#group_type{type_id=TypeId}}, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	[
 		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Body, MessageRef)})
 	];
-generate_union_decoder(Line, DWords, Field=#field_info{name=Name, type=Type}, Schema) ->
+generate_union_decoder(Line, DWords, Field=#field_info{name=Name, default=Default, type=Type}, Schema) ->
 	Var = ast(Var),
 	[
 		ast(quote(generate_union_matcher(Line, DWords, Field, Schema)) = Body),
-		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Var, Line, message_ref(Line, DWords, Field), Schema))})
+		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Default, Var, Line, message_ref(Line, DWords, Field), Schema))})
 	].
 
 generate_union_matcher(Line, _DWords, #field_info{offset=Offset, type=Type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
@@ -702,7 +702,7 @@ discriminant_field(TypeId, Schema) ->
 			}
 		}
 	} = schema_lookup(TypeId, Schema),
-	#field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16)}.
+	#field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16), default=0}.
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
@@ -781,7 +781,7 @@ encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Sch
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
-	EncodePointers = lists:append([ ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) || {N, #field_info{offset=Offset, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ begin undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, #field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
 		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
@@ -923,7 +923,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 	% I can't << X || ... >> is invalid syntax, and << <<X>> || ... >> doesn't let me specify encoding types, so I
 	% have to write the whole comprehension by hand! Woe!
 	MatchVar = var_p(Line, "Var", VarName),
-	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
+	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, undefined, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
 	EncodeFun = make_atom(Line, append("encode_", TypeName)),
@@ -1117,13 +1117,13 @@ var_p(Line, Prepend, Value) ->
 % Need to be careful to gather bit-size elements /backwards/ inside each byte.
 % Ignore for now.
 % Also support only ints for now.
-generate_data_binary(DesiredOffset, [#field_info{override=Override, offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction, DWords) ->
+generate_data_binary(DesiredOffset, [#field_info{override=Override, default=Default, offset=DesiredOffset, type=Type=#native_type{width=Size, binary_options=BinType}, name=Name}|Rest], Direction, DWords) ->
 	% Match an integer.
 	Line = 0, % TODO
 	RawVar = if Override =:= undefined -> var_p(Line, "Var", Name); true -> Override end,
 	Var = case Direction of
 		encode ->
-			encoder(Type, RawVar, Line);
+			encoder(Type, Default, RawVar, Line);
 		decode ->
 			RawVar
 	end,
@@ -1169,51 +1169,64 @@ junkterm(Line, encode) ->
 	{integer, Line, 0}.
 
 % The code we generate to construct data to put into a binary.
-encoder(#native_type{type=integer}, Var, _Line) ->
+encoder(#native_type{type=void}, void, Var, _Line) ->
+	ast(case quote(Var) of undefined -> 0 end);
+encoder(#native_type{type=integer}, 0, Var, _Line) ->
 	Var;
-encoder(#native_type{type=void}, Var, Line) ->
-	{'if',Line,[{clause,Line,[],[[{op, Line, '=:=', Var, {atom, Line, undefined}}]],[{integer,Line,0}]}]};
-encoder(#native_type{type=float}, Var, _Line) ->
+encoder(#native_type{type=integer}, Default, Var, Line) ->
+	ast(quote(Var) bxor quote({integer, Line, Default}));
+encoder(#native_type{type=float}, 0.0, Var, _Line) ->
 	Var;
-encoder(#native_type{type=boolean}, Var, Line) ->
-	{'if',Line,[{clause,Line,[],[[Var]],[{integer,Line,1}]},{clause,Line,[],[[{atom,Line,true}]],[{integer,Line,0}]}]};
-encoder(#native_type{type=enum, extra=Enumerants}, Var, Line) ->
-	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N, Elt}, N+1} end, 0, Enumerants),
+encoder(#native_type{type=boolean}, 0, Var, _Line) ->
+	ast(case quote(Var) of false -> 0; true -> 1 end);
+encoder(#native_type{type=boolean}, 1, Var, _Line) ->
+	ast(case quote(Var) of false -> 1; true -> 0 end);
+encoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line) ->
+	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N bxor Default, Elt}, N+1} end, 0, Enumerants),
 	% case Var of V1 -> 0; ... end
 	{'case', Line, Var, [{clause, Line, [{atom, Line, Name}], [], [{integer, Line, Number}]} || {Number, Name} <- Numbered ]};
-encoder(#ptr_type{}, Var, _Line) ->
+encoder(#ptr_type{}, undefined, Var, _Line) ->
 	Var.
 
 % The code we generate after matching a binary to put data into a record.
-decoder(#native_type{type=void}, _Var, _Line, _MessageRef, _Schema) ->
+decoder(#native_type{type=void}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(undefined);
-decoder(#native_type{type=integer}, Var, _Line, _MessageRef, _Schema) ->
+decoder(#native_type{type=integer}, 0, Var, _Line, _MessageRef, _Schema) ->
+	% Special case for neater code.
 	Var;
-decoder(#native_type{type=float}, Var, _Line, _MessageRef, _Schema) ->
+decoder(#native_type{type=integer}, Default, Var, Line, _MessageRef, _Schema) ->
+	ast(quote(Var) bxor quote({integer, Line, Default}));
+decoder(#native_type{type=float}, 0.0, Var, _Line, _MessageRef, _Schema) ->
+	% TODO nonzero defaults. They are ugly!
 	Var;
-decoder(#native_type{type=boolean}, Var, Line, _MessageRef, _Schema) ->
-	{'if',Line,[{clause,Line,[],[[{op,Line,'=:=',Var,{integer,Line,1}}]],[{atom,Line,true}]},{clause,Line,[],[[{atom,Line,true}]],[{atom,Line,false}]}]};
-decoder(#native_type{type=enum, extra=Enumerants}, Var, Line, _MessageRef, _Schema) ->
+decoder(#native_type{type=boolean}, DefaultI, Var, Line, _MessageRef, _Schema) ->
+	Default = DefaultI =:= 1,
+	ZeroValue = {atom, Line, Default},
+	OneValue = {atom, Line, not Default},
+	ast(case quote(Var) of 0 -> quote(ZeroValue); 1 -> quote(OneValue) end);
+decoder(#native_type{type=enum, extra=Enumerants}, 0, Var, Line, _MessageRef, _Schema) ->
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
-	% erlang:element(Var+1, {V1, ...})
-	{call,Line,{remote,Line,{atom,Line,erlang},{atom,Line,element}},[{op,Line,'+',Var,{integer,14,1}},Tuple]};
-decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, Var, Line, MessageRef, _Schema) ->
+	ast(element(quote(Var) + 1, quote(Tuple)));
+decoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line, _MessageRef, _Schema) ->
+	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
+	ast(element((quote(Var) bxor quote({integer, Line, Default})) + 1, quote(Tuple)));
+decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, Var, Line, MessageRef, Schema) ->
+decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, Var, Line, MessageRef, Schema) ->
+decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=text_or_data, extra=text}, Var, _Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=text_or_data, extra=text}, undefined, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=text_or_data, extra=data}, Var, _Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=text_or_data, extra=data}, undefined, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_data_pointer(quote(Var), quote(MessageRef)));
-decoder(#group_type{type_id=TypeId}, _Var, Line, MessageRef, Schema) ->
+decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	ast((quote(Decoder))(All, quote(MessageRef)));
-decoder(#ptr_type{}, _Var, _Line, _MessageRef, _Schema) ->
+decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
 field_info(#'capnp::namespace::Field'{
