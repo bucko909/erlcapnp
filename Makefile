@@ -5,3 +5,8 @@ all:
 
 contrib_r:
 	$(MAKE) -C contrib
+
+bootstrap:
+	make all
+	erl -noshell -pa ebin -eval 'file:write_file("include/capnp_schema.hrl", capnp_compile:header_only("data/schema.raw", capnp_schema))' -s erlang halt
+	erl -noshell -pa ebin -eval 'file:write_file("src/capnp_schema.erl", capnp_compile:source_with_include("data/schema.raw", capnp_schema, "include"))' -s erlang halt
