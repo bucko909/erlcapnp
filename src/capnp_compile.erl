@@ -1206,9 +1206,9 @@ decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeNa
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=text_or_data, type=text}, Var, _Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=text_or_data, extra=text}, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=text_or_data, type=data}, Var, _Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=text_or_data, extra=data}, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_data_pointer(quote(Var), quote(MessageRef)));
 decoder(#group_type{type_id=TypeId}, _Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
