@@ -26,6 +26,9 @@
 -record(ptr_type, {type, extra}).
 -record(group_type, {type_id}).
 
+% We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
+% When passed to internal_decode_X, it's the start of the pointer words section.
+
 -compile({parse_transform, uberpt}).
 
 load_directly(SchemaFile, ModuleName) ->
@@ -951,7 +954,7 @@ encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Sch
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
-	EncodePointers = lists:append([ begin io:format("~p~n", [I]), undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, I=#field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ begin undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, I=#field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
 		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
