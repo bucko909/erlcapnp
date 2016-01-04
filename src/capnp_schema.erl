@@ -44,7 +44,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Annotation'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Annotation'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -52,7 +52,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Brand'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -60,7 +60,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Brand.Binding'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -68,7 +68,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Brand.Scope'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -76,7 +76,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Brand.Scope.'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope.'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope.'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -84,7 +84,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:CodeGeneratorRequest'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -92,7 +92,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -100,7 +100,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -108,7 +108,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Enumerant'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Enumerant'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -116,7 +116,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Field'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -124,7 +124,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Field.'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -132,7 +132,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Field.group'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.group'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.group'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -140,7 +140,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Field.ordinal'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.ordinal'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.ordinal'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -148,7 +148,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Field.slot'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.slot'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.slot'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -156,7 +156,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Method'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Method'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Method'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -164,7 +164,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -172,7 +172,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -180,7 +180,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.NestedNode'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -188,7 +188,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.Parameter'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -196,7 +196,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.annotation'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.annotation'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.annotation'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -204,7 +204,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.const'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.const'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.const'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -212,7 +212,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.enum'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.enum'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.enum'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -220,7 +220,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.interface'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.interface'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.interface'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -228,7 +228,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Node.struct'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.struct'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.struct'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -236,7 +236,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Superclass'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Superclass'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Superclass'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -244,7 +244,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -252,7 +252,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.anyPointer'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -260,7 +260,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -268,7 +268,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.anyPointer.parameter'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.parameter'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.parameter'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -276,7 +276,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.enum'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.enum'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.enum'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -284,7 +284,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.interface'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.interface'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.interface'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -292,7 +292,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.list'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.list'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.list'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -300,7 +300,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Type.struct'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.struct'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.struct'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -308,7 +308,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
 'decode_schema.capnp:Value'(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/2,
+        follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
                               Ptr,
                               MessageRef),
     {Decoded,Dregs}.
@@ -318,15 +318,21 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     SkipBits = Offset * 64,
     <<_:SkipBits,Rest/binary>> = MessageRef#message_ref.current_segment,
     Words = DWords + PWords,
-    Bits = Words * 64,
+    DBits = DWords * 64,
+    PBits = PWords * 64,
     {_,ListR} =
         lists:foldl(fun(N, {OldRest,Acc}) ->
-                           <<ThisData:Bits/bitstring,NewRest/binary>> =
+                           <<ThisData:DBits/bitstring,
+                             ThisPointers:PBits/bitstring,
+                             NewRest/binary>> =
                                OldRest,
                            New =
                                DecodeFun(ThisData,
+                                         ThisPointers,
                                          MessageRef#message_ref{current_offset =
                                                                     Offset
+                                                                    +
+                                                                    DWords
                                                                     +
                                                                     Words
                                                                     *
@@ -2773,14 +2779,16 @@ follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     when PointerInt band 3 == 0 ->
     PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
     NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-    NewMessageRef = MessageRef#message_ref{current_offset = NewOffset},
     DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
     PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
+    NewMessageRef =
+        MessageRef#message_ref{current_offset = NewOffset + DWords},
     SkipBits = NewOffset bsl 6,
-    Bits = DWords + PWords bsl 6,
-    <<_:SkipBits,Binary:Bits/bitstring,_/binary>> =
+    DBits = DWords bsl 6,
+    PBits = PWords bsl 6,
+    <<_:SkipBits,Data:DBits/bitstring,Pointers:PBits/bitstring,_/binary>> =
         MessageRef#message_ref.current_segment,
-    DecodeFun(Binary, NewMessageRef).
+    DecodeFun(Data, Pointers, NewMessageRef).
 
 follow_tagged_struct_list_pointer(DecodeFun, 0, MessageRef) ->
     undefined;
@@ -2817,118 +2825,245 @@ follow_text_pointer(PointerInt, MessageRef)
         MessageRef#message_ref.current_segment,
     ListData.
 
-'internal_decode_schema.capnp:Annotation'(All =
-                                              <<Varid:64/little-unsigned-integer,
-                                                Varvalue:64/little-unsigned-integer,
+'internal_decode_schema.capnp:Annotation'(Data =
+                                              <<Varid:64/little-unsigned-integer>>,
+                                          Pointers =
+                                              <<Varvalue:64/little-unsigned-integer,
                                                 Varbrand:64/little-unsigned-integer>>,
                                           MessageRef) ->
     #'schema.capnp:Annotation'{id = Varid,
                                value =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
                                                          Varvalue,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    1
-                                                                                    +
                                                                                     0}),
                                brand =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                          Varbrand,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    1
-                                                                                    +
-                                                                                    1})}.
+                                                                                    1})};
+'internal_decode_schema.capnp:Annotation'(Data, Pointers, MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 128 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:128/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Annotation'(PaddedData,
+                                              PaddedPointers,
+                                              MessageRef).
 
-'internal_decode_schema.capnp:Brand'(All =
+'internal_decode_schema.capnp:Brand'(Data = <<>>,
+                                     Pointers =
                                          <<Varscopes:64/little-unsigned-integer>>,
                                      MessageRef) ->
     #'schema.capnp:Brand'{scopes =
-                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/2,
+                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/3,
                                                                 Varscopes,
                                                                 MessageRef#message_ref{current_offset =
                                                                                            MessageRef#message_ref.current_offset
                                                                                            +
-                                                                                           0
-                                                                                           +
-                                                                                           0})}.
+                                                                                           0})};
+'internal_decode_schema.capnp:Brand'(Data, Pointers, MessageRef) ->
+    DataPadLength = 0 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:0/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Brand'(PaddedData,
+                                         PaddedPointers,
+                                         MessageRef).
 
-'internal_decode_schema.capnp:Brand.Binding'(Body, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Brand.Binding'(Data, Pointers, MessageRef) ->
+    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {unbound,undefined};
         1 ->
-            <<_:64,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {type,
-             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                    Var,
                                    MessageRef#message_ref{current_offset =
                                                               MessageRef#message_ref.current_offset
                                                               +
-                                                              1
-                                                              +
                                                               0})}
-    end.
+    end;
+'internal_decode_schema.capnp:Brand.Binding'(Data, Pointers, MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Brand.Binding'(PaddedData,
+                                                 PaddedPointers,
+                                                 MessageRef).
 
-'internal_decode_schema.capnp:Brand.Scope'(All =
+'internal_decode_schema.capnp:Brand.Scope'(Data =
                                                <<VarscopeId:64/little-unsigned-integer,
-                                                 _:64/integer,
                                                  _:64/integer>>,
+                                           Pointers = <<_:64/integer>>,
                                            MessageRef) ->
     #'schema.capnp:Brand.Scope'{scopeId = VarscopeId,
                                 '' =
-                                    'internal_decode_schema.capnp:Brand.Scope.'(All,
-                                                                                MessageRef)}.
+                                    'internal_decode_schema.capnp:Brand.Scope.'(Data,
+                                                                                Pointers,
+                                                                                MessageRef)};
+'internal_decode_schema.capnp:Brand.Scope'(Data, Pointers, MessageRef) ->
+    DataPadLength = 128 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:128/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Brand.Scope'(PaddedData,
+                                               PaddedPointers,
+                                               MessageRef).
 
-'internal_decode_schema.capnp:Brand.Scope.'(Body, MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Brand.Scope.'(Data, Pointers, MessageRef) ->
+    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {bind,
-             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/2,
+             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/3,
                                                Var,
                                                MessageRef#message_ref{current_offset =
                                                                           MessageRef#message_ref.current_offset
                                                                           +
-                                                                          2
-                                                                          +
                                                                           0})};
         1 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {inherit,undefined}
-    end.
+    end;
+'internal_decode_schema.capnp:Brand.Scope.'(Data, Pointers, MessageRef) ->
+    DataPadLength = 128 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:128/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Brand.Scope.'(PaddedData,
+                                                PaddedPointers,
+                                                MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest'(All =
+'internal_decode_schema.capnp:CodeGeneratorRequest'(Data = <<>>,
+                                                    Pointers =
                                                         <<Varnodes:64/little-unsigned-integer,
                                                           VarrequestedFiles:64/little-unsigned-integer>>,
                                                     MessageRef) ->
     #'schema.capnp:CodeGeneratorRequest'{nodes =
-                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node'/2,
+                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node'/3,
                                                                                Varnodes,
                                                                                MessageRef#message_ref{current_offset =
                                                                                                           MessageRef#message_ref.current_offset
                                                                                                           +
-                                                                                                          0
-                                                                                                          +
                                                                                                           0}),
                                          requestedFiles =
-                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/2,
+                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/3,
                                                                                VarrequestedFiles,
                                                                                MessageRef#message_ref{current_offset =
                                                                                                           MessageRef#message_ref.current_offset
                                                                                                           +
-                                                                                                          0
-                                                                                                          +
-                                                                                                          1})}.
+                                                                                                          1})};
+'internal_decode_schema.capnp:CodeGeneratorRequest'(Data,
+                                                    Pointers,
+                                                    MessageRef) ->
+    DataPadLength = 0 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:0/bitstring>> = Data
+    end,
+    PointerPadLength = 128 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:128/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:CodeGeneratorRequest'(PaddedData,
+                                                        PaddedPointers,
+                                                        MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(All =
-                                                                      <<Varid:64/little-unsigned-integer,
-                                                                        Varfilename:64/little-unsigned-integer,
+'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data =
+                                                                      <<Varid:64/little-unsigned-integer>>,
+                                                                  Pointers =
+                                                                      <<Varfilename:64/little-unsigned-integer,
                                                                         Varimports:64/little-unsigned-integer>>,
                                                                   MessageRef) ->
     #'schema.capnp:CodeGeneratorRequest.RequestedFile'{id = Varid,
@@ -2937,22 +3072,43 @@ follow_text_pointer(PointerInt, MessageRef)
                                                                                MessageRef#message_ref{current_offset =
                                                                                                           MessageRef#message_ref.current_offset
                                                                                                           +
-                                                                                                          1
-                                                                                                          +
                                                                                                           0}),
                                                        imports =
-                                                           follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/2,
+                                                           follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/3,
                                                                                              Varimports,
                                                                                              MessageRef#message_ref{current_offset =
                                                                                                                         MessageRef#message_ref.current_offset
                                                                                                                         +
-                                                                                                                        1
-                                                                                                                        +
-                                                                                                                        1})}.
+                                                                                                                        1})};
+'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data,
+                                                                  Pointers,
+                                                                  MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 128 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:128/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(PaddedData,
+                                                                      PaddedPointers,
+                                                                      MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(All =
-                                                                             <<Varid:64/little-unsigned-integer,
-                                                                               Varname:64/little-unsigned-integer>>,
+'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data =
+                                                                             <<Varid:64/little-unsigned-integer>>,
+                                                                         Pointers =
+                                                                             <<Varname:64/little-unsigned-integer>>,
                                                                          MessageRef) ->
     #'schema.capnp:CodeGeneratorRequest.RequestedFile.Import'{id = Varid,
                                                               name =
@@ -2960,14 +3116,37 @@ follow_text_pointer(PointerInt, MessageRef)
                                                                                       MessageRef#message_ref{current_offset =
                                                                                                                  MessageRef#message_ref.current_offset
                                                                                                                  +
-                                                                                                                 1
-                                                                                                                 +
-                                                                                                                 0})}.
+                                                                                                                 0})};
+'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data,
+                                                                         Pointers,
+                                                                         MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(PaddedData,
+                                                                             PaddedPointers,
+                                                                             MessageRef).
 
-'internal_decode_schema.capnp:Enumerant'(All =
+'internal_decode_schema.capnp:Enumerant'(Data =
                                              <<VarcodeOrder:16/little-unsigned-integer,
-                                               _:48/integer,
-                                               Varname:64/little-unsigned-integer,
+                                               _:48/integer>>,
+                                         Pointers =
+                                             <<Varname:64/little-unsigned-integer,
                                                Varannotations:64/little-unsigned-integer>>,
                                          MessageRef) ->
     #'schema.capnp:Enumerant'{codeOrder = VarcodeOrder,
@@ -2976,24 +3155,43 @@ follow_text_pointer(PointerInt, MessageRef)
                                                       MessageRef#message_ref{current_offset =
                                                                                  MessageRef#message_ref.current_offset
                                                                                  +
-                                                                                 1
-                                                                                 +
                                                                                  0}),
                               annotations =
-                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/2,
+                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
                                                                     Varannotations,
                                                                     MessageRef#message_ref{current_offset =
                                                                                                MessageRef#message_ref.current_offset
                                                                                                +
-                                                                                               1
-                                                                                               +
-                                                                                               1})}.
+                                                                                               1})};
+'internal_decode_schema.capnp:Enumerant'(Data, Pointers, MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 128 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:128/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Enumerant'(PaddedData,
+                                             PaddedPointers,
+                                             MessageRef).
 
-'internal_decode_schema.capnp:Field'(All =
+'internal_decode_schema.capnp:Field'(Data =
                                          <<VarcodeOrder:16/little-unsigned-integer,
                                            VardiscriminantValue:16/little-unsigned-integer,
-                                           _:160/integer,
-                                           Varname:64/little-unsigned-integer,
+                                           _:160/integer>>,
+                                     Pointers =
+                                         <<Varname:64/little-unsigned-integer,
                                            Varannotations:64/little-unsigned-integer,
                                            _:128/integer>>,
                                      MessageRef) ->
@@ -3005,61 +3203,150 @@ follow_text_pointer(PointerInt, MessageRef)
                                                   MessageRef#message_ref{current_offset =
                                                                              MessageRef#message_ref.current_offset
                                                                              +
-                                                                             3
-                                                                             +
                                                                              0}),
                           annotations =
-                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/2,
+                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
                                                                 Varannotations,
                                                                 MessageRef#message_ref{current_offset =
                                                                                            MessageRef#message_ref.current_offset
                                                                                            +
-                                                                                           3
-                                                                                           +
                                                                                            1}),
                           '' =
-                              'internal_decode_schema.capnp:Field.'(All,
+                              'internal_decode_schema.capnp:Field.'(Data,
+                                                                    Pointers,
                                                                     MessageRef),
                           ordinal =
-                              'internal_decode_schema.capnp:Field.ordinal'(All,
-                                                                           MessageRef)}.
+                              'internal_decode_schema.capnp:Field.ordinal'(Data,
+                                                                           Pointers,
+                                                                           MessageRef)};
+'internal_decode_schema.capnp:Field'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 256 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:256/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Field'(PaddedData,
+                                         PaddedPointers,
+                                         MessageRef).
 
-'internal_decode_schema.capnp:Field.'(Body, MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Field.'(Data, Pointers, MessageRef) ->
+    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
             {slot,
-             'internal_decode_schema.capnp:Field.slot'(Body, MessageRef)};
+             'internal_decode_schema.capnp:Field.slot'(Data,
+                                                       Pointers,
+                                                       MessageRef)};
         1 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Data,
             {group,Var}
-    end.
+    end;
+'internal_decode_schema.capnp:Field.'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 256 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:256/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Field.'(PaddedData,
+                                          PaddedPointers,
+                                          MessageRef).
 
-'internal_decode_schema.capnp:Field.group'(All =
+'internal_decode_schema.capnp:Field.group'(Data =
                                                <<_:128/integer,
-                                                 VartypeId:64/little-unsigned-integer,
-                                                 _:256/integer>>,
+                                                 VartypeId:64/little-unsigned-integer>>,
+                                           Pointers = <<_:256/integer>>,
                                            MessageRef) ->
-    #'schema.capnp:Field.group'{typeId = VartypeId}.
+    #'schema.capnp:Field.group'{typeId = VartypeId};
+'internal_decode_schema.capnp:Field.group'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 256 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:256/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Field.group'(PaddedData,
+                                               PaddedPointers,
+                                               MessageRef).
 
-'internal_decode_schema.capnp:Field.ordinal'(Body, MessageRef) ->
-    <<_:80,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Field.ordinal'(Data, Pointers, MessageRef) ->
+    <<_:80,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {implicit,undefined};
         1 ->
-            <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {explicit,Var}
-    end.
+    end;
+'internal_decode_schema.capnp:Field.ordinal'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 256 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:256/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Field.ordinal'(PaddedData,
+                                                 PaddedPointers,
+                                                 MessageRef).
 
-'internal_decode_schema.capnp:Field.slot'(All =
+'internal_decode_schema.capnp:Field.slot'(Data =
                                               <<_:32/integer,
                                                 Varoffset:32/little-unsigned-integer,
                                                 _:71/integer,
                                                 VarhadExplicitDefault:1/integer,
-                                                _:56/integer,
-                                                _:128/integer,
+                                                _:56/integer>>,
+                                          Pointers =
+                                              <<_:128/integer,
                                                 Vartype:64/little-unsigned-integer,
                                                 VardefaultValue:64/little-unsigned-integer>>,
                                           MessageRef) ->
@@ -3072,30 +3359,49 @@ follow_text_pointer(PointerInt, MessageRef)
                                            true
                                    end,
                                type =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                                          Vartype,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    3
-                                                                                    +
                                                                                     2}),
                                defaultValue =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
                                                          VardefaultValue,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    3
-                                                                                    +
-                                                                                    3})}.
+                                                                                    3})};
+'internal_decode_schema.capnp:Field.slot'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 256 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:256/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Field.slot'(PaddedData,
+                                              PaddedPointers,
+                                              MessageRef).
 
-'internal_decode_schema.capnp:Method'(All =
+'internal_decode_schema.capnp:Method'(Data =
                                           <<VarcodeOrder:16/little-unsigned-integer,
                                             _:48/integer,
                                             VarparamStructType:64/little-unsigned-integer,
-                                            VarresultStructType:64/little-unsigned-integer,
-                                            Varname:64/little-unsigned-integer,
+                                            VarresultStructType:64/little-unsigned-integer>>,
+                                      Pointers =
+                                          <<Varname:64/little-unsigned-integer,
                                             Varannotations:64/little-unsigned-integer,
                                             VarparamBrand:64/little-unsigned-integer,
                                             VarresultBrand:64/little-unsigned-integer,
@@ -3109,55 +3415,68 @@ follow_text_pointer(PointerInt, MessageRef)
                                                    MessageRef#message_ref{current_offset =
                                                                               MessageRef#message_ref.current_offset
                                                                               +
-                                                                              3
-                                                                              +
                                                                               0}),
                            annotations =
-                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/2,
+                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
                                                                  Varannotations,
                                                                  MessageRef#message_ref{current_offset =
                                                                                             MessageRef#message_ref.current_offset
                                                                                             +
-                                                                                            3
-                                                                                            +
                                                                                             1}),
                            paramBrand =
-                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                      VarparamBrand,
                                                      MessageRef#message_ref{current_offset =
                                                                                 MessageRef#message_ref.current_offset
                                                                                 +
-                                                                                3
-                                                                                +
                                                                                 2}),
                            resultBrand =
-                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                      VarresultBrand,
                                                      MessageRef#message_ref{current_offset =
                                                                                 MessageRef#message_ref.current_offset
                                                                                 +
-                                                                                3
-                                                                                +
                                                                                 3}),
                            implicitParameters =
-                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/2,
+                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
                                                                  VarimplicitParameters,
                                                                  MessageRef#message_ref{current_offset =
                                                                                             MessageRef#message_ref.current_offset
                                                                                             +
-                                                                                            3
-                                                                                            +
-                                                                                            4})}.
+                                                                                            4})};
+'internal_decode_schema.capnp:Method'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 320 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:320/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Method'(PaddedData,
+                                          PaddedPointers,
+                                          MessageRef).
 
-'internal_decode_schema.capnp:Node'(All =
+'internal_decode_schema.capnp:Node'(Data =
                                         <<Varid:64/little-unsigned-integer,
                                           VardisplayNamePrefixLength:32/little-unsigned-integer,
                                           _:32/integer,
                                           VarscopeId:64/little-unsigned-integer,
                                           _:103/integer,
                                           VarisGeneric:1/integer,
-                                          _:24/integer,
-                                          VardisplayName:64/little-unsigned-integer,
+                                          _:24/integer>>,
+                                    Pointers =
+                                        <<VardisplayName:64/little-unsigned-integer,
                                           VarnestedNodes:64/little-unsigned-integer,
                                           Varannotations:64/little-unsigned-integer,
                                           _:128/integer,
@@ -3179,77 +3498,119 @@ follow_text_pointer(PointerInt, MessageRef)
                                                  MessageRef#message_ref{current_offset =
                                                                             MessageRef#message_ref.current_offset
                                                                             +
-                                                                            5
-                                                                            +
                                                                             0}),
                          nestedNodes =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/2,
+                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/3,
                                                                VarnestedNodes,
                                                                MessageRef#message_ref{current_offset =
                                                                                           MessageRef#message_ref.current_offset
                                                                                           +
-                                                                                          5
-                                                                                          +
                                                                                           1}),
                          annotations =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/2,
+                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
                                                                Varannotations,
                                                                MessageRef#message_ref{current_offset =
                                                                                           MessageRef#message_ref.current_offset
                                                                                           +
-                                                                                          5
-                                                                                          +
                                                                                           2}),
                          parameters =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/2,
+                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
                                                                Varparameters,
                                                                MessageRef#message_ref{current_offset =
                                                                                           MessageRef#message_ref.current_offset
                                                                                           +
-                                                                                          5
-                                                                                          +
                                                                                           5}),
                          '' =
-                             'internal_decode_schema.capnp:Node.'(All,
-                                                                  MessageRef)}.
+                             'internal_decode_schema.capnp:Node.'(Data,
+                                                                  Pointers,
+                                                                  MessageRef)};
+'internal_decode_schema.capnp:Node'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node'(PaddedData,
+                                        PaddedPointers,
+                                        MessageRef).
 
-'internal_decode_schema.capnp:Node.'(Body, MessageRef) ->
-    <<_:96,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Node.'(Data, Pointers, MessageRef) ->
+    <<_:96,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {file,undefined};
         1 ->
             {struct,
-             'internal_decode_schema.capnp:Node.struct'(Body,
+             'internal_decode_schema.capnp:Node.struct'(Data,
+                                                        Pointers,
                                                         MessageRef)};
         2 ->
-            <<_:512,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:192,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {enum,
-             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/2,
+             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
                                                Var,
                                                MessageRef#message_ref{current_offset =
                                                                           MessageRef#message_ref.current_offset
                                                                           +
-                                                                          5
-                                                                          +
                                                                           3})};
         3 ->
             {interface,
-             'internal_decode_schema.capnp:Node.interface'(Body,
+             'internal_decode_schema.capnp:Node.interface'(Data,
+                                                           Pointers,
                                                            MessageRef)};
         4 ->
             {const,
-             'internal_decode_schema.capnp:Node.const'(Body, MessageRef)};
+             'internal_decode_schema.capnp:Node.const'(Data,
+                                                       Pointers,
+                                                       MessageRef)};
         5 ->
             {annotation,
-             'internal_decode_schema.capnp:Node.annotation'(Body,
+             'internal_decode_schema.capnp:Node.annotation'(Data,
+                                                            Pointers,
                                                             MessageRef)}
-    end.
+    end;
+'internal_decode_schema.capnp:Node.'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.'(PaddedData,
+                                         PaddedPointers,
+                                         MessageRef).
 
-'internal_decode_schema.capnp:Node.NestedNode'(All =
-                                                   <<Varid:64/little-unsigned-integer,
-                                                     Varname:64/little-unsigned-integer>>,
+'internal_decode_schema.capnp:Node.NestedNode'(Data =
+                                                   <<Varid:64/little-unsigned-integer>>,
+                                               Pointers =
+                                                   <<Varname:64/little-unsigned-integer>>,
                                                MessageRef) ->
     #'schema.capnp:Node.NestedNode'{id = Varid,
                                     name =
@@ -3257,11 +3618,34 @@ follow_text_pointer(PointerInt, MessageRef)
                                                             MessageRef#message_ref{current_offset =
                                                                                        MessageRef#message_ref.current_offset
                                                                                        +
-                                                                                       1
-                                                                                       +
-                                                                                       0})}.
+                                                                                       0})};
+'internal_decode_schema.capnp:Node.NestedNode'(Data,
+                                               Pointers,
+                                               MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.NestedNode'(PaddedData,
+                                                   PaddedPointers,
+                                                   MessageRef).
 
-'internal_decode_schema.capnp:Node.Parameter'(All =
+'internal_decode_schema.capnp:Node.Parameter'(Data = <<>>,
+                                              Pointers =
                                                   <<Varname:64/little-unsigned-integer>>,
                                               MessageRef) ->
     #'schema.capnp:Node.Parameter'{name =
@@ -3269,11 +3653,33 @@ follow_text_pointer(PointerInt, MessageRef)
                                                            MessageRef#message_ref{current_offset =
                                                                                       MessageRef#message_ref.current_offset
                                                                                       +
-                                                                                      0
-                                                                                      +
-                                                                                      0})}.
+                                                                                      0})};
+'internal_decode_schema.capnp:Node.Parameter'(Data,
+                                              Pointers,
+                                              MessageRef) ->
+    DataPadLength = 0 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:0/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.Parameter'(PaddedData,
+                                                  PaddedPointers,
+                                                  MessageRef).
 
-'internal_decode_schema.capnp:Node.annotation'(All =
+'internal_decode_schema.capnp:Node.annotation'(Data =
                                                    <<_:112/integer,
                                                      VartargetsGroup:1/integer,
                                                      VartargetsUnion:1/integer,
@@ -3288,8 +3694,9 @@ follow_text_pointer(PointerInt, MessageRef)
                                                      VartargetsParam:1/integer,
                                                      VartargetsMethod:1/integer,
                                                      VartargetsInterface:1/integer,
-                                                     _:192/integer,
-                                                     _:192/integer,
+                                                     _:192/integer>>,
+                                               Pointers =
+                                                   <<_:192/integer,
                                                      Vartype:64/little-unsigned-integer,
                                                      _:128/integer>>,
                                                MessageRef) ->
@@ -3378,84 +3785,164 @@ follow_text_pointer(PointerInt, MessageRef)
                                                 true
                                         end,
                                     type =
-                                        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+                                        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                                               Vartype,
                                                               MessageRef#message_ref{current_offset =
                                                                                          MessageRef#message_ref.current_offset
                                                                                          +
-                                                                                         5
-                                                                                         +
-                                                                                         3})}.
+                                                                                         3})};
+'internal_decode_schema.capnp:Node.annotation'(Data,
+                                               Pointers,
+                                               MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.annotation'(PaddedData,
+                                                   PaddedPointers,
+                                                   MessageRef).
 
-'internal_decode_schema.capnp:Node.const'(All =
-                                              <<_:320/integer,
-                                                _:192/integer,
+'internal_decode_schema.capnp:Node.const'(Data = <<_:320/integer>>,
+                                          Pointers =
+                                              <<_:192/integer,
                                                 Vartype:64/little-unsigned-integer,
                                                 Varvalue:64/little-unsigned-integer,
                                                 _:64/integer>>,
                                           MessageRef) ->
     #'schema.capnp:Node.const'{type =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                                          Vartype,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    5
-                                                                                    +
                                                                                     3}),
                                value =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
                                                          Varvalue,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    5
-                                                                                    +
-                                                                                    4})}.
+                                                                                    4})};
+'internal_decode_schema.capnp:Node.const'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.const'(PaddedData,
+                                              PaddedPointers,
+                                              MessageRef).
 
-'internal_decode_schema.capnp:Node.enum'(All =
-                                             <<_:320/integer,
-                                               _:192/integer,
+'internal_decode_schema.capnp:Node.enum'(Data = <<_:320/integer>>,
+                                         Pointers =
+                                             <<_:192/integer,
                                                Varenumerants:64/little-unsigned-integer,
                                                _:128/integer>>,
                                          MessageRef) ->
     #'schema.capnp:Node.enum'{enumerants =
-                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/2,
+                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
                                                                     Varenumerants,
                                                                     MessageRef#message_ref{current_offset =
                                                                                                MessageRef#message_ref.current_offset
                                                                                                +
-                                                                                               5
-                                                                                               +
-                                                                                               3})}.
+                                                                                               3})};
+'internal_decode_schema.capnp:Node.enum'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.enum'(PaddedData,
+                                             PaddedPointers,
+                                             MessageRef).
 
-'internal_decode_schema.capnp:Node.interface'(All =
-                                                  <<_:320/integer,
-                                                    _:192/integer,
+'internal_decode_schema.capnp:Node.interface'(Data = <<_:320/integer>>,
+                                              Pointers =
+                                                  <<_:192/integer,
                                                     Varmethods:64/little-unsigned-integer,
                                                     Varsuperclasses:64/little-unsigned-integer,
                                                     _:64/integer>>,
                                               MessageRef) ->
     #'schema.capnp:Node.interface'{methods =
-                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Method'/2,
+                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Method'/3,
                                                                          Varmethods,
                                                                          MessageRef#message_ref{current_offset =
                                                                                                     MessageRef#message_ref.current_offset
                                                                                                     +
-                                                                                                    5
-                                                                                                    +
                                                                                                     3}),
                                    superclasses =
-                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Superclass'/2,
+                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Superclass'/3,
                                                                          Varsuperclasses,
                                                                          MessageRef#message_ref{current_offset =
                                                                                                     MessageRef#message_ref.current_offset
                                                                                                     +
-                                                                                                    5
-                                                                                                    +
-                                                                                                    4})}.
+                                                                                                    4})};
+'internal_decode_schema.capnp:Node.interface'(Data,
+                                              Pointers,
+                                              MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.interface'(PaddedData,
+                                                  PaddedPointers,
+                                                  MessageRef).
 
-'internal_decode_schema.capnp:Node.struct'(All =
+'internal_decode_schema.capnp:Node.struct'(Data =
                                                <<_:112/integer,
                                                  VardataWordCount:16/little-unsigned-integer,
                                                  _:64/integer,
@@ -3466,8 +3953,9 @@ follow_text_pointer(PointerInt, MessageRef)
                                                  _:8/integer,
                                                  VardiscriminantCount:16/little-unsigned-integer,
                                                  VardiscriminantOffset:32/little-unsigned-integer,
-                                                 _:32/integer,
-                                                 _:192/integer,
+                                                 _:32/integer>>,
+                                           Pointers =
+                                               <<_:192/integer,
                                                  Varfields:64/little-unsigned-integer,
                                                  _:128/integer>>,
                                            MessageRef) ->
@@ -3494,211 +3982,440 @@ follow_text_pointer(PointerInt, MessageRef)
                                 discriminantOffset =
                                     VardiscriminantOffset,
                                 fields =
-                                    follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Field'/2,
+                                    follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Field'/3,
                                                                       Varfields,
                                                                       MessageRef#message_ref{current_offset =
                                                                                                  MessageRef#message_ref.current_offset
                                                                                                  +
-                                                                                                 5
-                                                                                                 +
-                                                                                                 3})}.
+                                                                                                 3})};
+'internal_decode_schema.capnp:Node.struct'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Node.struct'(PaddedData,
+                                               PaddedPointers,
+                                               MessageRef).
 
-'internal_decode_schema.capnp:Superclass'(All =
-                                              <<Varid:64/little-unsigned-integer,
-                                                Varbrand:64/little-unsigned-integer>>,
+'internal_decode_schema.capnp:Superclass'(Data =
+                                              <<Varid:64/little-unsigned-integer>>,
+                                          Pointers =
+                                              <<Varbrand:64/little-unsigned-integer>>,
                                           MessageRef) ->
     #'schema.capnp:Superclass'{id = Varid,
                                brand =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                          Varbrand,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    1
-                                                                                    +
-                                                                                    0})}.
+                                                                                    0})};
+'internal_decode_schema.capnp:Superclass'(Data, Pointers, MessageRef) ->
+    DataPadLength = 64 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:64/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Superclass'(PaddedData,
+                                              PaddedPointers,
+                                              MessageRef).
 
-'internal_decode_schema.capnp:Type'(Body, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Type'(Data, Pointers, MessageRef) ->
+    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {void,undefined};
         1 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {bool,undefined};
         2 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int8,undefined};
         3 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int16,undefined};
         4 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int32,undefined};
         5 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int64,undefined};
         6 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint8,undefined};
         7 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint16,undefined};
         8 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint32,undefined};
         9 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint64,undefined};
         10 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {float32,undefined};
         11 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {float64,undefined};
         12 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {text,undefined};
         13 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {data,undefined};
         14 ->
-            <<_:192,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {list,
-             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                    Var,
                                    MessageRef#message_ref{current_offset =
                                                               MessageRef#message_ref.current_offset
                                                               +
-                                                              3
-                                                              +
                                                               0})};
         15 ->
             {enum,
-             'internal_decode_schema.capnp:Type.enum'(Body, MessageRef)};
+             'internal_decode_schema.capnp:Type.enum'(Data,
+                                                      Pointers,
+                                                      MessageRef)};
         16 ->
             {struct,
-             'internal_decode_schema.capnp:Type.struct'(Body,
+             'internal_decode_schema.capnp:Type.struct'(Data,
+                                                        Pointers,
                                                         MessageRef)};
         17 ->
             {interface,
-             'internal_decode_schema.capnp:Type.interface'(Body,
+             'internal_decode_schema.capnp:Type.interface'(Data,
+                                                           Pointers,
                                                            MessageRef)};
         18 ->
             {anyPointer,
-             'internal_decode_schema.capnp:Type.anyPointer'(Body,
+             'internal_decode_schema.capnp:Type.anyPointer'(Data,
+                                                            Pointers,
                                                             MessageRef)}
-    end.
+    end;
+'internal_decode_schema.capnp:Type'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type'(PaddedData,
+                                        PaddedPointers,
+                                        MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer'(Body, MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Type.anyPointer'(Data,
+                                               Pointers,
+                                               MessageRef) ->
+    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {unconstrained,undefined};
         1 ->
             {parameter,
-             'internal_decode_schema.capnp:Type.anyPointer.parameter'(Body,
+             'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data,
+                                                                      Pointers,
                                                                       MessageRef)};
         2 ->
-            <<_:80,Var:16/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:80,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {implicitMethodParameter,Var}
-    end.
+    end;
+'internal_decode_schema.capnp:Type.anyPointer'(Data,
+                                               Pointers,
+                                               MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.anyPointer'(PaddedData,
+                                                   PaddedPointers,
+                                                   MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(All =
+'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data =
                                                                            <<_:80/integer,
                                                                              VarparameterIndex:16/little-unsigned-integer,
-                                                                             _:96/integer,
-                                                                             _:64/integer>>,
+                                                                             _:96/integer>>,
+                                                                       Pointers =
+                                                                           <<_:64/integer>>,
                                                                        MessageRef) ->
     #'schema.capnp:Type.anyPointer.implicitMethodParameter'{parameterIndex =
-                                                                VarparameterIndex}.
+                                                                VarparameterIndex};
+'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data,
+                                                                       Pointers,
+                                                                       MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(PaddedData,
+                                                                           PaddedPointers,
+                                                                           MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer.parameter'(All =
+'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data =
                                                              <<_:80/integer,
                                                                VarparameterIndex:16/little-unsigned-integer,
                                                                _:32/integer,
-                                                               VarscopeId:64/little-unsigned-integer,
-                                                               _:64/integer>>,
+                                                               VarscopeId:64/little-unsigned-integer>>,
+                                                         Pointers =
+                                                             <<_:64/integer>>,
                                                          MessageRef) ->
     #'schema.capnp:Type.anyPointer.parameter'{parameterIndex =
                                                   VarparameterIndex,
-                                              scopeId = VarscopeId}.
+                                              scopeId = VarscopeId};
+'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data,
+                                                         Pointers,
+                                                         MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.anyPointer.parameter'(PaddedData,
+                                                             PaddedPointers,
+                                                             MessageRef).
 
-'internal_decode_schema.capnp:Type.enum'(All =
+'internal_decode_schema.capnp:Type.enum'(Data =
                                              <<_:64/integer,
                                                VartypeId:64/little-unsigned-integer,
-                                               _:64/integer,
-                                               Varbrand:64/little-unsigned-integer>>,
+                                               _:64/integer>>,
+                                         Pointers =
+                                             <<Varbrand:64/little-unsigned-integer>>,
                                          MessageRef) ->
     #'schema.capnp:Type.enum'{typeId = VartypeId,
                               brand =
-                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                         Varbrand,
                                                         MessageRef#message_ref{current_offset =
                                                                                    MessageRef#message_ref.current_offset
                                                                                    +
-                                                                                   3
-                                                                                   +
-                                                                                   0})}.
+                                                                                   0})};
+'internal_decode_schema.capnp:Type.enum'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.enum'(PaddedData,
+                                             PaddedPointers,
+                                             MessageRef).
 
-'internal_decode_schema.capnp:Type.interface'(All =
+'internal_decode_schema.capnp:Type.interface'(Data =
                                                   <<_:64/integer,
                                                     VartypeId:64/little-unsigned-integer,
-                                                    _:64/integer,
-                                                    Varbrand:64/little-unsigned-integer>>,
+                                                    _:64/integer>>,
+                                              Pointers =
+                                                  <<Varbrand:64/little-unsigned-integer>>,
                                               MessageRef) ->
     #'schema.capnp:Type.interface'{typeId = VartypeId,
                                    brand =
-                                       follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                                       follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                              Varbrand,
                                                              MessageRef#message_ref{current_offset =
                                                                                         MessageRef#message_ref.current_offset
                                                                                         +
-                                                                                        3
-                                                                                        +
-                                                                                        0})}.
+                                                                                        0})};
+'internal_decode_schema.capnp:Type.interface'(Data,
+                                              Pointers,
+                                              MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.interface'(PaddedData,
+                                                  PaddedPointers,
+                                                  MessageRef).
 
-'internal_decode_schema.capnp:Type.list'(All =
-                                             <<_:192/integer,
-                                               VarelementType:64/little-unsigned-integer>>,
+'internal_decode_schema.capnp:Type.list'(Data = <<_:192/integer>>,
+                                         Pointers =
+                                             <<VarelementType:64/little-unsigned-integer>>,
                                          MessageRef) ->
     #'schema.capnp:Type.list'{elementType =
-                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/2,
+                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
                                                         VarelementType,
                                                         MessageRef#message_ref{current_offset =
                                                                                    MessageRef#message_ref.current_offset
                                                                                    +
-                                                                                   3
-                                                                                   +
-                                                                                   0})}.
+                                                                                   0})};
+'internal_decode_schema.capnp:Type.list'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.list'(PaddedData,
+                                             PaddedPointers,
+                                             MessageRef).
 
-'internal_decode_schema.capnp:Type.struct'(All =
+'internal_decode_schema.capnp:Type.struct'(Data =
                                                <<_:64/integer,
                                                  VartypeId:64/little-unsigned-integer,
-                                                 _:64/integer,
-                                                 Varbrand:64/little-unsigned-integer>>,
+                                                 _:64/integer>>,
+                                           Pointers =
+                                               <<Varbrand:64/little-unsigned-integer>>,
                                            MessageRef) ->
     #'schema.capnp:Type.struct'{typeId = VartypeId,
                                 brand =
-                                    follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/2,
+                                    follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
                                                           Varbrand,
                                                           MessageRef#message_ref{current_offset =
                                                                                      MessageRef#message_ref.current_offset
                                                                                      +
-                                                                                     3
-                                                                                     +
-                                                                                     0})}.
+                                                                                     0})};
+'internal_decode_schema.capnp:Type.struct'(Data, Pointers, MessageRef) ->
+    DataPadLength = 192 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:192/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Type.struct'(PaddedData,
+                                               PaddedPointers,
+                                               MessageRef).
 
-'internal_decode_schema.capnp:Value'(Body, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Body,
+'internal_decode_schema.capnp:Value'(Data, Pointers, MessageRef) ->
+    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {void,undefined};
         1 ->
-            <<_:23,Var:1/integer,_/bitstring>> = Body,
+            <<_:23,Var:1/integer,_/bitstring>> = Data,
             {bool,
              case Var of
                  0 ->
@@ -3707,71 +4424,94 @@ follow_text_pointer(PointerInt, MessageRef)
                      true
              end};
         2 ->
-            <<_:16,Var:8/little-signed-integer,_/bitstring>> = Body,
+            <<_:16,Var:8/little-signed-integer,_/bitstring>> = Data,
             {int8,Var};
         3 ->
-            <<_:16,Var:16/little-signed-integer,_/bitstring>> = Body,
+            <<_:16,Var:16/little-signed-integer,_/bitstring>> = Data,
             {int16,Var};
         4 ->
-            <<_:32,Var:32/little-signed-integer,_/bitstring>> = Body,
+            <<_:32,Var:32/little-signed-integer,_/bitstring>> = Data,
             {int32,Var};
         5 ->
-            <<_:64,Var:64/little-signed-integer,_/bitstring>> = Body,
+            <<_:64,Var:64/little-signed-integer,_/bitstring>> = Data,
             {int64,Var};
         6 ->
-            <<_:16,Var:8/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:16,Var:8/little-unsigned-integer,_/bitstring>> = Data,
             {uint8,Var};
         7 ->
-            <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {uint16,Var};
         8 ->
-            <<_:32,Var:32/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:32,Var:32/little-unsigned-integer,_/bitstring>> = Data,
             {uint32,Var};
         9 ->
-            <<_:64,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:64,Var:64/little-unsigned-integer,_/bitstring>> = Data,
             {uint64,Var};
         10 ->
-            <<_:32,Var:32/little-float,_/bitstring>> = Body,
+            <<_:32,Var:32/little-float,_/bitstring>> = Data,
             {float32,Var};
         11 ->
-            <<_:64,Var:64/little-float,_/bitstring>> = Body,
+            <<_:64,Var:64/little-float,_/bitstring>> = Data,
             {float64,Var};
         12 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {text,
              follow_text_pointer(Var,
                                  MessageRef#message_ref{current_offset =
                                                             MessageRef#message_ref.current_offset
                                                             +
-                                                            2
-                                                            +
                                                             0})};
         13 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {data,
              follow_data_pointer(Var,
                                  MessageRef#message_ref{current_offset =
                                                             MessageRef#message_ref.current_offset
                                                             +
-                                                            2
-                                                            +
                                                             0})};
         14 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {list,not_implemented};
         15 ->
-            <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {enum,Var};
         16 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {struct,not_implemented};
         17 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Body,
+            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {interface,undefined};
         18 ->
-            <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Body,
+            <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
+                Pointers,
             {anyPointer,not_implemented}
-    end.
+    end;
+'internal_decode_schema.capnp:Value'(Data, Pointers, MessageRef) ->
+    DataPadLength = 128 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:128/bitstring>> = Data
+    end,
+    PointerPadLength = 64 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:64/bitstring>> = Pointers
+    end,
+    'internal_decode_schema.capnp:Value'(PaddedData,
+                                         PaddedPointers,
+                                         MessageRef).
 
 
 

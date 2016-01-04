@@ -413,13 +413,13 @@ make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
 
 % This points all pointers in the data segment at somewhat junk, but
 % data decoders never need this information!
-message_ref(_, _, #field_info{type=#group_type{}}) ->
+message_ref(_, #field_info{type=#group_type{}}) ->
 	ast(MessageRef);
-message_ref(_, _, #field_info{type=#native_type{}}) ->
+message_ref(_, #field_info{type=#native_type{}}) ->
 	undefined;
-message_ref(Line, DWords, #field_info{type=#ptr_type{}, offset=Offset}) ->
+message_ref(Line, #field_info{type=#ptr_type{}, offset=Offset}) ->
 	WordOffset = {integer, 0, (Offset bsr 6)},
-	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote({integer, Line, DWords}) + quote(WordOffset)}).
+	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote(WordOffset)}).
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
 	case is_union(TypeId, Schema) of
@@ -427,15 +427,44 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 			% We just take the binary for now and break if we get a pointer type.
 			{_, DWords, PWords} = node_name(TypeId, Schema),
+			DBits = {integer, Line, DWords * 64},
+			PBits = {integer, Line, PWords * 64},
 			DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
 			PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
-			Matcher = {bin, Line, DataMatcher ++ PtrMatcher},
 			Body = {record, Line, record_name(TypeId, Schema),
-				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Line, DWords, Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Line, Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 			},
-			ast_function(quote(decoder_name(TypeId, Schema)), fun (All=quote(Matcher), MessageRef) -> quote(Body) end);
+			ast_function(
+				quote(decoder_name(TypeId, Schema)),
+				fun
+					(Data=quote({bin, Line, DataMatcher}), Pointers=quote({bin, Line, PtrMatcher}), MessageRef) ->
+						quote(Body);
+					(Data, Pointers, MessageRef) ->
+						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
+						if
+							DataPadLength > 0 ->
+								PaddedData = <<Data/binary, 0:DataPadLength>>;
+							DataPadLength =:= 0 ->
+								PaddedData = Data;
+							DataPadLength < 0 ->
+								<<PaddedData:(quote(DBits))/bitstring>> = Data
+						end,
+						PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
+						if
+							PointerPadLength > 0 ->
+								PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
+							PointerPadLength =:= 0 ->
+								PaddedPointers = Pointers;
+							PointerPadLength < 0 ->
+								<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
+						end,
+						(quote({atom, Line, decoder_name(TypeId, Schema)}))(PaddedData, PaddedPointers, MessageRef)
+				end
+			);
 		true ->
-			{_, DWords, _} = node_name(TypeId, Schema),
+			{_, DWords, PWords} = node_name(TypeId, Schema),
+			DBits = {integer, Line, DWords * 64},
+			PBits = {integer, Line, PWords * 64},
 			UnionFields = find_tag_fields(TypeId, Schema),
 			Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
 			Expected = lists:seq(0, length(Sorted)-1),
@@ -443,38 +472,66 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 
 			#field_info{offset=Offset} = discriminant_field(TypeId, Schema),
 			DiscriminantSkip = {integer, Line, Offset},
-			Matcher = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _/bitstring>> = Body),
-			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, DWords, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
+			Matcher = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _/bitstring>> = Data),
+			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
 			Decoder = {'case', Line, ast(Discriminant), DecoderClauses},
-			ast_function(quote(decoder_name(TypeId, Schema)), fun (Body, MessageRef) -> quote(Matcher), quote(Decoder) end)
+			ast_function(
+				quote(decoder_name(TypeId, Schema)),
+				fun
+					(Data, Pointers, MessageRef) ->
+						quote(Matcher),
+						quote(Decoder);
+					(Data, Pointers, MessageRef) ->
+						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
+						if
+							DataPadLength > 0 ->
+								PaddedData = <<Data/binary, 0:DataPadLength>>;
+							DataPadLength =:= 0 ->
+								PaddedData = Data;
+							DataPadLength < 0 ->
+								<<PaddedData:(quote(DBits))/bitstring>> = Data
+						end,
+						PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
+						if
+							PointerPadLength > 0 ->
+								PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
+							PointerPadLength =:= 0 ->
+								PaddedPointers = Pointers;
+							PointerPadLength < 0 ->
+								<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
+						end,
+						(quote({atom, Line, decoder_name(TypeId, Schema)}))(PaddedData, PaddedPointers, MessageRef)
+				end
+			)
 	end.
 
-generate_union_decoder(Line, DWords, #field_info{name=Name, default=undefined, type=#group_type{type_id=TypeId}}, Schema) ->
+generate_union_decoder(Line, #field_info{name=Name, default=undefined, type=#group_type{type_id=TypeId}}, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	[
-		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Body, MessageRef)})
+		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Data, Pointers, MessageRef)})
 	];
-generate_union_decoder(Line, DWords, Field=#field_info{name=Name, default=Default, type=Type}, Schema) ->
+generate_union_decoder(Line, Field=#field_info{name=Name, default=Default, type=Type}, Schema) ->
 	Var = ast(Var),
 	[
-		ast(quote(generate_union_matcher(Line, DWords, Field, Schema)) = Body),
-		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Default, Var, Line, message_ref(Line, DWords, Field), Schema))})
+		generate_union_matcher(Line, Field, Schema),
+		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Default, Var, Line, message_ref(Line, Field), Schema))})
 	].
 
-generate_union_matcher(Line, _DWords, #field_info{offset=Offset, type=Type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
+generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
 	Skip = {integer, Line, Offset},
 	Junk = junkterm(Line, decode),
-	{bin, Line, [{bin_element, Line, Junk, Skip, default}, {bin_element, Line, ast(Var), {integer, Line, Width}, BinaryOptions}, {bin_element, Line, Junk, default, [bitstring]}]};
-generate_union_matcher(Line, DWords, #field_info{offset=Offset, type=Type=#ptr_type{}}, _Schema) ->
-	Skip = {integer, Line, Offset + DWords * 64},
-	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>>);
-generate_union_matcher(Line, _DWords, #field_info{offset=Offset, type=Type=#ptr_type{type=list}}, _Schema) ->
-	ast(not_implemented).
+	Matcher = {bin, Line, [{bin_element, Line, Junk, Skip, default}, {bin_element, Line, ast(Var), {integer, Line, Width}, BinaryOptions}, {bin_element, Line, Junk, default, [bitstring]}]},
+	ast(quote(Matcher) = Data);
+generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#ptr_type{}}, _Schema) ->
+	Skip = {integer, Line, Offset},
+	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>> = Pointers);
+generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#ptr_type{type=list}}, _Schema) ->
+	ast(Var = not_implemented).
 
 generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 	% We just take the binary for now and break if we get a pointer type.
-	Decoder = {'fun', Line, {function, to_atom(decoder_name(TypeId, Schema)), 2}},
+	Decoder = {'fun', Line, {function, to_atom(decoder_name(TypeId, Schema)), 3}},
 	FunDef = ast_function(
 		quote(full_decoder_name(TypeId, Schema)),
 		fun (Data) ->
@@ -509,13 +566,14 @@ generate_follow_struct_pointer() ->
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
 				PointerOffset = ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1,
 				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-				NewMessageRef = MessageRef#message_ref{current_offset=NewOffset},
 				DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
 				PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
+				NewMessageRef = MessageRef#message_ref{current_offset=NewOffset + DWords}, % Point at start of pointer area.
 				SkipBits = NewOffset bsl 6,
-				Bits = (DWords + PWords) bsl 6,
-				<<_:SkipBits, Binary:Bits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
-				DecodeFun(Binary, NewMessageRef)
+				DBits = DWords bsl 6,
+				PBits = PWords bsl 6,
+				<<_:SkipBits, Data:DBits/bitstring, Pointers:PBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
+				DecodeFun(Data, Pointers, NewMessageRef)
 		end
 	),
 	{ [], [FunDef], [] }.
@@ -567,12 +625,13 @@ generate_follow_struct_list_pointer() ->
 				SkipBits = Offset * 64,
 				<<_:SkipBits, Rest/binary>> = MessageRef#message_ref.current_segment,
 				Words = DWords + PWords,
-				Bits = Words * 64,
+				DBits = DWords * 64,
+				PBits = PWords * 64,
 				{_, ListR} = lists:foldl(
 					fun
 						(N, {OldRest, Acc}) ->
-							<<ThisData:Bits/bitstring, NewRest/binary>> = OldRest,
-							New = DecodeFun(ThisData, MessageRef#message_ref{current_offset=Offset+Words*N}),
+							<<ThisData:DBits/bitstring, ThisPointers:PBits/bitstring, NewRest/binary>> = OldRest,
+							New = DecodeFun(ThisData, ThisPointers, MessageRef#message_ref{current_offset=Offset+DWords+Words*N}),
 							{NewRest, [New|Acc]}
 					end,
 					{Rest, []},
@@ -1242,10 +1301,10 @@ decoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line, _MessageR
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
 	ast(element((quote(Var) bxor quote({integer, Line, Default})) + 1, quote(Tuple)));
 decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, MessageRef, _Schema) ->
-	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
+	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, Schema) ->
-	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 2}},
+	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
@@ -1256,7 +1315,7 @@ decoder(#ptr_type{type=text_or_data, extra=data}, undefined, Var, _Line, Message
 	ast(follow_data_pointer(quote(Var), quote(MessageRef)));
 decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
-	ast((quote(Decoder))(All, quote(MessageRef)));
+	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
