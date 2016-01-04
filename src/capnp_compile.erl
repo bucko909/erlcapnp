@@ -1087,13 +1087,19 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=text_or_data, extra=data}, VarName, Li
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}, VarName, Line) ->
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_bool_list_/3, [], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarName, Line) ->
-	#native_type{list_tag=WidthType, width=Width, binary_options=BinType} = Type,
+	#native_type{list_tag=WidthType, type=Class, width=Width, binary_options=BinType} = Type,
 	WidthTypeInt = {integer, Line, WidthType},
 	WidthInt = {integer, Line, Width},
 	% I can't << X || ... >> is invalid syntax, and << <<X>> || ... >> doesn't let me specify encoding types, so I
 	% have to write the whole comprehension by hand! Woe!
 	MatchVar = var_p(Line, "Var", VarName),
-	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, undefined, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
+	Default = case Class of
+		float -> 0.0;
+		integer -> 0;
+		boolean -> false;
+		void -> undefined
+	end,
+	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, Default, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
 	EncodeFun = make_atom(Line, append("encode_", TypeName)),
