@@ -565,7 +565,10 @@ generate_follow_struct_pointer() ->
 			(DecodeFun, 0, MessageRef) ->
 				undefined;
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
-				PointerOffset = ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1,
+				PointerOffset = case PointerInt band (1 bsl 31) of
+					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+				end,
 				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
 				DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
 				PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
@@ -611,7 +614,10 @@ generate_follow_text_pointer(Type) ->
 			(0, _) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 2 ->
-				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				PointerOffset = case PointerInt band (1 bsl 31) of
+					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+				end,
 				Offset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = Offset bsl 6,
 				Length = (PointerInt bsr 35) - quote(Trail),
@@ -650,7 +656,10 @@ generate_follow_struct_list_pointer() ->
 			(DecodeFun, 0, MessageRef) ->
 				undefined;
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
-				PointerOffset = ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1,
+				PointerOffset = case PointerInt band (1 bsl 31) of
+					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+				end,
 				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = NewOffset bsl 6,
 				<<_:SkipBits, Tag:64/little-unsigned-integer, Rest/binary>> = MessageRef#message_ref.current_segment,
@@ -725,7 +734,10 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=boolean}) ->
 			(0, _) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 1 ->
-				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				PointerOffset = case PointerInt band (1 bsl 31) of
+					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+				end,
 				Offset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = Offset * 64,
 				Length = PointerInt bsr 35,
@@ -752,7 +764,10 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 			(0, _) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= quote({integer, Line, Tag}) ->
-				PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+				PointerOffset = case PointerInt band (1 bsl 31) of
+					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+				end,
 				Offset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = Offset * 64,
 				Length = PointerInt bsr 35,
