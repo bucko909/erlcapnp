@@ -78,10 +78,10 @@ massage_name(Name, Filename) ->
 			Name
 	end.
 
-make_objdict(#'schema.capnp:CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
-	MassagedNodes = [ X#'schema.capnp:Node'{displayName=massage_name(Name, Filename)} || X=#'schema.capnp:Node'{displayName=Name} <- Nodes ],
-	ById = dict:from_list([{Id, Node} || Node=#'schema.capnp:Node'{id=Id} <- MassagedNodes ]),
-	NameToId = dict:from_list([{Name, Id} || #'schema.capnp:Node'{id=Id, displayName=Name} <- MassagedNodes ]),
+make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
+	MassagedNodes = [ X#'Node'{displayName=massage_name(Name, Filename)} || X=#'Node'{displayName=Name} <- Nodes ],
+	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- MassagedNodes ]),
+	NameToId = dict:from_list([{Name, Id} || #'Node'{id=Id, displayName=Name} <- MassagedNodes ]),
 	#capnp_context{
 		by_id = ById,
 		name_to_id = NameToId
@@ -89,12 +89,13 @@ make_objdict(#'schema.capnp:CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
 
 load_raw(Filename) ->
 	{ok, Raw} = file:read_file(Filename),
-	{Schema, <<>>} = capnp_schema:'decode_schema.capnp:CodeGeneratorRequest'(Raw),
-	make_objdict(Schema, Filename).
+	Base = filename:rootname(filename:basename(Filename)),
+	{Schema, <<>>} = capnp_schema:'decode_CodeGeneratorRequest'(Raw),
+	make_objdict(Schema, Base ++ ".capnp").
 
 to_ast(SchemaFile) when is_list(SchemaFile) ->
 	Schema = load_raw(SchemaFile),
-	Tasks = [ {generate_name, Name} || {_, #'schema.capnp:Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
+	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
 	to_ast([ generate_decode_envelope_fun | Tasks ], Schema).
 
 to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
@@ -244,10 +245,10 @@ find_tag_fields(TypeId, Schema) ->
 	lists:filter(fun has_discriminant/1, find_fields(TypeId, Schema)).
 
 find_anon_union(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				discriminantCount=DiscriminantCount
 			}
 		}
@@ -260,10 +261,10 @@ find_anon_union(TypeId, Schema) ->
 	end.
 
 find_fields(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				fields=Fields
 			}
 		}
@@ -275,10 +276,10 @@ is_union(TypeId, Schema) ->
 	find_notag_fields(TypeId, Schema) == [] andalso find_tag_fields(TypeId, Schema) /= [].
 
 is_group(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				isGroup=IsGroup
 			}
 		}
@@ -830,10 +831,10 @@ generate_text() ->
 	{[], [Func], []}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -864,10 +865,10 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	).
 
 discriminant_field(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				discriminantOffset=DiscriminantOffset
 			}
 		}
@@ -885,10 +886,10 @@ union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	[{'case', Line, {var, Line, 'VarDiscriminant'}, EncoderClauses}].
 
 generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=#native_type{}}, TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -903,10 +904,10 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 				{nil, Line}
 	]}];
 generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=Type=#ptr_type{}}, TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -922,10 +923,10 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 				to_list(Line, [{var, Line, 'Data1'}, {var, Line, 'Extra1'}])
 	]}];
 generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{discriminant=Discriminant, type=#group_type{type_id=GroupTypeId}}, TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -1407,12 +1408,12 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(not_implemented).
 
-field_info(#'schema.capnp:Field'{
+field_info(#'Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,
 		''={
 			slot,
-			#'schema.capnp:Field.slot'{
+			#'Field.slot'{
 				offset=N,
 				defaultValue={TypeClass, DefaultValue},
 				type=Type={TypeClass, _TypeDescription}
@@ -1428,7 +1429,7 @@ field_info(#'schema.capnp:Field'{
 			Size * N
 	end,
 	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of not_implemented -> undefined; _ -> DefaultValue end};
-field_info(#'schema.capnp:Field'{
+field_info(#'Field'{
 		discriminantValue=DiscriminantValue,
 		name=Name,
 		''={
@@ -1458,10 +1459,10 @@ type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= dat
 	{64, #ptr_type{type=text_or_data, extra=TextType}};
 type_info(anyPointer, undefined, _Schema) ->
 	{64, #ptr_type{type=unknown}}; % Not really possible
-type_info(struct, #'schema.capnp:Type.struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(struct, #'Type.struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-type_info(list, {enum, #'schema.capnp:Type.enum'{typeId=TypeId}}, Schema) ->
+type_info(list, {enum, #'Type.enum'{typeId=TypeId}}, Schema) ->
 	% List of enums.
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
@@ -1485,7 +1486,7 @@ type_info(list, {interface,_LTypeId}, _Schema) ->
 	erlang:error({not_implemented, list, interface}); % TODO
 % TODO decoders for pointers.
 % Data types
-type_info(enum, #'schema.capnp:Type.enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(enum, #'Type.enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
 type_info(TypeClass, undefined, _Schema) ->
@@ -1506,23 +1507,23 @@ schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
 
 
 enumerant_names(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		''={
 			enum,
 			Enumerants
 		}
 	} = schema_lookup(TypeId, Schema),
-	[ to_atom(EName) || #'schema.capnp:Enumerant'{name=EName} <- Enumerants ].
+	[ to_atom(EName) || #'Enumerant'{name=EName} <- Enumerants ].
 
 node_name({anonunion, TypeId}, Schema) ->
 	{Name, DWords, PWords} = node_name(TypeId, Schema),
 	{<<Name/binary, $.>>, DWords, PWords};
 node_name(TypeId, Schema) ->
-	#'schema.capnp:Node'{
+	#'Node'{
 		displayName=Name,
 		''={
 			struct,
-			#'schema.capnp:Node.struct'{
+			#'Node.struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}

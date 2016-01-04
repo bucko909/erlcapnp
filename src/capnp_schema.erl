@@ -17,6 +17,278 @@ massage_bool_list(List) ->
                           lists:duplicate(- length(List) band 7, 0))
     end.
 
+decode_Annotation(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Annotation/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Brand(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Brand/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Brand.Binding'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Brand.Binding'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Brand.Scope'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Brand.Scope'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Brand.Scope.'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Brand.Scope.'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_CodeGeneratorRequest(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_CodeGeneratorRequest/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_CodeGeneratorRequest.RequestedFile'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_CodeGeneratorRequest.RequestedFile'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_CodeGeneratorRequest.RequestedFile.Import'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_CodeGeneratorRequest.RequestedFile.Import'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Enumerant(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Enumerant/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Field(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Field/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Field.'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Field.'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Field.group'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Field.group'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Field.ordinal'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Field.ordinal'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Field.slot'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Field.slot'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Method(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Method/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Node(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Node/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.NestedNode'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.NestedNode'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.Parameter'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.Parameter'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.annotation'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.annotation'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.const'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.const'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.enum'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.enum'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.interface'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.interface'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Node.struct'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Node.struct'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Superclass(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Superclass/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Type(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Type/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.anyPointer'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.anyPointer'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.anyPointer.implicitMethodParameter'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.anyPointer.implicitMethodParameter'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.anyPointer.parameter'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.anyPointer.parameter'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.enum'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.enum'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.interface'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.interface'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.list'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.list'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+'decode_Type.struct'(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun 'internal_decode_Type.struct'/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
+decode_Value(Data) ->
+    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    Decoded =
+        follow_struct_pointer(fun internal_decode_Value/3,
+                              Ptr,
+                              MessageRef),
+    {Decoded,Dregs}.
+
 decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
     SegLengthLength = RawSegCount + 1 bsr 1 bsl 1 + 1 bsl 2,
     <<SegLengthData:SegLengthLength/binary,SegData/binary>> = Rest,
@@ -40,278 +312,6 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
                   segments = list_to_tuple(Segs)},
      Ptr,
      Dregs}.
-
-'decode_schema.capnp:Annotation'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Brand'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Brand.Binding'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Brand.Scope'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Brand.Scope.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand.Scope.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:CodeGeneratorRequest'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Enumerant'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Field'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Field.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Field.group'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.group'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Field.ordinal'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.ordinal'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Field.slot'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Field.slot'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Method'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Method'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.NestedNode'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.Parameter'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.annotation'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.annotation'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.const'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.const'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.enum'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.enum'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.interface'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.interface'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Node.struct'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Node.struct'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Superclass'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Superclass'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.anyPointer'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.anyPointer.parameter'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.anyPointer.parameter'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.enum'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.enum'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.interface'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.interface'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.list'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.list'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Type.struct'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type.struct'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
-
-'decode_schema.capnp:Value'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
-    Decoded =
-        follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
 
 decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     Offset = MessageRef#message_ref.current_offset,
@@ -343,14 +343,12 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                     lists:seq(0, Length - 1)),
     lists:reverse(ListR).
 
-'encode_schema.capnp:Annotation'(#'schema.capnp:Annotation'{id = Varid,
-                                                            value =
-                                                                Varvalue,
-                                                            brand =
-                                                                Varbrand},
-                                 PtrOffsetWordsFromEnd0) ->
+encode_Annotation(#'Annotation'{id = Varid,
+                                value = Varvalue,
+                                brand = Varbrand},
+                  PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntvalue,MainLenvalue,ExtraLenvalue,Data1,Extra1} =
-        'encode_schema.capnp:Value'(Varvalue, 0),
+        encode_Value(Varvalue, 0),
     Ptrvalue =
         case ZeroOffsetPtrIntvalue of
             0 ->
@@ -361,7 +359,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenvalue + ExtraLenvalue,
     {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data2,Extra2} =
-        'encode_schema.capnp:Brand'(Varbrand, 0),
+        encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
             0 ->
@@ -378,11 +376,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrvalue:64/little-unsigned-integer,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:Annotation'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Annotation(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Brand'(#'schema.capnp:Brand'{scopes = Varscopes},
-                            PtrOffsetWordsFromEnd0) ->
+encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
     if
         Varscopes =/= undefined ->
             DataLenscopes = length(Varscopes),
@@ -393,10 +390,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Brand.Scope'(Element,
-                                                                         Offset
-                                                                         -
-                                                                         3),
+                                       'encode_Brand.Scope'(Element,
+                                                            Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -425,11 +420,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Ptrscopes:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Brand'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Brand(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Brand.Binding'({VarDiscriminant,Var},
-                                    PtrOffsetWordsFromEnd0) ->
+'encode_Brand.Binding'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         unbound ->
             {281479271677952,
@@ -439,7 +433,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []};
         type ->
             {ZeroOffsetPtrInt,MainLen,ExtraLen,Data1,Extra1} =
-                'encode_schema.capnp:Type'(Var, 0),
+                encode_Type(Var, 0),
             Ptr =
                 case ZeroOffsetPtrInt of
                     0 ->
@@ -460,30 +454,27 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              [Data1,Extra1]}
     end.
 
-'encode_schema.capnp:Brand.Scope'(#'schema.capnp:Brand.Scope'{scopeId =
-                                                                  VarscopeId,
-                                                              '' = Var},
-                                  PtrOffsetWordsFromEnd0) ->
+'encode_Brand.Scope'(#'Brand.Scope'{scopeId = VarscopeId,'' = Var},
+                     PtrOffsetWordsFromEnd0) ->
     <<NoGroupBodyDataAsInt:192/integer>> =
         <<VarscopeId:64/little-unsigned-integer,
           0:64/integer,
           0:64/integer>>,
     {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
-        'encode_schema.capnp:Brand.Scope.'(Var,
-                                           PtrOffsetWordsFromEnd0
-                                           -
-                                           PtrOffsetWordsFromEnd0),
+        'encode_Brand.Scope.'(Var,
+                              PtrOffsetWordsFromEnd0
+                              -
+                              PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:192/integer>> = BodyData,
     {281483566645248,
      3,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0 + ExtraDataLen,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):192/integer>>,
      [[]|ExtraData]};
-'encode_schema.capnp:Brand.Scope'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Brand.Scope'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Brand.Scope.'({VarDiscriminant,Var},
-                                   PtrOffsetWordsFromEnd0) ->
+'encode_Brand.Scope.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         bind ->
             if
@@ -497,10 +488,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                             ExtraLen,
                                             ThisBody,
                                             ThisExtra} =
-                                               'encode_schema.capnp:Brand.Binding'(Element,
-                                                                                   Offset
-                                                                                   -
-                                                                                   2),
+                                               'encode_Brand.Binding'(Element,
+                                                                      Offset
+                                                                      -
+                                                                      2),
                                            {ExtraLen + Offset - 2,
                                             [DataAcc,ThisBody],
                                             [ExtraAcc|ThisExtra]}
@@ -549,11 +540,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []}
     end.
 
-'encode_schema.capnp:CodeGeneratorRequest'(#'schema.capnp:CodeGeneratorRequest'{nodes =
-                                                                                    Varnodes,
-                                                                                requestedFiles =
-                                                                                    VarrequestedFiles},
-                                           PtrOffsetWordsFromEnd0) ->
+encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
+                                                    requestedFiles =
+                                                        VarrequestedFiles},
+                            PtrOffsetWordsFromEnd0) ->
     if
         Varnodes =/= undefined ->
             DataLennodes = length(Varnodes),
@@ -564,10 +554,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Node'(Element,
-                                                                  Offset
-                                                                  -
-                                                                  11),
+                                       encode_Node(Element, Offset - 11),
                                    {ExtraLen + Offset - 11,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -601,10 +588,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Element,
-                                                                                                Offset
-                                                                                                -
-                                                                                                3),
+                                       'encode_CodeGeneratorRequest.RequestedFile'(Element,
+                                                                                   Offset
+                                                                                   -
+                                                                                   3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -636,17 +623,16 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      <<Ptrnodes:64/little-unsigned-integer,
        PtrrequestedFiles:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:CodeGeneratorRequest'(undefined,
-                                           _PtrOffsetWordsFromEnd0) ->
+encode_CodeGeneratorRequest(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:CodeGeneratorRequest.RequestedFile'(#'schema.capnp:CodeGeneratorRequest.RequestedFile'{id =
-                                                                                                                Varid,
-                                                                                                            filename =
-                                                                                                                Varfilename,
-                                                                                                            imports =
-                                                                                                                Varimports},
-                                                         PtrOffsetWordsFromEnd0) ->
+'encode_CodeGeneratorRequest.RequestedFile'(#'CodeGeneratorRequest.RequestedFile'{id =
+                                                                                      Varid,
+                                                                                  filename =
+                                                                                      Varfilename,
+                                                                                  imports =
+                                                                                      Varimports},
+                                            PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varfilename);is_binary(Varfilename) ->
             Extra1 = <<>>,
@@ -677,10 +663,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Element,
-                                                                                                       Offset
-                                                                                                       -
-                                                                                                       2),
+                                       'encode_CodeGeneratorRequest.RequestedFile.Import'(Element,
+                                                                                          Offset
+                                                                                          -
+                                                                                          2),
                                    {ExtraLen + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -711,15 +697,15 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrfilename:64/little-unsigned-integer,
        Ptrimports:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:CodeGeneratorRequest.RequestedFile'(undefined,
-                                                         _PtrOffsetWordsFromEnd0) ->
+'encode_CodeGeneratorRequest.RequestedFile'(undefined,
+                                            _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(#'schema.capnp:CodeGeneratorRequest.RequestedFile.Import'{id =
-                                                                                                                              Varid,
-                                                                                                                          name =
-                                                                                                                              Varname},
-                                                                PtrOffsetWordsFromEnd0) ->
+'encode_CodeGeneratorRequest.RequestedFile.Import'(#'CodeGeneratorRequest.RequestedFile.Import'{id =
+                                                                                                    Varid,
+                                                                                                name =
+                                                                                                    Varname},
+                                                   PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -746,16 +732,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      <<Varid:64/little-unsigned-integer,
        Ptrname:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(undefined,
-                                                                _PtrOffsetWordsFromEnd0) ->
+'encode_CodeGeneratorRequest.RequestedFile.Import'(undefined,
+                                                   _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Enumerant'(#'schema.capnp:Enumerant'{codeOrder =
-                                                              VarcodeOrder,
-                                                          name = Varname,
-                                                          annotations =
-                                                              Varannotations},
-                                PtrOffsetWordsFromEnd0) ->
+encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
+                              name = Varname,
+                              annotations = Varannotations},
+                 PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -786,10 +770,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Annotation'(Element,
-                                                                        Offset
-                                                                        -
-                                                                        3),
+                                       encode_Annotation(Element,
+                                                         Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -823,19 +805,16 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrname:64/little-unsigned-integer,
        Ptrannotations:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:Enumerant'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Enumerant(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Field'(#'schema.capnp:Field'{codeOrder =
-                                                      VarcodeOrder,
-                                                  discriminantValue =
-                                                      VardiscriminantValue,
-                                                  name = Varname,
-                                                  annotations =
-                                                      Varannotations,
-                                                  '' = Var,
-                                                  ordinal = Varordinal},
-                            PtrOffsetWordsFromEnd0) ->
+encode_Field(#'Field'{codeOrder = VarcodeOrder,
+                      discriminantValue = VardiscriminantValue,
+                      name = Varname,
+                      annotations = Varannotations,
+                      '' = Var,
+                      ordinal = Varordinal},
+             PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -866,10 +845,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Annotation'(Element,
-                                                                        Offset
-                                                                        -
-                                                                        3),
+                                       encode_Annotation(Element,
+                                                         Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -903,22 +880,20 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
           Ptrannotations:64/little-unsigned-integer,
           0:128/integer>>,
     {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
-        'encode_schema.capnp:Field.'(Var,
-                                     PtrOffsetWordsFromEnd2
-                                     -
-                                     PtrOffsetWordsFromEnd0),
+        'encode_Field.'(Var,
+                        PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:448/integer>> = BodyData,
     {_ZeroOffsetPtrIntordinal,
      _NewBodyLenordinal,
      ExtraDataLenordinal,
      BodyDataordinal,
      ExtraDataordinal} =
-        'encode_schema.capnp:Field.ordinal'(Varordinal,
-                                            PtrOffsetWordsFromEnd2
-                                            -
-                                            PtrOffsetWordsFromEnd0
-                                            +
-                                            ExtraDataLen),
+        'encode_Field.ordinal'(Varordinal,
+                               PtrOffsetWordsFromEnd2
+                               -
+                               PtrOffsetWordsFromEnd0
+                               +
+                               ExtraDataLen),
     <<BodyDataAsIntFromordinal:448/integer>> = BodyDataordinal,
     {1125912791744512,
      7,
@@ -929,11 +904,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
         bor
         BodyDataAsIntFromordinal):448/integer>>,
      [[[Data1,Extra1,Data2,Extra2]|ExtraData]|ExtraDataordinal]};
-'encode_schema.capnp:Field'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Field(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Field.'({VarDiscriminant,Var},
-                             PtrOffsetWordsFromEnd0) ->
+'encode_Field.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         slot ->
             {ZeroOffsetPtrInt,
@@ -941,8 +915,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:448/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Field.slot'(Var,
-                                                 PtrOffsetWordsFromEnd0),
+                'encode_Field.slot'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -960,19 +933,17 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []}
     end.
 
-'encode_schema.capnp:Field.group'(#'schema.capnp:Field.group'{typeId =
-                                                                  VartypeId},
-                                  PtrOffsetWordsFromEnd0) ->
+'encode_Field.group'(#'Field.group'{typeId = VartypeId},
+                     PtrOffsetWordsFromEnd0) ->
     {1125912791744512,
      7,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
      <<0:128/integer,VartypeId:64/little-unsigned-integer,0:256/integer>>,
      []};
-'encode_schema.capnp:Field.group'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Field.group'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Field.ordinal'({VarDiscriminant,Var},
-                                    PtrOffsetWordsFromEnd0) ->
+'encode_Field.ordinal'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         implicit ->
             {1125912791744512,
@@ -999,17 +970,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []}
     end.
 
-'encode_schema.capnp:Field.slot'(#'schema.capnp:Field.slot'{offset =
-                                                                Varoffset,
-                                                            hadExplicitDefault =
-                                                                VarhadExplicitDefault,
-                                                            type =
-                                                                Vartype,
-                                                            defaultValue =
-                                                                VardefaultValue},
-                                 PtrOffsetWordsFromEnd0) ->
+'encode_Field.slot'(#'Field.slot'{offset = Varoffset,
+                                  hadExplicitDefault =
+                                      VarhadExplicitDefault,
+                                  type = Vartype,
+                                  defaultValue = VardefaultValue},
+                    PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
-        'encode_schema.capnp:Type'(Vartype, 0),
+        encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
             0 ->
@@ -1024,7 +992,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      ExtraLendefaultValue,
      Data2,
      Extra2} =
-        'encode_schema.capnp:Value'(VardefaultValue, 0),
+        encode_Value(VardefaultValue, 0),
     PtrdefaultValue =
         case ZeroOffsetPtrIntdefaultValue of
             0 ->
@@ -1055,25 +1023,18 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrtype:64/little-unsigned-integer,
        PtrdefaultValue:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:Field.slot'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Field.slot'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Method'(#'schema.capnp:Method'{codeOrder =
-                                                        VarcodeOrder,
-                                                    paramStructType =
-                                                        VarparamStructType,
-                                                    resultStructType =
-                                                        VarresultStructType,
-                                                    name = Varname,
-                                                    annotations =
-                                                        Varannotations,
-                                                    paramBrand =
-                                                        VarparamBrand,
-                                                    resultBrand =
-                                                        VarresultBrand,
-                                                    implicitParameters =
-                                                        VarimplicitParameters},
-                             PtrOffsetWordsFromEnd0) ->
+encode_Method(#'Method'{codeOrder = VarcodeOrder,
+                        paramStructType = VarparamStructType,
+                        resultStructType = VarresultStructType,
+                        name = Varname,
+                        annotations = Varannotations,
+                        paramBrand = VarparamBrand,
+                        resultBrand = VarresultBrand,
+                        implicitParameters = VarimplicitParameters},
+              PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -1104,10 +1065,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Annotation'(Element,
-                                                                        Offset
-                                                                        -
-                                                                        3),
+                                       encode_Annotation(Element,
+                                                         Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1138,7 +1097,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      ExtraLenparamBrand,
      Data3,
      Extra3} =
-        'encode_schema.capnp:Brand'(VarparamBrand, 0),
+        encode_Brand(VarparamBrand, 0),
     PtrparamBrand =
         case ZeroOffsetPtrIntparamBrand of
             0 ->
@@ -1155,7 +1114,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      ExtraLenresultBrand,
      Data4,
      Extra4} =
-        'encode_schema.capnp:Brand'(VarresultBrand, 0),
+        encode_Brand(VarresultBrand, 0),
     PtrresultBrand =
         case ZeroOffsetPtrIntresultBrand of
             0 ->
@@ -1179,10 +1138,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Node.Parameter'(Element,
-                                                                            Offset
-                                                                            -
-                                                                            1),
+                                       'encode_Node.Parameter'(Element,
+                                                               Offset
+                                                               -
+                                                               1),
                                    {ExtraLen + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1224,24 +1183,19 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        PtrresultBrand:64/little-unsigned-integer,
        PtrimplicitParameters:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4,Data5,Extra5]};
-'encode_schema.capnp:Method'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Method(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node'(#'schema.capnp:Node'{id = Varid,
-                                                displayNamePrefixLength =
-                                                    VardisplayNamePrefixLength,
-                                                scopeId = VarscopeId,
-                                                isGeneric = VarisGeneric,
-                                                displayName =
-                                                    VardisplayName,
-                                                nestedNodes =
-                                                    VarnestedNodes,
-                                                annotations =
-                                                    Varannotations,
-                                                parameters =
-                                                    Varparameters,
-                                                '' = Var},
-                           PtrOffsetWordsFromEnd0) ->
+encode_Node(#'Node'{id = Varid,
+                    displayNamePrefixLength = VardisplayNamePrefixLength,
+                    scopeId = VarscopeId,
+                    isGeneric = VarisGeneric,
+                    displayName = VardisplayName,
+                    nestedNodes = VarnestedNodes,
+                    annotations = Varannotations,
+                    parameters = Varparameters,
+                    '' = Var},
+            PtrOffsetWordsFromEnd0) ->
     if
         is_list(VardisplayName);is_binary(VardisplayName) ->
             Extra1 = <<>>,
@@ -1272,10 +1226,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Node.NestedNode'(Element,
-                                                                             Offset
-                                                                             -
-                                                                             2),
+                                       'encode_Node.NestedNode'(Element,
+                                                                Offset
+                                                                -
+                                                                2),
                                    {ExtraLen + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1311,10 +1265,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Annotation'(Element,
-                                                                        Offset
-                                                                        -
-                                                                        3),
+                                       encode_Annotation(Element,
+                                                         Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1350,10 +1302,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Node.Parameter'(Element,
-                                                                            Offset
-                                                                            -
-                                                                            1),
+                                       'encode_Node.Parameter'(Element,
+                                                               Offset
+                                                               -
+                                                               1),
                                    {ExtraLen + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1398,21 +1350,18 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
           0:128/integer,
           Ptrparameters:64/little-unsigned-integer>>,
     {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
-        'encode_schema.capnp:Node.'(Var,
-                                    PtrOffsetWordsFromEnd4
-                                    -
-                                    PtrOffsetWordsFromEnd0),
+        'encode_Node.'(Var,
+                       PtrOffsetWordsFromEnd4 - PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:704/integer>> = BodyData,
     {1688871335100416,
      11,
      PtrOffsetWordsFromEnd4 - PtrOffsetWordsFromEnd0 + ExtraDataLen,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):704/integer>>,
      [[Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4]|ExtraData]};
-'encode_schema.capnp:Node'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Node(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.'({VarDiscriminant,Var},
-                            PtrOffsetWordsFromEnd0) ->
+'encode_Node.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         file ->
             {1688871335100416,
@@ -1433,8 +1382,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Node.struct'(Var,
-                                                  PtrOffsetWordsFromEnd0),
+                'encode_Node.struct'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -1452,10 +1400,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                             ExtraLen,
                                             ThisBody,
                                             ThisExtra} =
-                                               'encode_schema.capnp:Enumerant'(Element,
-                                                                               Offset
-                                                                               -
-                                                                               3),
+                                               encode_Enumerant(Element,
+                                                                Offset
+                                                                -
+                                                                3),
                                            {ExtraLen + Offset - 3,
                                             [DataAcc,ThisBody],
                                             [ExtraAcc|ThisExtra]}
@@ -1497,8 +1445,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Node.interface'(Var,
-                                                     PtrOffsetWordsFromEnd0),
+                'encode_Node.interface'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -1510,8 +1457,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Node.const'(Var,
-                                                 PtrOffsetWordsFromEnd0),
+                'encode_Node.const'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -1523,8 +1469,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Node.annotation'(Var,
-                                                      PtrOffsetWordsFromEnd0),
+                'encode_Node.annotation'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -1532,11 +1477,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraData}
     end.
 
-'encode_schema.capnp:Node.NestedNode'(#'schema.capnp:Node.NestedNode'{id =
-                                                                          Varid,
-                                                                      name =
-                                                                          Varname},
-                                      PtrOffsetWordsFromEnd0) ->
+'encode_Node.NestedNode'(#'Node.NestedNode'{id = Varid,name = Varname},
+                         PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -1563,13 +1505,11 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      <<Varid:64/little-unsigned-integer,
        Ptrname:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Node.NestedNode'(undefined,
-                                      _PtrOffsetWordsFromEnd0) ->
+'encode_Node.NestedNode'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.Parameter'(#'schema.capnp:Node.Parameter'{name =
-                                                                        Varname},
-                                     PtrOffsetWordsFromEnd0) ->
+'encode_Node.Parameter'(#'Node.Parameter'{name = Varname},
+                        PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
             Extra1 = <<>>,
@@ -1595,38 +1535,35 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Ptrname:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Node.Parameter'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Node.Parameter'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.annotation'(#'schema.capnp:Node.annotation'{targetsGroup =
-                                                                          VartargetsGroup,
-                                                                      targetsUnion =
-                                                                          VartargetsUnion,
-                                                                      targetsField =
-                                                                          VartargetsField,
-                                                                      targetsStruct =
-                                                                          VartargetsStruct,
-                                                                      targetsEnumerant =
-                                                                          VartargetsEnumerant,
-                                                                      targetsEnum =
-                                                                          VartargetsEnum,
-                                                                      targetsConst =
-                                                                          VartargetsConst,
-                                                                      targetsFile =
-                                                                          VartargetsFile,
-                                                                      targetsAnnotation =
-                                                                          VartargetsAnnotation,
-                                                                      targetsParam =
-                                                                          VartargetsParam,
-                                                                      targetsMethod =
-                                                                          VartargetsMethod,
-                                                                      targetsInterface =
-                                                                          VartargetsInterface,
-                                                                      type =
-                                                                          Vartype},
-                                      PtrOffsetWordsFromEnd0) ->
+'encode_Node.annotation'(#'Node.annotation'{targetsGroup =
+                                                VartargetsGroup,
+                                            targetsUnion =
+                                                VartargetsUnion,
+                                            targetsField =
+                                                VartargetsField,
+                                            targetsStruct =
+                                                VartargetsStruct,
+                                            targetsEnumerant =
+                                                VartargetsEnumerant,
+                                            targetsEnum = VartargetsEnum,
+                                            targetsConst =
+                                                VartargetsConst,
+                                            targetsFile = VartargetsFile,
+                                            targetsAnnotation =
+                                                VartargetsAnnotation,
+                                            targetsParam =
+                                                VartargetsParam,
+                                            targetsMethod =
+                                                VartargetsMethod,
+                                            targetsInterface =
+                                                VartargetsInterface,
+                                            type = Vartype},
+                         PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
-        'encode_schema.capnp:Type'(Vartype, 0),
+        encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
             0 ->
@@ -1718,17 +1655,13 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrtype:64/little-unsigned-integer,
        0:128/integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Node.annotation'(undefined,
-                                      _PtrOffsetWordsFromEnd0) ->
+'encode_Node.annotation'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.const'(#'schema.capnp:Node.const'{type =
-                                                                Vartype,
-                                                            value =
-                                                                Varvalue},
-                                 PtrOffsetWordsFromEnd0) ->
+'encode_Node.const'(#'Node.const'{type = Vartype,value = Varvalue},
+                    PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
-        'encode_schema.capnp:Type'(Vartype, 0),
+        encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
             0 ->
@@ -1739,7 +1672,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLentype + ExtraLentype,
     {ZeroOffsetPtrIntvalue,MainLenvalue,ExtraLenvalue,Data2,Extra2} =
-        'encode_schema.capnp:Value'(Varvalue, 0),
+        encode_Value(Varvalue, 0),
     Ptrvalue =
         case ZeroOffsetPtrIntvalue of
             0 ->
@@ -1758,12 +1691,11 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrvalue:64/little-unsigned-integer,
        0:64/integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:Node.const'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Node.const'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.enum'(#'schema.capnp:Node.enum'{enumerants =
-                                                              Varenumerants},
-                                PtrOffsetWordsFromEnd0) ->
+'encode_Node.enum'(#'Node.enum'{enumerants = Varenumerants},
+                   PtrOffsetWordsFromEnd0) ->
     if
         Varenumerants =/= undefined ->
             DataLenenumerants = length(Varenumerants),
@@ -1774,10 +1706,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Enumerant'(Element,
-                                                                       Offset
-                                                                       -
-                                                                       3),
+                                       encode_Enumerant(Element,
+                                                        Offset - 3),
                                    {ExtraLen + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1811,14 +1741,12 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrenumerants:64/little-unsigned-integer,
        0:128/integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Node.enum'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Node.enum'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.interface'(#'schema.capnp:Node.interface'{methods =
-                                                                        Varmethods,
-                                                                    superclasses =
-                                                                        Varsuperclasses},
-                                     PtrOffsetWordsFromEnd0) ->
+'encode_Node.interface'(#'Node.interface'{methods = Varmethods,
+                                          superclasses = Varsuperclasses},
+                        PtrOffsetWordsFromEnd0) ->
     if
         Varmethods =/= undefined ->
             DataLenmethods = length(Varmethods),
@@ -1829,10 +1757,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Method'(Element,
-                                                                    Offset
-                                                                    -
-                                                                    8),
+                                       encode_Method(Element,
+                                                     Offset - 8),
                                    {ExtraLen + Offset - 8,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1866,10 +1792,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Superclass'(Element,
-                                                                        Offset
-                                                                        -
-                                                                        2),
+                                       encode_Superclass(Element,
+                                                         Offset - 2),
                                    {ExtraLen + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1904,24 +1828,20 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrsuperclasses:64/little-unsigned-integer,
        0:64/integer>>,
      [Data1,Extra1,Data2,Extra2]};
-'encode_schema.capnp:Node.interface'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Node.interface'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Node.struct'(#'schema.capnp:Node.struct'{dataWordCount =
-                                                                  VardataWordCount,
-                                                              pointerCount =
-                                                                  VarpointerCount,
-                                                              preferredListEncoding =
-                                                                  VarpreferredListEncoding,
-                                                              isGroup =
-                                                                  VarisGroup,
-                                                              discriminantCount =
-                                                                  VardiscriminantCount,
-                                                              discriminantOffset =
-                                                                  VardiscriminantOffset,
-                                                              fields =
-                                                                  Varfields},
-                                  PtrOffsetWordsFromEnd0) ->
+'encode_Node.struct'(#'Node.struct'{dataWordCount = VardataWordCount,
+                                    pointerCount = VarpointerCount,
+                                    preferredListEncoding =
+                                        VarpreferredListEncoding,
+                                    isGroup = VarisGroup,
+                                    discriminantCount =
+                                        VardiscriminantCount,
+                                    discriminantOffset =
+                                        VardiscriminantOffset,
+                                    fields = Varfields},
+                     PtrOffsetWordsFromEnd0) ->
     if
         Varfields =/= undefined ->
             DataLenfields = length(Varfields),
@@ -1932,10 +1852,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                     ExtraLen,
                                     ThisBody,
                                     ThisExtra} =
-                                       'encode_schema.capnp:Field'(Element,
-                                                                   Offset
-                                                                   -
-                                                                   7),
+                                       encode_Field(Element, Offset - 7),
                                    {ExtraLen + Offset - 7,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
@@ -1999,15 +1916,13 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        Ptrfields:64/little-unsigned-integer,
        0:128/integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Node.struct'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Node.struct'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Superclass'(#'schema.capnp:Superclass'{id = Varid,
-                                                            brand =
-                                                                Varbrand},
-                                 PtrOffsetWordsFromEnd0) ->
+encode_Superclass(#'Superclass'{id = Varid,brand = Varbrand},
+                  PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
-        'encode_schema.capnp:Brand'(Varbrand, 0),
+        encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
             0 ->
@@ -2023,11 +1938,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      <<Varid:64/little-unsigned-integer,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Superclass'(undefined, _PtrOffsetWordsFromEnd0) ->
+encode_Superclass(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type'({VarDiscriminant,Var},
-                           PtrOffsetWordsFromEnd0) ->
+encode_Type({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         void ->
             {281487861612544,
@@ -2115,7 +2029,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []};
         list ->
             {ZeroOffsetPtrInt,MainLen,ExtraLen,Data1,Extra1} =
-                'encode_schema.capnp:Type'(Var, 0),
+                encode_Type(Var, 0),
             Ptr =
                 case ZeroOffsetPtrInt of
                     0 ->
@@ -2140,8 +2054,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Type.enum'(Var,
-                                                PtrOffsetWordsFromEnd0),
+                'encode_Type.enum'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -2153,8 +2066,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Type.struct'(Var,
-                                                  PtrOffsetWordsFromEnd0),
+                'encode_Type.struct'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -2166,8 +2078,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Type.interface'(Var,
-                                                     PtrOffsetWordsFromEnd0),
+                'encode_Type.interface'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -2179,8 +2090,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Type.anyPointer'(Var,
-                                                      PtrOffsetWordsFromEnd0),
+                'encode_Type.anyPointer'(Var, PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -2188,8 +2098,7 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraData}
     end.
 
-'encode_schema.capnp:Type.anyPointer'({VarDiscriminant,Var},
-                                      PtrOffsetWordsFromEnd0) ->
+'encode_Type.anyPointer'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         unconstrained ->
             {281487861612544,
@@ -2210,8 +2119,8 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
-                'encode_schema.capnp:Type.anyPointer.parameter'(Var,
-                                                                PtrOffsetWordsFromEnd0),
+                'encode_Type.anyPointer.parameter'(Var,
+                                                   PtrOffsetWordsFromEnd0),
             {ZeroOffsetPtrInt,
              MainLen,
              ExtraLen,
@@ -2229,9 +2138,9 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              []}
     end.
 
-'encode_schema.capnp:Type.anyPointer.implicitMethodParameter'(#'schema.capnp:Type.anyPointer.implicitMethodParameter'{parameterIndex =
-                                                                                                                          VarparameterIndex},
-                                                              PtrOffsetWordsFromEnd0) ->
+'encode_Type.anyPointer.implicitMethodParameter'(#'Type.anyPointer.implicitMethodParameter'{parameterIndex =
+                                                                                                VarparameterIndex},
+                                                 PtrOffsetWordsFromEnd0) ->
     {281487861612544,
      4,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
@@ -2240,15 +2149,15 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        0:96/integer,
        0:64/integer>>,
      []};
-'encode_schema.capnp:Type.anyPointer.implicitMethodParameter'(undefined,
-                                                              _PtrOffsetWordsFromEnd0) ->
+'encode_Type.anyPointer.implicitMethodParameter'(undefined,
+                                                 _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type.anyPointer.parameter'(#'schema.capnp:Type.anyPointer.parameter'{parameterIndex =
-                                                                                              VarparameterIndex,
-                                                                                          scopeId =
-                                                                                              VarscopeId},
-                                                PtrOffsetWordsFromEnd0) ->
+'encode_Type.anyPointer.parameter'(#'Type.anyPointer.parameter'{parameterIndex =
+                                                                    VarparameterIndex,
+                                                                scopeId =
+                                                                    VarscopeId},
+                                   PtrOffsetWordsFromEnd0) ->
     {281487861612544,
      4,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
@@ -2258,17 +2167,13 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        VarscopeId:64/little-unsigned-integer,
        0:64/integer>>,
      []};
-'encode_schema.capnp:Type.anyPointer.parameter'(undefined,
-                                                _PtrOffsetWordsFromEnd0) ->
+'encode_Type.anyPointer.parameter'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type.enum'(#'schema.capnp:Type.enum'{typeId =
-                                                              VartypeId,
-                                                          brand =
-                                                              Varbrand},
-                                PtrOffsetWordsFromEnd0) ->
+'encode_Type.enum'(#'Type.enum'{typeId = VartypeId,brand = Varbrand},
+                   PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
-        'encode_schema.capnp:Brand'(Varbrand, 0),
+        encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
             0 ->
@@ -2286,16 +2191,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Type.enum'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Type.enum'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type.interface'(#'schema.capnp:Type.interface'{typeId =
-                                                                        VartypeId,
-                                                                    brand =
-                                                                        Varbrand},
-                                     PtrOffsetWordsFromEnd0) ->
+'encode_Type.interface'(#'Type.interface'{typeId = VartypeId,
+                                          brand = Varbrand},
+                        PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
-        'encode_schema.capnp:Brand'(Varbrand, 0),
+        encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
             0 ->
@@ -2313,18 +2216,17 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Type.interface'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Type.interface'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type.list'(#'schema.capnp:Type.list'{elementType =
-                                                              VarelementType},
-                                PtrOffsetWordsFromEnd0) ->
+'encode_Type.list'(#'Type.list'{elementType = VarelementType},
+                   PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntelementType,
      MainLenelementType,
      ExtraLenelementType,
      Data1,
      Extra1} =
-        'encode_schema.capnp:Type'(VarelementType, 0),
+        encode_Type(VarelementType, 0),
     PtrelementType =
         case ZeroOffsetPtrIntelementType of
             0 ->
@@ -2343,16 +2245,13 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:192/integer,PtrelementType:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Type.list'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Type.list'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Type.struct'(#'schema.capnp:Type.struct'{typeId =
-                                                                  VartypeId,
-                                                              brand =
-                                                                  Varbrand},
-                                  PtrOffsetWordsFromEnd0) ->
+'encode_Type.struct'(#'Type.struct'{typeId = VartypeId,brand = Varbrand},
+                     PtrOffsetWordsFromEnd0) ->
     {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
-        'encode_schema.capnp:Brand'(Varbrand, 0),
+        encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
             0 ->
@@ -2370,11 +2269,10 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
-'encode_schema.capnp:Type.struct'(undefined, _PtrOffsetWordsFromEnd0) ->
+'encode_Type.struct'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_schema.capnp:Value'({VarDiscriminant,Var},
-                            PtrOffsetWordsFromEnd0) ->
+encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         void ->
             {281483566645248,
@@ -2611,146 +2509,144 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
              [Data1,Extra1]}
     end.
 
-'envelope_schema.capnp:Annotation'(Input) ->
+envelope_Annotation(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Annotation'(Input, 0),
+        encode_Annotation(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Brand'(Input) ->
+envelope_Brand(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Brand'(Input, 0),
+        encode_Brand(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Brand.Binding'(Input) ->
+'envelope_Brand.Binding'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Brand.Binding'(Input, 0),
+        'encode_Brand.Binding'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Brand.Scope'(Input) ->
+'envelope_Brand.Scope'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Brand.Scope'(Input, 0),
+        'encode_Brand.Scope'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:CodeGeneratorRequest'(Input) ->
+envelope_CodeGeneratorRequest(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:CodeGeneratorRequest'(Input, 0),
+        encode_CodeGeneratorRequest(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:CodeGeneratorRequest.RequestedFile'(Input) ->
+'envelope_CodeGeneratorRequest.RequestedFile'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Input,
-                                                                 0),
+        'encode_CodeGeneratorRequest.RequestedFile'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Input) ->
+'envelope_CodeGeneratorRequest.RequestedFile.Import'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Input,
-                                                                        0),
+        'encode_CodeGeneratorRequest.RequestedFile.Import'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Enumerant'(Input) ->
+envelope_Enumerant(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Enumerant'(Input, 0),
+        encode_Enumerant(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Field'(Input) ->
+envelope_Field(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Field'(Input, 0),
+        encode_Field(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Method'(Input) ->
+envelope_Method(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Method'(Input, 0),
+        encode_Method(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Node'(Input) ->
+envelope_Node(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Node'(Input, 0),
+        encode_Node(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Node.NestedNode'(Input) ->
+'envelope_Node.NestedNode'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Node.NestedNode'(Input, 0),
+        'encode_Node.NestedNode'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Node.Parameter'(Input) ->
+'envelope_Node.Parameter'(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Node.Parameter'(Input, 0),
+        'encode_Node.Parameter'(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Superclass'(Input) ->
+envelope_Superclass(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Superclass'(Input, 0),
+        encode_Superclass(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Type'(Input) ->
+envelope_Type(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Type'(Input, 0),
+        encode_Type(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
                     MainData,
                     ExtraData]).
 
-'envelope_schema.capnp:Value'(Input) ->
+envelope_Value(Input) ->
     {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
-        'encode_schema.capnp:Value'(Input, 0),
+        encode_Value(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
@@ -2978,28 +2874,27 @@ follow_text_pointer(PointerInt,
     end,
     follow_text_pointer(NewPointerInt, NewMessageRef).
 
-'internal_decode_schema.capnp:Annotation'(Data =
-                                              <<Varid:64/little-unsigned-integer>>,
-                                          Pointers =
-                                              <<Varvalue:64/little-unsigned-integer,
-                                                Varbrand:64/little-unsigned-integer>>,
-                                          MessageRef) ->
-    #'schema.capnp:Annotation'{id = Varid,
-                               value =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
-                                                         Varvalue,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    0}),
-                               brand =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                         Varbrand,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    1})};
-'internal_decode_schema.capnp:Annotation'(Data, Pointers, MessageRef) ->
+internal_decode_Annotation(Data = <<Varid:64/little-unsigned-integer>>,
+                           Pointers =
+                               <<Varvalue:64/little-unsigned-integer,
+                                 Varbrand:64/little-unsigned-integer>>,
+                           MessageRef) ->
+    #'Annotation'{id = Varid,
+                  value =
+                      follow_struct_pointer(fun internal_decode_Value/3,
+                                            Varvalue,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       0}),
+                  brand =
+                      follow_struct_pointer(fun internal_decode_Brand/3,
+                                            Varbrand,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       1})};
+internal_decode_Annotation(Data, Pointers, MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3018,22 +2913,20 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:128/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Annotation'(PaddedData,
-                                              PaddedPointers,
-                                              MessageRef).
+    internal_decode_Annotation(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Brand'(Data = <<>>,
-                                     Pointers =
-                                         <<Varscopes:64/little-unsigned-integer>>,
-                                     MessageRef) ->
-    #'schema.capnp:Brand'{scopes =
-                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Scope'/3,
-                                                                Varscopes,
-                                                                MessageRef#message_ref{current_offset =
-                                                                                           MessageRef#message_ref.current_offset
-                                                                                           +
-                                                                                           0})};
-'internal_decode_schema.capnp:Brand'(Data, Pointers, MessageRef) ->
+internal_decode_Brand(Data = <<>>,
+                      Pointers =
+                          <<Varscopes:64/little-unsigned-integer>>,
+                      MessageRef) ->
+    #'Brand'{scopes =
+                 follow_tagged_struct_list_pointer(fun 'internal_decode_Brand.Scope'/3,
+                                                   Varscopes,
+                                                   MessageRef#message_ref{current_offset =
+                                                                              MessageRef#message_ref.current_offset
+                                                                              +
+                                                                              0})};
+internal_decode_Brand(Data, Pointers, MessageRef) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3052,16 +2945,14 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Brand'(PaddedData,
-                                         PaddedPointers,
-                                         MessageRef).
+    internal_decode_Brand(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Brand.Binding'(Data =
-                                                 <<_:0,
-                                                   Discriminant:16/little-unsigned-integer,
-                                                   _:48>>,
-                                             Pointers = <<_:64>>,
-                                             MessageRef) ->
+'internal_decode_Brand.Binding'(Data =
+                                    <<_:0,
+                                      Discriminant:16/little-unsigned-integer,
+                                      _:48>>,
+                                Pointers = <<_:64>>,
+                                MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -3070,14 +2961,14 @@ follow_text_pointer(PointerInt,
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {type,
-             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
+             follow_struct_pointer(fun internal_decode_Type/3,
                                    Var,
                                    MessageRef#message_ref{current_offset =
                                                               MessageRef#message_ref.current_offset
                                                               +
                                                               0})}
     end;
-'internal_decode_schema.capnp:Brand.Binding'(Data, Pointers, MessageRef) ->
+'internal_decode_Brand.Binding'(Data, Pointers, MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3096,21 +2987,21 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Brand.Binding'(PaddedData,
-                                                 PaddedPointers,
-                                                 MessageRef).
+    'internal_decode_Brand.Binding'(PaddedData,
+                                    PaddedPointers,
+                                    MessageRef).
 
-'internal_decode_schema.capnp:Brand.Scope'(Data =
-                                               <<VarscopeId:64/little-unsigned-integer,
-                                                 _:64/integer>>,
-                                           Pointers = <<_:64/integer>>,
-                                           MessageRef) ->
-    #'schema.capnp:Brand.Scope'{scopeId = VarscopeId,
-                                '' =
-                                    'internal_decode_schema.capnp:Brand.Scope.'(Data,
-                                                                                Pointers,
-                                                                                MessageRef)};
-'internal_decode_schema.capnp:Brand.Scope'(Data, Pointers, MessageRef) ->
+'internal_decode_Brand.Scope'(Data =
+                                  <<VarscopeId:64/little-unsigned-integer,
+                                    _:64/integer>>,
+                              Pointers = <<_:64/integer>>,
+                              MessageRef) ->
+    #'Brand.Scope'{scopeId = VarscopeId,
+                   '' =
+                       'internal_decode_Brand.Scope.'(Data,
+                                                      Pointers,
+                                                      MessageRef)};
+'internal_decode_Brand.Scope'(Data, Pointers, MessageRef) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3129,22 +3020,22 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Brand.Scope'(PaddedData,
-                                               PaddedPointers,
-                                               MessageRef).
+    'internal_decode_Brand.Scope'(PaddedData,
+                                  PaddedPointers,
+                                  MessageRef).
 
-'internal_decode_schema.capnp:Brand.Scope.'(Data =
-                                                <<_:64,
-                                                  Discriminant:16/little-unsigned-integer,
-                                                  _:48>>,
-                                            Pointers = <<_:64>>,
-                                            MessageRef) ->
+'internal_decode_Brand.Scope.'(Data =
+                                   <<_:64,
+                                     Discriminant:16/little-unsigned-integer,
+                                     _:48>>,
+                               Pointers = <<_:64>>,
+                               MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {bind,
-             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Brand.Binding'/3,
+             follow_tagged_struct_list_pointer(fun 'internal_decode_Brand.Binding'/3,
                                                Var,
                                                MessageRef#message_ref{current_offset =
                                                                           MessageRef#message_ref.current_offset
@@ -3154,7 +3045,7 @@ follow_text_pointer(PointerInt,
             <<_:0,Var:0/integer,_/bitstring>> = Data,
             {inherit,undefined}
     end;
-'internal_decode_schema.capnp:Brand.Scope.'(Data, Pointers, MessageRef) ->
+'internal_decode_Brand.Scope.'(Data, Pointers, MessageRef) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3173,32 +3064,30 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Brand.Scope.'(PaddedData,
-                                                PaddedPointers,
-                                                MessageRef).
+    'internal_decode_Brand.Scope.'(PaddedData,
+                                   PaddedPointers,
+                                   MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest'(Data = <<>>,
-                                                    Pointers =
-                                                        <<Varnodes:64/little-unsigned-integer,
-                                                          VarrequestedFiles:64/little-unsigned-integer>>,
-                                                    MessageRef) ->
-    #'schema.capnp:CodeGeneratorRequest'{nodes =
-                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node'/3,
-                                                                               Varnodes,
-                                                                               MessageRef#message_ref{current_offset =
-                                                                                                          MessageRef#message_ref.current_offset
-                                                                                                          +
-                                                                                                          0}),
-                                         requestedFiles =
-                                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'/3,
-                                                                               VarrequestedFiles,
-                                                                               MessageRef#message_ref{current_offset =
-                                                                                                          MessageRef#message_ref.current_offset
-                                                                                                          +
-                                                                                                          1})};
-'internal_decode_schema.capnp:CodeGeneratorRequest'(Data,
-                                                    Pointers,
-                                                    MessageRef) ->
+internal_decode_CodeGeneratorRequest(Data = <<>>,
+                                     Pointers =
+                                         <<Varnodes:64/little-unsigned-integer,
+                                           VarrequestedFiles:64/little-unsigned-integer>>,
+                                     MessageRef) ->
+    #'CodeGeneratorRequest'{nodes =
+                                follow_tagged_struct_list_pointer(fun internal_decode_Node/3,
+                                                                  Varnodes,
+                                                                  MessageRef#message_ref{current_offset =
+                                                                                             MessageRef#message_ref.current_offset
+                                                                                             +
+                                                                                             0}),
+                            requestedFiles =
+                                follow_tagged_struct_list_pointer(fun 'internal_decode_CodeGeneratorRequest.RequestedFile'/3,
+                                                                  VarrequestedFiles,
+                                                                  MessageRef#message_ref{current_offset =
+                                                                                             MessageRef#message_ref.current_offset
+                                                                                             +
+                                                                                             1})};
+internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3217,33 +3106,33 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:128/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:CodeGeneratorRequest'(PaddedData,
-                                                        PaddedPointers,
-                                                        MessageRef).
+    internal_decode_CodeGeneratorRequest(PaddedData,
+                                         PaddedPointers,
+                                         MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data =
-                                                                      <<Varid:64/little-unsigned-integer>>,
-                                                                  Pointers =
-                                                                      <<Varfilename:64/little-unsigned-integer,
-                                                                        Varimports:64/little-unsigned-integer>>,
-                                                                  MessageRef) ->
-    #'schema.capnp:CodeGeneratorRequest.RequestedFile'{id = Varid,
-                                                       filename =
-                                                           follow_text_pointer(Varfilename,
-                                                                               MessageRef#message_ref{current_offset =
-                                                                                                          MessageRef#message_ref.current_offset
-                                                                                                          +
-                                                                                                          0}),
-                                                       imports =
-                                                           follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'/3,
-                                                                                             Varimports,
-                                                                                             MessageRef#message_ref{current_offset =
-                                                                                                                        MessageRef#message_ref.current_offset
-                                                                                                                        +
-                                                                                                                        1})};
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(Data,
-                                                                  Pointers,
-                                                                  MessageRef) ->
+'internal_decode_CodeGeneratorRequest.RequestedFile'(Data =
+                                                         <<Varid:64/little-unsigned-integer>>,
+                                                     Pointers =
+                                                         <<Varfilename:64/little-unsigned-integer,
+                                                           Varimports:64/little-unsigned-integer>>,
+                                                     MessageRef) ->
+    #'CodeGeneratorRequest.RequestedFile'{id = Varid,
+                                          filename =
+                                              follow_text_pointer(Varfilename,
+                                                                  MessageRef#message_ref{current_offset =
+                                                                                             MessageRef#message_ref.current_offset
+                                                                                             +
+                                                                                             0}),
+                                          imports =
+                                              follow_tagged_struct_list_pointer(fun 'internal_decode_CodeGeneratorRequest.RequestedFile.Import'/3,
+                                                                                Varimports,
+                                                                                MessageRef#message_ref{current_offset =
+                                                                                                           MessageRef#message_ref.current_offset
+                                                                                                           +
+                                                                                                           1})};
+'internal_decode_CodeGeneratorRequest.RequestedFile'(Data,
+                                                     Pointers,
+                                                     MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3262,25 +3151,25 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:128/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile'(PaddedData,
-                                                                      PaddedPointers,
-                                                                      MessageRef).
+    'internal_decode_CodeGeneratorRequest.RequestedFile'(PaddedData,
+                                                         PaddedPointers,
+                                                         MessageRef).
 
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data =
-                                                                             <<Varid:64/little-unsigned-integer>>,
-                                                                         Pointers =
-                                                                             <<Varname:64/little-unsigned-integer>>,
-                                                                         MessageRef) ->
-    #'schema.capnp:CodeGeneratorRequest.RequestedFile.Import'{id = Varid,
-                                                              name =
-                                                                  follow_text_pointer(Varname,
-                                                                                      MessageRef#message_ref{current_offset =
-                                                                                                                 MessageRef#message_ref.current_offset
-                                                                                                                 +
-                                                                                                                 0})};
-'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(Data,
-                                                                         Pointers,
-                                                                         MessageRef) ->
+'internal_decode_CodeGeneratorRequest.RequestedFile.Import'(Data =
+                                                                <<Varid:64/little-unsigned-integer>>,
+                                                            Pointers =
+                                                                <<Varname:64/little-unsigned-integer>>,
+                                                            MessageRef) ->
+    #'CodeGeneratorRequest.RequestedFile.Import'{id = Varid,
+                                                 name =
+                                                     follow_text_pointer(Varname,
+                                                                         MessageRef#message_ref{current_offset =
+                                                                                                    MessageRef#message_ref.current_offset
+                                                                                                    +
+                                                                                                    0})};
+'internal_decode_CodeGeneratorRequest.RequestedFile.Import'(Data,
+                                                            Pointers,
+                                                            MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3299,32 +3188,32 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:CodeGeneratorRequest.RequestedFile.Import'(PaddedData,
-                                                                             PaddedPointers,
-                                                                             MessageRef).
+    'internal_decode_CodeGeneratorRequest.RequestedFile.Import'(PaddedData,
+                                                                PaddedPointers,
+                                                                MessageRef).
 
-'internal_decode_schema.capnp:Enumerant'(Data =
-                                             <<VarcodeOrder:16/little-unsigned-integer,
-                                               _:48/integer>>,
-                                         Pointers =
-                                             <<Varname:64/little-unsigned-integer,
-                                               Varannotations:64/little-unsigned-integer>>,
-                                         MessageRef) ->
-    #'schema.capnp:Enumerant'{codeOrder = VarcodeOrder,
-                              name =
-                                  follow_text_pointer(Varname,
-                                                      MessageRef#message_ref{current_offset =
-                                                                                 MessageRef#message_ref.current_offset
-                                                                                 +
-                                                                                 0}),
-                              annotations =
-                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
-                                                                    Varannotations,
-                                                                    MessageRef#message_ref{current_offset =
-                                                                                               MessageRef#message_ref.current_offset
-                                                                                               +
-                                                                                               1})};
-'internal_decode_schema.capnp:Enumerant'(Data, Pointers, MessageRef) ->
+internal_decode_Enumerant(Data =
+                              <<VarcodeOrder:16/little-unsigned-integer,
+                                _:48/integer>>,
+                          Pointers =
+                              <<Varname:64/little-unsigned-integer,
+                                Varannotations:64/little-unsigned-integer>>,
+                          MessageRef) ->
+    #'Enumerant'{codeOrder = VarcodeOrder,
+                 name =
+                     follow_text_pointer(Varname,
+                                         MessageRef#message_ref{current_offset =
+                                                                    MessageRef#message_ref.current_offset
+                                                                    +
+                                                                    0}),
+                 annotations =
+                     follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
+                                                       Varannotations,
+                                                       MessageRef#message_ref{current_offset =
+                                                                                  MessageRef#message_ref.current_offset
+                                                                                  +
+                                                                                  1})};
+internal_decode_Enumerant(Data, Pointers, MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3343,44 +3232,38 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:128/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Enumerant'(PaddedData,
-                                             PaddedPointers,
-                                             MessageRef).
+    internal_decode_Enumerant(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Field'(Data =
-                                         <<VarcodeOrder:16/little-unsigned-integer,
-                                           VardiscriminantValue:16/little-unsigned-integer,
-                                           _:160/integer>>,
-                                     Pointers =
-                                         <<Varname:64/little-unsigned-integer,
-                                           Varannotations:64/little-unsigned-integer,
-                                           _:128/integer>>,
-                                     MessageRef) ->
-    #'schema.capnp:Field'{codeOrder = VarcodeOrder,
-                          discriminantValue =
-                              VardiscriminantValue bxor 65535,
-                          name =
-                              follow_text_pointer(Varname,
-                                                  MessageRef#message_ref{current_offset =
-                                                                             MessageRef#message_ref.current_offset
-                                                                             +
-                                                                             0}),
-                          annotations =
-                              follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
-                                                                Varannotations,
-                                                                MessageRef#message_ref{current_offset =
-                                                                                           MessageRef#message_ref.current_offset
-                                                                                           +
-                                                                                           1}),
-                          '' =
-                              'internal_decode_schema.capnp:Field.'(Data,
-                                                                    Pointers,
-                                                                    MessageRef),
-                          ordinal =
-                              'internal_decode_schema.capnp:Field.ordinal'(Data,
-                                                                           Pointers,
-                                                                           MessageRef)};
-'internal_decode_schema.capnp:Field'(Data, Pointers, MessageRef) ->
+internal_decode_Field(Data =
+                          <<VarcodeOrder:16/little-unsigned-integer,
+                            VardiscriminantValue:16/little-unsigned-integer,
+                            _:160/integer>>,
+                      Pointers =
+                          <<Varname:64/little-unsigned-integer,
+                            Varannotations:64/little-unsigned-integer,
+                            _:128/integer>>,
+                      MessageRef) ->
+    #'Field'{codeOrder = VarcodeOrder,
+             discriminantValue = VardiscriminantValue bxor 65535,
+             name =
+                 follow_text_pointer(Varname,
+                                     MessageRef#message_ref{current_offset =
+                                                                MessageRef#message_ref.current_offset
+                                                                +
+                                                                0}),
+             annotations =
+                 follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
+                                                   Varannotations,
+                                                   MessageRef#message_ref{current_offset =
+                                                                              MessageRef#message_ref.current_offset
+                                                                              +
+                                                                              1}),
+             '' = 'internal_decode_Field.'(Data, Pointers, MessageRef),
+             ordinal =
+                 'internal_decode_Field.ordinal'(Data,
+                                                 Pointers,
+                                                 MessageRef)};
+internal_decode_Field(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3399,27 +3282,23 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Field'(PaddedData,
-                                         PaddedPointers,
-                                         MessageRef).
+    internal_decode_Field(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Field.'(Data =
-                                          <<_:64,
-                                            Discriminant:16/little-unsigned-integer,
-                                            _:112>>,
-                                      Pointers = <<_:256>>,
-                                      MessageRef) ->
+'internal_decode_Field.'(Data =
+                             <<_:64,
+                               Discriminant:16/little-unsigned-integer,
+                               _:112>>,
+                         Pointers = <<_:256>>,
+                         MessageRef) ->
     case Discriminant of
         0 ->
             {slot,
-             'internal_decode_schema.capnp:Field.slot'(Data,
-                                                       Pointers,
-                                                       MessageRef)};
+             'internal_decode_Field.slot'(Data, Pointers, MessageRef)};
         1 ->
             <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Data,
             {group,Var}
     end;
-'internal_decode_schema.capnp:Field.'(Data, Pointers, MessageRef) ->
+'internal_decode_Field.'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3438,17 +3317,15 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Field.'(PaddedData,
-                                          PaddedPointers,
-                                          MessageRef).
+    'internal_decode_Field.'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Field.group'(Data =
-                                               <<_:128/integer,
-                                                 VartypeId:64/little-unsigned-integer>>,
-                                           Pointers = <<_:256/integer>>,
-                                           MessageRef) ->
-    #'schema.capnp:Field.group'{typeId = VartypeId};
-'internal_decode_schema.capnp:Field.group'(Data, Pointers, MessageRef) ->
+'internal_decode_Field.group'(Data =
+                                  <<_:128/integer,
+                                    VartypeId:64/little-unsigned-integer>>,
+                              Pointers = <<_:256/integer>>,
+                              MessageRef) ->
+    #'Field.group'{typeId = VartypeId};
+'internal_decode_Field.group'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3467,16 +3344,16 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Field.group'(PaddedData,
-                                               PaddedPointers,
-                                               MessageRef).
+    'internal_decode_Field.group'(PaddedData,
+                                  PaddedPointers,
+                                  MessageRef).
 
-'internal_decode_schema.capnp:Field.ordinal'(Data =
-                                                 <<_:80,
-                                                   Discriminant:16/little-unsigned-integer,
-                                                   _:96>>,
-                                             Pointers = <<_:256>>,
-                                             MessageRef) ->
+'internal_decode_Field.ordinal'(Data =
+                                    <<_:80,
+                                      Discriminant:16/little-unsigned-integer,
+                                      _:96>>,
+                                Pointers = <<_:256>>,
+                                MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -3485,7 +3362,7 @@ follow_text_pointer(PointerInt,
             <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {explicit,Var}
     end;
-'internal_decode_schema.capnp:Field.ordinal'(Data, Pointers, MessageRef) ->
+'internal_decode_Field.ordinal'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3504,44 +3381,44 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Field.ordinal'(PaddedData,
-                                                 PaddedPointers,
-                                                 MessageRef).
+    'internal_decode_Field.ordinal'(PaddedData,
+                                    PaddedPointers,
+                                    MessageRef).
 
-'internal_decode_schema.capnp:Field.slot'(Data =
-                                              <<_:32/integer,
-                                                Varoffset:32/little-unsigned-integer,
-                                                _:71/integer,
-                                                VarhadExplicitDefault:1/integer,
-                                                _:56/integer>>,
-                                          Pointers =
-                                              <<_:128/integer,
-                                                Vartype:64/little-unsigned-integer,
-                                                VardefaultValue:64/little-unsigned-integer>>,
-                                          MessageRef) ->
-    #'schema.capnp:Field.slot'{offset = Varoffset,
-                               hadExplicitDefault =
-                                   case VarhadExplicitDefault of
-                                       0 ->
-                                           false;
-                                       1 ->
-                                           true
-                                   end,
-                               type =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
-                                                         Vartype,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    2}),
-                               defaultValue =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
-                                                         VardefaultValue,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    3})};
-'internal_decode_schema.capnp:Field.slot'(Data, Pointers, MessageRef) ->
+'internal_decode_Field.slot'(Data =
+                                 <<_:32/integer,
+                                   Varoffset:32/little-unsigned-integer,
+                                   _:71/integer,
+                                   VarhadExplicitDefault:1/integer,
+                                   _:56/integer>>,
+                             Pointers =
+                                 <<_:128/integer,
+                                   Vartype:64/little-unsigned-integer,
+                                   VardefaultValue:64/little-unsigned-integer>>,
+                             MessageRef) ->
+    #'Field.slot'{offset = Varoffset,
+                  hadExplicitDefault =
+                      case VarhadExplicitDefault of
+                          0 ->
+                              false;
+                          1 ->
+                              true
+                      end,
+                  type =
+                      follow_struct_pointer(fun internal_decode_Type/3,
+                                            Vartype,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       2}),
+                  defaultValue =
+                      follow_struct_pointer(fun internal_decode_Value/3,
+                                            VardefaultValue,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       3})};
+'internal_decode_Field.slot'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3560,60 +3437,58 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Field.slot'(PaddedData,
-                                              PaddedPointers,
-                                              MessageRef).
+    'internal_decode_Field.slot'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Method'(Data =
-                                          <<VarcodeOrder:16/little-unsigned-integer,
-                                            _:48/integer,
-                                            VarparamStructType:64/little-unsigned-integer,
-                                            VarresultStructType:64/little-unsigned-integer>>,
-                                      Pointers =
-                                          <<Varname:64/little-unsigned-integer,
-                                            Varannotations:64/little-unsigned-integer,
-                                            VarparamBrand:64/little-unsigned-integer,
-                                            VarresultBrand:64/little-unsigned-integer,
-                                            VarimplicitParameters:64/little-unsigned-integer>>,
-                                      MessageRef) ->
-    #'schema.capnp:Method'{codeOrder = VarcodeOrder,
-                           paramStructType = VarparamStructType,
-                           resultStructType = VarresultStructType,
-                           name =
-                               follow_text_pointer(Varname,
-                                                   MessageRef#message_ref{current_offset =
-                                                                              MessageRef#message_ref.current_offset
-                                                                              +
-                                                                              0}),
-                           annotations =
-                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
-                                                                 Varannotations,
-                                                                 MessageRef#message_ref{current_offset =
-                                                                                            MessageRef#message_ref.current_offset
-                                                                                            +
-                                                                                            1}),
-                           paramBrand =
-                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                     VarparamBrand,
-                                                     MessageRef#message_ref{current_offset =
-                                                                                MessageRef#message_ref.current_offset
-                                                                                +
-                                                                                2}),
-                           resultBrand =
-                               follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                     VarresultBrand,
-                                                     MessageRef#message_ref{current_offset =
-                                                                                MessageRef#message_ref.current_offset
-                                                                                +
-                                                                                3}),
-                           implicitParameters =
-                               follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
-                                                                 VarimplicitParameters,
-                                                                 MessageRef#message_ref{current_offset =
-                                                                                            MessageRef#message_ref.current_offset
-                                                                                            +
-                                                                                            4})};
-'internal_decode_schema.capnp:Method'(Data, Pointers, MessageRef) ->
+internal_decode_Method(Data =
+                           <<VarcodeOrder:16/little-unsigned-integer,
+                             _:48/integer,
+                             VarparamStructType:64/little-unsigned-integer,
+                             VarresultStructType:64/little-unsigned-integer>>,
+                       Pointers =
+                           <<Varname:64/little-unsigned-integer,
+                             Varannotations:64/little-unsigned-integer,
+                             VarparamBrand:64/little-unsigned-integer,
+                             VarresultBrand:64/little-unsigned-integer,
+                             VarimplicitParameters:64/little-unsigned-integer>>,
+                       MessageRef) ->
+    #'Method'{codeOrder = VarcodeOrder,
+              paramStructType = VarparamStructType,
+              resultStructType = VarresultStructType,
+              name =
+                  follow_text_pointer(Varname,
+                                      MessageRef#message_ref{current_offset =
+                                                                 MessageRef#message_ref.current_offset
+                                                                 +
+                                                                 0}),
+              annotations =
+                  follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
+                                                    Varannotations,
+                                                    MessageRef#message_ref{current_offset =
+                                                                               MessageRef#message_ref.current_offset
+                                                                               +
+                                                                               1}),
+              paramBrand =
+                  follow_struct_pointer(fun internal_decode_Brand/3,
+                                        VarparamBrand,
+                                        MessageRef#message_ref{current_offset =
+                                                                   MessageRef#message_ref.current_offset
+                                                                   +
+                                                                   2}),
+              resultBrand =
+                  follow_struct_pointer(fun internal_decode_Brand/3,
+                                        VarresultBrand,
+                                        MessageRef#message_ref{current_offset =
+                                                                   MessageRef#message_ref.current_offset
+                                                                   +
+                                                                   3}),
+              implicitParameters =
+                  follow_tagged_struct_list_pointer(fun 'internal_decode_Node.Parameter'/3,
+                                                    VarimplicitParameters,
+                                                    MessageRef#message_ref{current_offset =
+                                                                               MessageRef#message_ref.current_offset
+                                                                               +
+                                                                               4})};
+internal_decode_Method(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3632,68 +3507,62 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:320/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Method'(PaddedData,
-                                          PaddedPointers,
-                                          MessageRef).
+    internal_decode_Method(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Node'(Data =
-                                        <<Varid:64/little-unsigned-integer,
-                                          VardisplayNamePrefixLength:32/little-unsigned-integer,
-                                          _:32/integer,
-                                          VarscopeId:64/little-unsigned-integer,
-                                          _:103/integer,
-                                          VarisGeneric:1/integer,
-                                          _:24/integer>>,
-                                    Pointers =
-                                        <<VardisplayName:64/little-unsigned-integer,
-                                          VarnestedNodes:64/little-unsigned-integer,
-                                          Varannotations:64/little-unsigned-integer,
-                                          _:128/integer,
-                                          Varparameters:64/little-unsigned-integer>>,
-                                    MessageRef) ->
-    #'schema.capnp:Node'{id = Varid,
-                         displayNamePrefixLength =
-                             VardisplayNamePrefixLength,
-                         scopeId = VarscopeId,
-                         isGeneric =
-                             case VarisGeneric of
-                                 0 ->
-                                     false;
-                                 1 ->
-                                     true
-                             end,
-                         displayName =
-                             follow_text_pointer(VardisplayName,
-                                                 MessageRef#message_ref{current_offset =
-                                                                            MessageRef#message_ref.current_offset
-                                                                            +
-                                                                            0}),
-                         nestedNodes =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.NestedNode'/3,
-                                                               VarnestedNodes,
-                                                               MessageRef#message_ref{current_offset =
-                                                                                          MessageRef#message_ref.current_offset
-                                                                                          +
-                                                                                          1}),
-                         annotations =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Annotation'/3,
-                                                               Varannotations,
-                                                               MessageRef#message_ref{current_offset =
-                                                                                          MessageRef#message_ref.current_offset
-                                                                                          +
-                                                                                          2}),
-                         parameters =
-                             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Node.Parameter'/3,
-                                                               Varparameters,
-                                                               MessageRef#message_ref{current_offset =
-                                                                                          MessageRef#message_ref.current_offset
-                                                                                          +
-                                                                                          5}),
-                         '' =
-                             'internal_decode_schema.capnp:Node.'(Data,
-                                                                  Pointers,
-                                                                  MessageRef)};
-'internal_decode_schema.capnp:Node'(Data, Pointers, MessageRef) ->
+internal_decode_Node(Data =
+                         <<Varid:64/little-unsigned-integer,
+                           VardisplayNamePrefixLength:32/little-unsigned-integer,
+                           _:32/integer,
+                           VarscopeId:64/little-unsigned-integer,
+                           _:103/integer,
+                           VarisGeneric:1/integer,
+                           _:24/integer>>,
+                     Pointers =
+                         <<VardisplayName:64/little-unsigned-integer,
+                           VarnestedNodes:64/little-unsigned-integer,
+                           Varannotations:64/little-unsigned-integer,
+                           _:128/integer,
+                           Varparameters:64/little-unsigned-integer>>,
+                     MessageRef) ->
+    #'Node'{id = Varid,
+            displayNamePrefixLength = VardisplayNamePrefixLength,
+            scopeId = VarscopeId,
+            isGeneric =
+                case VarisGeneric of
+                    0 ->
+                        false;
+                    1 ->
+                        true
+                end,
+            displayName =
+                follow_text_pointer(VardisplayName,
+                                    MessageRef#message_ref{current_offset =
+                                                               MessageRef#message_ref.current_offset
+                                                               +
+                                                               0}),
+            nestedNodes =
+                follow_tagged_struct_list_pointer(fun 'internal_decode_Node.NestedNode'/3,
+                                                  VarnestedNodes,
+                                                  MessageRef#message_ref{current_offset =
+                                                                             MessageRef#message_ref.current_offset
+                                                                             +
+                                                                             1}),
+            annotations =
+                follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
+                                                  Varannotations,
+                                                  MessageRef#message_ref{current_offset =
+                                                                             MessageRef#message_ref.current_offset
+                                                                             +
+                                                                             2}),
+            parameters =
+                follow_tagged_struct_list_pointer(fun 'internal_decode_Node.Parameter'/3,
+                                                  Varparameters,
+                                                  MessageRef#message_ref{current_offset =
+                                                                             MessageRef#message_ref.current_offset
+                                                                             +
+                                                                             5}),
+            '' = 'internal_decode_Node.'(Data, Pointers, MessageRef)};
+internal_decode_Node(Data, Pointers, MessageRef) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3712,30 +3581,26 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node'(PaddedData,
-                                        PaddedPointers,
-                                        MessageRef).
+    internal_decode_Node(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Node.'(Data =
-                                         <<_:96,
-                                           Discriminant:16/little-unsigned-integer,
-                                           _:208>>,
-                                     Pointers = <<_:384>>,
-                                     MessageRef) ->
+'internal_decode_Node.'(Data =
+                            <<_:96,
+                              Discriminant:16/little-unsigned-integer,
+                              _:208>>,
+                        Pointers = <<_:384>>,
+                        MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
             {file,undefined};
         1 ->
             {struct,
-             'internal_decode_schema.capnp:Node.struct'(Data,
-                                                        Pointers,
-                                                        MessageRef)};
+             'internal_decode_Node.struct'(Data, Pointers, MessageRef)};
         2 ->
             <<_:192,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {enum,
-             follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
+             follow_tagged_struct_list_pointer(fun internal_decode_Enumerant/3,
                                                Var,
                                                MessageRef#message_ref{current_offset =
                                                                           MessageRef#message_ref.current_offset
@@ -3743,21 +3608,19 @@ follow_text_pointer(PointerInt,
                                                                           3})};
         3 ->
             {interface,
-             'internal_decode_schema.capnp:Node.interface'(Data,
-                                                           Pointers,
-                                                           MessageRef)};
+             'internal_decode_Node.interface'(Data,
+                                              Pointers,
+                                              MessageRef)};
         4 ->
             {const,
-             'internal_decode_schema.capnp:Node.const'(Data,
-                                                       Pointers,
-                                                       MessageRef)};
+             'internal_decode_Node.const'(Data, Pointers, MessageRef)};
         5 ->
             {annotation,
-             'internal_decode_schema.capnp:Node.annotation'(Data,
-                                                            Pointers,
-                                                            MessageRef)}
+             'internal_decode_Node.annotation'(Data,
+                                               Pointers,
+                                               MessageRef)}
     end;
-'internal_decode_schema.capnp:Node.'(Data, Pointers, MessageRef) ->
+'internal_decode_Node.'(Data, Pointers, MessageRef) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3776,25 +3639,21 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node.'(PaddedData,
-                                         PaddedPointers,
-                                         MessageRef).
+    'internal_decode_Node.'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Node.NestedNode'(Data =
-                                                   <<Varid:64/little-unsigned-integer>>,
-                                               Pointers =
-                                                   <<Varname:64/little-unsigned-integer>>,
-                                               MessageRef) ->
-    #'schema.capnp:Node.NestedNode'{id = Varid,
-                                    name =
-                                        follow_text_pointer(Varname,
-                                                            MessageRef#message_ref{current_offset =
-                                                                                       MessageRef#message_ref.current_offset
-                                                                                       +
-                                                                                       0})};
-'internal_decode_schema.capnp:Node.NestedNode'(Data,
-                                               Pointers,
-                                               MessageRef) ->
+'internal_decode_Node.NestedNode'(Data =
+                                      <<Varid:64/little-unsigned-integer>>,
+                                  Pointers =
+                                      <<Varname:64/little-unsigned-integer>>,
+                                  MessageRef) ->
+    #'Node.NestedNode'{id = Varid,
+                       name =
+                           follow_text_pointer(Varname,
+                                               MessageRef#message_ref{current_offset =
+                                                                          MessageRef#message_ref.current_offset
+                                                                          +
+                                                                          0})};
+'internal_decode_Node.NestedNode'(Data, Pointers, MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3813,23 +3672,21 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node.NestedNode'(PaddedData,
-                                                   PaddedPointers,
-                                                   MessageRef).
+    'internal_decode_Node.NestedNode'(PaddedData,
+                                      PaddedPointers,
+                                      MessageRef).
 
-'internal_decode_schema.capnp:Node.Parameter'(Data = <<>>,
-                                              Pointers =
-                                                  <<Varname:64/little-unsigned-integer>>,
-                                              MessageRef) ->
-    #'schema.capnp:Node.Parameter'{name =
-                                       follow_text_pointer(Varname,
-                                                           MessageRef#message_ref{current_offset =
-                                                                                      MessageRef#message_ref.current_offset
-                                                                                      +
-                                                                                      0})};
-'internal_decode_schema.capnp:Node.Parameter'(Data,
-                                              Pointers,
-                                              MessageRef) ->
+'internal_decode_Node.Parameter'(Data = <<>>,
+                                 Pointers =
+                                     <<Varname:64/little-unsigned-integer>>,
+                                 MessageRef) ->
+    #'Node.Parameter'{name =
+                          follow_text_pointer(Varname,
+                                              MessageRef#message_ref{current_offset =
+                                                                         MessageRef#message_ref.current_offset
+                                                                         +
+                                                                         0})};
+'internal_decode_Node.Parameter'(Data, Pointers, MessageRef) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3848,125 +3705,123 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node.Parameter'(PaddedData,
-                                                  PaddedPointers,
-                                                  MessageRef).
+    'internal_decode_Node.Parameter'(PaddedData,
+                                     PaddedPointers,
+                                     MessageRef).
 
-'internal_decode_schema.capnp:Node.annotation'(Data =
-                                                   <<_:112/integer,
-                                                     VartargetsGroup:1/integer,
-                                                     VartargetsUnion:1/integer,
-                                                     VartargetsField:1/integer,
-                                                     VartargetsStruct:1/integer,
-                                                     VartargetsEnumerant:1/integer,
-                                                     VartargetsEnum:1/integer,
-                                                     VartargetsConst:1/integer,
-                                                     VartargetsFile:1/integer,
-                                                     _:4/integer,
-                                                     VartargetsAnnotation:1/integer,
-                                                     VartargetsParam:1/integer,
-                                                     VartargetsMethod:1/integer,
-                                                     VartargetsInterface:1/integer,
-                                                     _:192/integer>>,
-                                               Pointers =
-                                                   <<_:192/integer,
-                                                     Vartype:64/little-unsigned-integer,
-                                                     _:128/integer>>,
-                                               MessageRef) ->
-    #'schema.capnp:Node.annotation'{targetsGroup =
-                                        case VartargetsGroup of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsUnion =
-                                        case VartargetsUnion of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsField =
-                                        case VartargetsField of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsStruct =
-                                        case VartargetsStruct of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsEnumerant =
-                                        case VartargetsEnumerant of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsEnum =
-                                        case VartargetsEnum of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsConst =
-                                        case VartargetsConst of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsFile =
-                                        case VartargetsFile of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsAnnotation =
-                                        case VartargetsAnnotation of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsParam =
-                                        case VartargetsParam of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsMethod =
-                                        case VartargetsMethod of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    targetsInterface =
-                                        case VartargetsInterface of
-                                            0 ->
-                                                false;
-                                            1 ->
-                                                true
-                                        end,
-                                    type =
-                                        follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
-                                                              Vartype,
-                                                              MessageRef#message_ref{current_offset =
-                                                                                         MessageRef#message_ref.current_offset
-                                                                                         +
-                                                                                         3})};
-'internal_decode_schema.capnp:Node.annotation'(Data,
-                                               Pointers,
-                                               MessageRef) ->
+'internal_decode_Node.annotation'(Data =
+                                      <<_:112/integer,
+                                        VartargetsGroup:1/integer,
+                                        VartargetsUnion:1/integer,
+                                        VartargetsField:1/integer,
+                                        VartargetsStruct:1/integer,
+                                        VartargetsEnumerant:1/integer,
+                                        VartargetsEnum:1/integer,
+                                        VartargetsConst:1/integer,
+                                        VartargetsFile:1/integer,
+                                        _:4/integer,
+                                        VartargetsAnnotation:1/integer,
+                                        VartargetsParam:1/integer,
+                                        VartargetsMethod:1/integer,
+                                        VartargetsInterface:1/integer,
+                                        _:192/integer>>,
+                                  Pointers =
+                                      <<_:192/integer,
+                                        Vartype:64/little-unsigned-integer,
+                                        _:128/integer>>,
+                                  MessageRef) ->
+    #'Node.annotation'{targetsGroup =
+                           case VartargetsGroup of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsUnion =
+                           case VartargetsUnion of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsField =
+                           case VartargetsField of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsStruct =
+                           case VartargetsStruct of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsEnumerant =
+                           case VartargetsEnumerant of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsEnum =
+                           case VartargetsEnum of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsConst =
+                           case VartargetsConst of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsFile =
+                           case VartargetsFile of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsAnnotation =
+                           case VartargetsAnnotation of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsParam =
+                           case VartargetsParam of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsMethod =
+                           case VartargetsMethod of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       targetsInterface =
+                           case VartargetsInterface of
+                               0 ->
+                                   false;
+                               1 ->
+                                   true
+                           end,
+                       type =
+                           follow_struct_pointer(fun internal_decode_Type/3,
+                                                 Vartype,
+                                                 MessageRef#message_ref{current_offset =
+                                                                            MessageRef#message_ref.current_offset
+                                                                            +
+                                                                            3})};
+'internal_decode_Node.annotation'(Data, Pointers, MessageRef) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3985,32 +3840,176 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node.annotation'(PaddedData,
-                                                   PaddedPointers,
-                                                   MessageRef).
+    'internal_decode_Node.annotation'(PaddedData,
+                                      PaddedPointers,
+                                      MessageRef).
 
-'internal_decode_schema.capnp:Node.const'(Data = <<_:320/integer>>,
-                                          Pointers =
-                                              <<_:192/integer,
-                                                Vartype:64/little-unsigned-integer,
-                                                Varvalue:64/little-unsigned-integer,
-                                                _:64/integer>>,
-                                          MessageRef) ->
-    #'schema.capnp:Node.const'{type =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
-                                                         Vartype,
+'internal_decode_Node.const'(Data = <<_:320/integer>>,
+                             Pointers =
+                                 <<_:192/integer,
+                                   Vartype:64/little-unsigned-integer,
+                                   Varvalue:64/little-unsigned-integer,
+                                   _:64/integer>>,
+                             MessageRef) ->
+    #'Node.const'{type =
+                      follow_struct_pointer(fun internal_decode_Type/3,
+                                            Vartype,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       3}),
+                  value =
+                      follow_struct_pointer(fun internal_decode_Value/3,
+                                            Varvalue,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       4})};
+'internal_decode_Node.const'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_Node.const'(PaddedData, PaddedPointers, MessageRef).
+
+'internal_decode_Node.enum'(Data = <<_:320/integer>>,
+                            Pointers =
+                                <<_:192/integer,
+                                  Varenumerants:64/little-unsigned-integer,
+                                  _:128/integer>>,
+                            MessageRef) ->
+    #'Node.enum'{enumerants =
+                     follow_tagged_struct_list_pointer(fun internal_decode_Enumerant/3,
+                                                       Varenumerants,
+                                                       MessageRef#message_ref{current_offset =
+                                                                                  MessageRef#message_ref.current_offset
+                                                                                  +
+                                                                                  3})};
+'internal_decode_Node.enum'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_Node.enum'(PaddedData, PaddedPointers, MessageRef).
+
+'internal_decode_Node.interface'(Data = <<_:320/integer>>,
+                                 Pointers =
+                                     <<_:192/integer,
+                                       Varmethods:64/little-unsigned-integer,
+                                       Varsuperclasses:64/little-unsigned-integer,
+                                       _:64/integer>>,
+                                 MessageRef) ->
+    #'Node.interface'{methods =
+                          follow_tagged_struct_list_pointer(fun internal_decode_Method/3,
+                                                            Varmethods,
+                                                            MessageRef#message_ref{current_offset =
+                                                                                       MessageRef#message_ref.current_offset
+                                                                                       +
+                                                                                       3}),
+                      superclasses =
+                          follow_tagged_struct_list_pointer(fun internal_decode_Superclass/3,
+                                                            Varsuperclasses,
+                                                            MessageRef#message_ref{current_offset =
+                                                                                       MessageRef#message_ref.current_offset
+                                                                                       +
+                                                                                       4})};
+'internal_decode_Node.interface'(Data, Pointers, MessageRef) ->
+    DataPadLength = 320 - bit_size(Data),
+    if
+        DataPadLength > 0 ->
+            PaddedData = <<Data/binary,0:DataPadLength>>;
+        DataPadLength =:= 0 ->
+            PaddedData = Data;
+        DataPadLength < 0 ->
+            <<PaddedData:320/bitstring>> = Data
+    end,
+    PointerPadLength = 384 - bit_size(Pointers),
+    if
+        PointerPadLength > 0 ->
+            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
+        PointerPadLength =:= 0 ->
+            PaddedPointers = Pointers;
+        PointerPadLength < 0 ->
+            <<PaddedPointers:384/bitstring>> = Pointers
+    end,
+    'internal_decode_Node.interface'(PaddedData,
+                                     PaddedPointers,
+                                     MessageRef).
+
+'internal_decode_Node.struct'(Data =
+                                  <<_:112/integer,
+                                    VardataWordCount:16/little-unsigned-integer,
+                                    _:64/integer,
+                                    VarpointerCount:16/little-unsigned-integer,
+                                    VarpreferredListEncoding:16/little-unsigned-integer,
+                                    _:7/integer,
+                                    VarisGroup:1/integer,
+                                    _:8/integer,
+                                    VardiscriminantCount:16/little-unsigned-integer,
+                                    VardiscriminantOffset:32/little-unsigned-integer,
+                                    _:32/integer>>,
+                              Pointers =
+                                  <<_:192/integer,
+                                    Varfields:64/little-unsigned-integer,
+                                    _:128/integer>>,
+                              MessageRef) ->
+    #'Node.struct'{dataWordCount = VardataWordCount,
+                   pointerCount = VarpointerCount,
+                   preferredListEncoding =
+                       element(VarpreferredListEncoding + 1,
+                               {empty,
+                                bit,
+                                byte,
+                                twoBytes,
+                                fourBytes,
+                                eightBytes,
+                                pointer,
+                                inlineComposite}),
+                   isGroup =
+                       case VarisGroup of
+                           0 ->
+                               false;
+                           1 ->
+                               true
+                       end,
+                   discriminantCount = VardiscriminantCount,
+                   discriminantOffset = VardiscriminantOffset,
+                   fields =
+                       follow_tagged_struct_list_pointer(fun internal_decode_Field/3,
+                                                         Varfields,
                                                          MessageRef#message_ref{current_offset =
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
-                                                                                    3}),
-                               value =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Value'/3,
-                                                         Varvalue,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    4})};
-'internal_decode_schema.capnp:Node.const'(Data, Pointers, MessageRef) ->
+                                                                                    3})};
+'internal_decode_Node.struct'(Data, Pointers, MessageRef) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4029,175 +4028,23 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Node.const'(PaddedData,
-                                              PaddedPointers,
-                                              MessageRef).
+    'internal_decode_Node.struct'(PaddedData,
+                                  PaddedPointers,
+                                  MessageRef).
 
-'internal_decode_schema.capnp:Node.enum'(Data = <<_:320/integer>>,
-                                         Pointers =
-                                             <<_:192/integer,
-                                               Varenumerants:64/little-unsigned-integer,
-                                               _:128/integer>>,
-                                         MessageRef) ->
-    #'schema.capnp:Node.enum'{enumerants =
-                                  follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Enumerant'/3,
-                                                                    Varenumerants,
-                                                                    MessageRef#message_ref{current_offset =
-                                                                                               MessageRef#message_ref.current_offset
-                                                                                               +
-                                                                                               3})};
-'internal_decode_schema.capnp:Node.enum'(Data, Pointers, MessageRef) ->
-    DataPadLength = 320 - bit_size(Data),
-    if
-        DataPadLength > 0 ->
-            PaddedData = <<Data/binary,0:DataPadLength>>;
-        DataPadLength =:= 0 ->
-            PaddedData = Data;
-        DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
-    end,
-    PointerPadLength = 384 - bit_size(Pointers),
-    if
-        PointerPadLength > 0 ->
-            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
-        PointerPadLength =:= 0 ->
-            PaddedPointers = Pointers;
-        PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
-    end,
-    'internal_decode_schema.capnp:Node.enum'(PaddedData,
-                                             PaddedPointers,
-                                             MessageRef).
-
-'internal_decode_schema.capnp:Node.interface'(Data = <<_:320/integer>>,
-                                              Pointers =
-                                                  <<_:192/integer,
-                                                    Varmethods:64/little-unsigned-integer,
-                                                    Varsuperclasses:64/little-unsigned-integer,
-                                                    _:64/integer>>,
-                                              MessageRef) ->
-    #'schema.capnp:Node.interface'{methods =
-                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Method'/3,
-                                                                         Varmethods,
-                                                                         MessageRef#message_ref{current_offset =
-                                                                                                    MessageRef#message_ref.current_offset
-                                                                                                    +
-                                                                                                    3}),
-                                   superclasses =
-                                       follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Superclass'/3,
-                                                                         Varsuperclasses,
-                                                                         MessageRef#message_ref{current_offset =
-                                                                                                    MessageRef#message_ref.current_offset
-                                                                                                    +
-                                                                                                    4})};
-'internal_decode_schema.capnp:Node.interface'(Data,
-                                              Pointers,
-                                              MessageRef) ->
-    DataPadLength = 320 - bit_size(Data),
-    if
-        DataPadLength > 0 ->
-            PaddedData = <<Data/binary,0:DataPadLength>>;
-        DataPadLength =:= 0 ->
-            PaddedData = Data;
-        DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
-    end,
-    PointerPadLength = 384 - bit_size(Pointers),
-    if
-        PointerPadLength > 0 ->
-            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
-        PointerPadLength =:= 0 ->
-            PaddedPointers = Pointers;
-        PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
-    end,
-    'internal_decode_schema.capnp:Node.interface'(PaddedData,
-                                                  PaddedPointers,
-                                                  MessageRef).
-
-'internal_decode_schema.capnp:Node.struct'(Data =
-                                               <<_:112/integer,
-                                                 VardataWordCount:16/little-unsigned-integer,
-                                                 _:64/integer,
-                                                 VarpointerCount:16/little-unsigned-integer,
-                                                 VarpreferredListEncoding:16/little-unsigned-integer,
-                                                 _:7/integer,
-                                                 VarisGroup:1/integer,
-                                                 _:8/integer,
-                                                 VardiscriminantCount:16/little-unsigned-integer,
-                                                 VardiscriminantOffset:32/little-unsigned-integer,
-                                                 _:32/integer>>,
-                                           Pointers =
-                                               <<_:192/integer,
-                                                 Varfields:64/little-unsigned-integer,
-                                                 _:128/integer>>,
-                                           MessageRef) ->
-    #'schema.capnp:Node.struct'{dataWordCount = VardataWordCount,
-                                pointerCount = VarpointerCount,
-                                preferredListEncoding =
-                                    element(VarpreferredListEncoding + 1,
-                                            {empty,
-                                             bit,
-                                             byte,
-                                             twoBytes,
-                                             fourBytes,
-                                             eightBytes,
-                                             pointer,
-                                             inlineComposite}),
-                                isGroup =
-                                    case VarisGroup of
-                                        0 ->
-                                            false;
-                                        1 ->
-                                            true
-                                    end,
-                                discriminantCount = VardiscriminantCount,
-                                discriminantOffset =
-                                    VardiscriminantOffset,
-                                fields =
-                                    follow_tagged_struct_list_pointer(fun 'internal_decode_schema.capnp:Field'/3,
-                                                                      Varfields,
-                                                                      MessageRef#message_ref{current_offset =
-                                                                                                 MessageRef#message_ref.current_offset
-                                                                                                 +
-                                                                                                 3})};
-'internal_decode_schema.capnp:Node.struct'(Data, Pointers, MessageRef) ->
-    DataPadLength = 320 - bit_size(Data),
-    if
-        DataPadLength > 0 ->
-            PaddedData = <<Data/binary,0:DataPadLength>>;
-        DataPadLength =:= 0 ->
-            PaddedData = Data;
-        DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
-    end,
-    PointerPadLength = 384 - bit_size(Pointers),
-    if
-        PointerPadLength > 0 ->
-            PaddedPointers = <<Pointers/binary,0:PointerPadLength>>;
-        PointerPadLength =:= 0 ->
-            PaddedPointers = Pointers;
-        PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
-    end,
-    'internal_decode_schema.capnp:Node.struct'(PaddedData,
-                                               PaddedPointers,
-                                               MessageRef).
-
-'internal_decode_schema.capnp:Superclass'(Data =
-                                              <<Varid:64/little-unsigned-integer>>,
-                                          Pointers =
-                                              <<Varbrand:64/little-unsigned-integer>>,
-                                          MessageRef) ->
-    #'schema.capnp:Superclass'{id = Varid,
-                               brand =
-                                   follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                         Varbrand,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    0})};
-'internal_decode_schema.capnp:Superclass'(Data, Pointers, MessageRef) ->
+internal_decode_Superclass(Data = <<Varid:64/little-unsigned-integer>>,
+                           Pointers =
+                               <<Varbrand:64/little-unsigned-integer>>,
+                           MessageRef) ->
+    #'Superclass'{id = Varid,
+                  brand =
+                      follow_struct_pointer(fun internal_decode_Brand/3,
+                                            Varbrand,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       0})};
+internal_decode_Superclass(Data, Pointers, MessageRef) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4216,16 +4063,14 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Superclass'(PaddedData,
-                                              PaddedPointers,
-                                              MessageRef).
+    internal_decode_Superclass(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Type'(Data =
-                                        <<_:0,
-                                          Discriminant:16/little-unsigned-integer,
-                                          _:176>>,
-                                    Pointers = <<_:64>>,
-                                    MessageRef) ->
+internal_decode_Type(Data =
+                         <<_:0,
+                           Discriminant:16/little-unsigned-integer,
+                           _:176>>,
+                     Pointers = <<_:64>>,
+                     MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -4273,7 +4118,7 @@ follow_text_pointer(PointerInt,
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {list,
-             follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
+             follow_struct_pointer(fun internal_decode_Type/3,
                                    Var,
                                    MessageRef#message_ref{current_offset =
                                                               MessageRef#message_ref.current_offset
@@ -4281,26 +4126,22 @@ follow_text_pointer(PointerInt,
                                                               0})};
         15 ->
             {enum,
-             'internal_decode_schema.capnp:Type.enum'(Data,
-                                                      Pointers,
-                                                      MessageRef)};
+             'internal_decode_Type.enum'(Data, Pointers, MessageRef)};
         16 ->
             {struct,
-             'internal_decode_schema.capnp:Type.struct'(Data,
-                                                        Pointers,
-                                                        MessageRef)};
+             'internal_decode_Type.struct'(Data, Pointers, MessageRef)};
         17 ->
             {interface,
-             'internal_decode_schema.capnp:Type.interface'(Data,
-                                                           Pointers,
-                                                           MessageRef)};
+             'internal_decode_Type.interface'(Data,
+                                              Pointers,
+                                              MessageRef)};
         18 ->
             {anyPointer,
-             'internal_decode_schema.capnp:Type.anyPointer'(Data,
-                                                            Pointers,
-                                                            MessageRef)}
+             'internal_decode_Type.anyPointer'(Data,
+                                               Pointers,
+                                               MessageRef)}
     end;
-'internal_decode_schema.capnp:Type'(Data, Pointers, MessageRef) ->
+internal_decode_Type(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4319,32 +4160,28 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type'(PaddedData,
-                                        PaddedPointers,
-                                        MessageRef).
+    internal_decode_Type(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer'(Data =
-                                                   <<_:64,
-                                                     Discriminant:16/little-unsigned-integer,
-                                                     _:112>>,
-                                               Pointers = <<_:64>>,
-                                               MessageRef) ->
+'internal_decode_Type.anyPointer'(Data =
+                                      <<_:64,
+                                        Discriminant:16/little-unsigned-integer,
+                                        _:112>>,
+                                  Pointers = <<_:64>>,
+                                  MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
             {unconstrained,undefined};
         1 ->
             {parameter,
-             'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data,
-                                                                      Pointers,
-                                                                      MessageRef)};
+             'internal_decode_Type.anyPointer.parameter'(Data,
+                                                         Pointers,
+                                                         MessageRef)};
         2 ->
             <<_:80,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {implicitMethodParameter,Var}
     end;
-'internal_decode_schema.capnp:Type.anyPointer'(Data,
-                                               Pointers,
-                                               MessageRef) ->
+'internal_decode_Type.anyPointer'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4363,22 +4200,22 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.anyPointer'(PaddedData,
-                                                   PaddedPointers,
-                                                   MessageRef).
+    'internal_decode_Type.anyPointer'(PaddedData,
+                                      PaddedPointers,
+                                      MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data =
-                                                                           <<_:80/integer,
-                                                                             VarparameterIndex:16/little-unsigned-integer,
-                                                                             _:96/integer>>,
-                                                                       Pointers =
-                                                                           <<_:64/integer>>,
-                                                                       MessageRef) ->
-    #'schema.capnp:Type.anyPointer.implicitMethodParameter'{parameterIndex =
-                                                                VarparameterIndex};
-'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(Data,
-                                                                       Pointers,
-                                                                       MessageRef) ->
+'internal_decode_Type.anyPointer.implicitMethodParameter'(Data =
+                                                              <<_:80/integer,
+                                                                VarparameterIndex:16/little-unsigned-integer,
+                                                                _:96/integer>>,
+                                                          Pointers =
+                                                              <<_:64/integer>>,
+                                                          MessageRef) ->
+    #'Type.anyPointer.implicitMethodParameter'{parameterIndex =
+                                                   VarparameterIndex};
+'internal_decode_Type.anyPointer.implicitMethodParameter'(Data,
+                                                          Pointers,
+                                                          MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4397,24 +4234,20 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.anyPointer.implicitMethodParameter'(PaddedData,
-                                                                           PaddedPointers,
-                                                                           MessageRef).
+    'internal_decode_Type.anyPointer.implicitMethodParameter'(PaddedData,
+                                                              PaddedPointers,
+                                                              MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data =
-                                                             <<_:80/integer,
-                                                               VarparameterIndex:16/little-unsigned-integer,
-                                                               _:32/integer,
-                                                               VarscopeId:64/little-unsigned-integer>>,
-                                                         Pointers =
-                                                             <<_:64/integer>>,
-                                                         MessageRef) ->
-    #'schema.capnp:Type.anyPointer.parameter'{parameterIndex =
-                                                  VarparameterIndex,
-                                              scopeId = VarscopeId};
-'internal_decode_schema.capnp:Type.anyPointer.parameter'(Data,
-                                                         Pointers,
-                                                         MessageRef) ->
+'internal_decode_Type.anyPointer.parameter'(Data =
+                                                <<_:80/integer,
+                                                  VarparameterIndex:16/little-unsigned-integer,
+                                                  _:32/integer,
+                                                  VarscopeId:64/little-unsigned-integer>>,
+                                            Pointers = <<_:64/integer>>,
+                                            MessageRef) ->
+    #'Type.anyPointer.parameter'{parameterIndex = VarparameterIndex,
+                                 scopeId = VarscopeId};
+'internal_decode_Type.anyPointer.parameter'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4433,26 +4266,26 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.anyPointer.parameter'(PaddedData,
-                                                             PaddedPointers,
-                                                             MessageRef).
+    'internal_decode_Type.anyPointer.parameter'(PaddedData,
+                                                PaddedPointers,
+                                                MessageRef).
 
-'internal_decode_schema.capnp:Type.enum'(Data =
-                                             <<_:64/integer,
-                                               VartypeId:64/little-unsigned-integer,
-                                               _:64/integer>>,
-                                         Pointers =
-                                             <<Varbrand:64/little-unsigned-integer>>,
-                                         MessageRef) ->
-    #'schema.capnp:Type.enum'{typeId = VartypeId,
-                              brand =
-                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                        Varbrand,
-                                                        MessageRef#message_ref{current_offset =
-                                                                                   MessageRef#message_ref.current_offset
-                                                                                   +
-                                                                                   0})};
-'internal_decode_schema.capnp:Type.enum'(Data, Pointers, MessageRef) ->
+'internal_decode_Type.enum'(Data =
+                                <<_:64/integer,
+                                  VartypeId:64/little-unsigned-integer,
+                                  _:64/integer>>,
+                            Pointers =
+                                <<Varbrand:64/little-unsigned-integer>>,
+                            MessageRef) ->
+    #'Type.enum'{typeId = VartypeId,
+                 brand =
+                     follow_struct_pointer(fun internal_decode_Brand/3,
+                                           Varbrand,
+                                           MessageRef#message_ref{current_offset =
+                                                                      MessageRef#message_ref.current_offset
+                                                                      +
+                                                                      0})};
+'internal_decode_Type.enum'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4471,28 +4304,24 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.enum'(PaddedData,
-                                             PaddedPointers,
-                                             MessageRef).
+    'internal_decode_Type.enum'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Type.interface'(Data =
-                                                  <<_:64/integer,
-                                                    VartypeId:64/little-unsigned-integer,
-                                                    _:64/integer>>,
-                                              Pointers =
-                                                  <<Varbrand:64/little-unsigned-integer>>,
-                                              MessageRef) ->
-    #'schema.capnp:Type.interface'{typeId = VartypeId,
-                                   brand =
-                                       follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                             Varbrand,
-                                                             MessageRef#message_ref{current_offset =
-                                                                                        MessageRef#message_ref.current_offset
-                                                                                        +
-                                                                                        0})};
-'internal_decode_schema.capnp:Type.interface'(Data,
-                                              Pointers,
-                                              MessageRef) ->
+'internal_decode_Type.interface'(Data =
+                                     <<_:64/integer,
+                                       VartypeId:64/little-unsigned-integer,
+                                       _:64/integer>>,
+                                 Pointers =
+                                     <<Varbrand:64/little-unsigned-integer>>,
+                                 MessageRef) ->
+    #'Type.interface'{typeId = VartypeId,
+                      brand =
+                          follow_struct_pointer(fun internal_decode_Brand/3,
+                                                Varbrand,
+                                                MessageRef#message_ref{current_offset =
+                                                                           MessageRef#message_ref.current_offset
+                                                                           +
+                                                                           0})};
+'internal_decode_Type.interface'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4511,22 +4340,22 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.interface'(PaddedData,
-                                                  PaddedPointers,
-                                                  MessageRef).
+    'internal_decode_Type.interface'(PaddedData,
+                                     PaddedPointers,
+                                     MessageRef).
 
-'internal_decode_schema.capnp:Type.list'(Data = <<_:192/integer>>,
-                                         Pointers =
-                                             <<VarelementType:64/little-unsigned-integer>>,
-                                         MessageRef) ->
-    #'schema.capnp:Type.list'{elementType =
-                                  follow_struct_pointer(fun 'internal_decode_schema.capnp:Type'/3,
-                                                        VarelementType,
-                                                        MessageRef#message_ref{current_offset =
-                                                                                   MessageRef#message_ref.current_offset
-                                                                                   +
-                                                                                   0})};
-'internal_decode_schema.capnp:Type.list'(Data, Pointers, MessageRef) ->
+'internal_decode_Type.list'(Data = <<_:192/integer>>,
+                            Pointers =
+                                <<VarelementType:64/little-unsigned-integer>>,
+                            MessageRef) ->
+    #'Type.list'{elementType =
+                     follow_struct_pointer(fun internal_decode_Type/3,
+                                           VarelementType,
+                                           MessageRef#message_ref{current_offset =
+                                                                      MessageRef#message_ref.current_offset
+                                                                      +
+                                                                      0})};
+'internal_decode_Type.list'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4545,26 +4374,24 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.list'(PaddedData,
-                                             PaddedPointers,
-                                             MessageRef).
+    'internal_decode_Type.list'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_schema.capnp:Type.struct'(Data =
-                                               <<_:64/integer,
-                                                 VartypeId:64/little-unsigned-integer,
-                                                 _:64/integer>>,
-                                           Pointers =
-                                               <<Varbrand:64/little-unsigned-integer>>,
-                                           MessageRef) ->
-    #'schema.capnp:Type.struct'{typeId = VartypeId,
-                                brand =
-                                    follow_struct_pointer(fun 'internal_decode_schema.capnp:Brand'/3,
-                                                          Varbrand,
-                                                          MessageRef#message_ref{current_offset =
-                                                                                     MessageRef#message_ref.current_offset
-                                                                                     +
-                                                                                     0})};
-'internal_decode_schema.capnp:Type.struct'(Data, Pointers, MessageRef) ->
+'internal_decode_Type.struct'(Data =
+                                  <<_:64/integer,
+                                    VartypeId:64/little-unsigned-integer,
+                                    _:64/integer>>,
+                              Pointers =
+                                  <<Varbrand:64/little-unsigned-integer>>,
+                              MessageRef) ->
+    #'Type.struct'{typeId = VartypeId,
+                   brand =
+                       follow_struct_pointer(fun internal_decode_Brand/3,
+                                             Varbrand,
+                                             MessageRef#message_ref{current_offset =
+                                                                        MessageRef#message_ref.current_offset
+                                                                        +
+                                                                        0})};
+'internal_decode_Type.struct'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4583,16 +4410,16 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Type.struct'(PaddedData,
-                                               PaddedPointers,
-                                               MessageRef).
+    'internal_decode_Type.struct'(PaddedData,
+                                  PaddedPointers,
+                                  MessageRef).
 
-'internal_decode_schema.capnp:Value'(Data =
-                                         <<_:0,
-                                           Discriminant:16/little-unsigned-integer,
-                                           _:112>>,
-                                     Pointers = <<_:64>>,
-                                     MessageRef) ->
+internal_decode_Value(Data =
+                          <<_:0,
+                            Discriminant:16/little-unsigned-integer,
+                            _:112>>,
+                      Pointers = <<_:64>>,
+                      MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -4673,7 +4500,7 @@ follow_text_pointer(PointerInt,
                 Pointers,
             {anyPointer,not_implemented}
     end;
-'internal_decode_schema.capnp:Value'(Data, Pointers, MessageRef) ->
+internal_decode_Value(Data, Pointers, MessageRef) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4692,9 +4519,7 @@ follow_text_pointer(PointerInt,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
-    'internal_decode_schema.capnp:Value'(PaddedData,
-                                         PaddedPointers,
-                                         MessageRef).
+    internal_decode_Value(PaddedData, PaddedPointers, MessageRef).
 
 
 
