@@ -96,7 +96,14 @@ load_raw(Filename) ->
 to_ast(SchemaFile) when is_list(SchemaFile) ->
 	Schema = load_raw(SchemaFile),
 	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
-	to_ast([ generate_decode_envelope_fun | Tasks ], Schema).
+	to_ast(
+		[
+			generate_follow_struct_pointer,
+			generate_decode_envelope_fun
+			| Tasks
+		],
+		Schema
+	).
 
 to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
 	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
