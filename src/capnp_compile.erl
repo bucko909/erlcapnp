@@ -472,14 +472,15 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 
 			#field_info{offset=Offset} = discriminant_field(TypeId, Schema),
 			DiscriminantSkip = {integer, Line, Offset},
-			Matcher = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _/bitstring>> = Data),
+			DataRest = {integer, Line, DWords * 64 - Offset - 16},
+			DataMatcher = ast(Data = <<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _:(quote(DataRest))>>),
+			PointerMatcher = ast(Pointers = <<_:(quote(PBits))>>),
 			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
 			Decoder = {'case', Line, ast(Discriminant), DecoderClauses},
 			ast_function(
 				quote(decoder_name(TypeId, Schema)),
 				fun
-					(Data, Pointers, MessageRef) ->
-						quote(Matcher),
+					(quote(DataMatcher), quote(PointerMatcher), MessageRef) ->
 						quote(Decoder);
 					(Data, Pointers, MessageRef) ->
 						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
@@ -552,7 +553,7 @@ generate_decode_envelope_fun() ->
 			{SegsR, Dregs} = lists:foldl(fun (Length, {SplitSegs, Data}) -> <<Seg:Length/binary, Remain/binary>> = Data, {[Seg|SplitSegs], Remain} end, {[], SegData}, SegLengths),
 			Segs = lists:reverse(SegsR),
 			<<Ptr:64/little-unsigned-integer, _/binary>> = hd(Segs),
-			{#message_ref{current_offset=0, current_segment=hd(Segs), segments=Segs}, Ptr, Dregs}
+			{#message_ref{current_offset=0, current_segment=hd(Segs), segments=list_to_tuple(Segs)}, Ptr, Dregs}
 		end
 	),
 	{ [RecDef], [FunDef], [] }.
@@ -573,7 +574,28 @@ generate_follow_struct_pointer() ->
 				DBits = DWords bsl 6,
 				PBits = PWords bsl 6,
 				<<_:SkipBits, Data:DBits/bitstring, Pointers:PBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
-				DecodeFun(Data, Pointers, NewMessageRef)
+				DecodeFun(Data, Pointers, NewMessageRef);
+			(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+				% Far pointer
+				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+				SkipBits = PointerOffset bsl 6,
+				Segment = element((PointerInt bsr 32) + 1, Segments),
+				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				case PointerInt band 4 of
+					0 ->
+						NewPointerInt = LandingPadInt,
+						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+					1 ->
+						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+						% Note that the 0-offset is relative to the end of the pointer at current_offset.
+						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+				end,
+				follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef)
 		end
 	),
 	{ [], [FunDef], [] }.
@@ -595,7 +617,28 @@ generate_follow_text_pointer(Type) ->
 				Length = (PointerInt bsr 35) - quote(Trail),
 				MessageBits = Length bsl 3,
 				<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
-				ListData
+				ListData;
+			(PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+				% Far pointer
+				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+				SkipBits = PointerOffset bsl 6,
+				Segment = element((PointerInt bsr 32) + 1, Segments),
+				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				case PointerInt band 4 of
+					0 ->
+						NewPointerInt = LandingPadInt,
+						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+					1 ->
+						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+						% Note that the 0-offset is relative to the end of the pointer at current_offset.
+						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+				end,
+				follow_text_pointer(NewPointerInt, NewMessageRef)
 		end
 	),
 	{ [], [FunDef], [] }.
@@ -614,7 +657,28 @@ generate_follow_struct_list_pointer() ->
 				Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
 				DWords = (Tag bsr 32) band (1 bsl 16 - 1),
 				PWords = (Tag bsr 48) band (1 bsl 16 - 1),
-				decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1})
+				decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
+			(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+				% Far pointer
+				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+				SkipBits = PointerOffset bsl 6,
+				Segment = element((PointerInt bsr 32) + 1, Segments),
+				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				case PointerInt band 4 of
+					0 ->
+						NewPointerInt = LandingPadInt,
+						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+					1 ->
+						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+						% Note that the 0-offset is relative to the end of the pointer at current_offset.
+						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+				end,
+				follow_tagged_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef)
 		end
 	),
 	ListFunDef = ast_function(
