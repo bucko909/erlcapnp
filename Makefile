@@ -6,7 +6,6 @@ all:
 	erlc -o ebin -I include src/capnp_schema.erl
 	erlc -o ebin -I include src/capnp_raw.erl
 	erlc -o ebin -I include src/capnp_compile_tests.erl
-	erlc -o ebin -I include src/test_capnp.erl
 
 contrib_r:
 	$(MAKE) -C contrib
