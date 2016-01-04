@@ -37,7 +37,7 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
     <<Ptr:64/little-unsigned-integer,_/binary>> = hd(Segs),
     {#message_ref{current_offset = 0,
                   current_segment = hd(Segs),
-                  segments = Segs},
+                  segments = list_to_tuple(Segs)},
      Ptr,
      Dregs}.
 
@@ -2764,20 +2764,63 @@ follow_data_pointer(PointerInt, MessageRef)
         PointerInt band 3 =:= 1
         andalso
         (PointerInt bsr 32) band 7 =:= 2 ->
-    PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
     Offset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = Offset bsl 6,
     Length = PointerInt bsr 35 - 0,
     MessageBits = Length bsl 3,
     <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
         MessageRef#message_ref.current_segment,
-    ListData.
+    ListData;
+follow_data_pointer(PointerInt,
+                    MessageRef = #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    follow_text_pointer(NewPointerInt, NewMessageRef).
 
 follow_struct_pointer(DecodeFun, 0, MessageRef) ->
     undefined;
 follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     when PointerInt band 3 == 0 ->
-    PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
     NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
     DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
     PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
@@ -2788,13 +2831,51 @@ follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     PBits = PWords bsl 6,
     <<_:SkipBits,Data:DBits/bitstring,Pointers:PBits/bitstring,_/binary>> =
         MessageRef#message_ref.current_segment,
-    DecodeFun(Data, Pointers, NewMessageRef).
+    DecodeFun(Data, Pointers, NewMessageRef);
+follow_struct_pointer(DecodeFun,
+                      PointerInt,
+                      MessageRef = #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
 follow_tagged_struct_list_pointer(DecodeFun, 0, MessageRef) ->
     undefined;
 follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
     when PointerInt band 3 == 1 ->
-    PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
     NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = NewOffset bsl 6,
     <<_:SkipBits,Tag:64/little-unsigned-integer,Rest/binary>> =
@@ -2807,7 +2888,42 @@ follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
                        DWords,
                        PWords,
                        MessageRef#message_ref{current_offset =
-                                                  NewOffset + 1}).
+                                                  NewOffset + 1});
+follow_tagged_struct_list_pointer(DecodeFun,
+                                  PointerInt,
+                                  MessageRef =
+                                      #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    follow_tagged_struct_list_pointer(DecodeFun,
+                                      NewPointerInt,
+                                      NewMessageRef).
 
 follow_text_pointer(0, _) ->
     undefined;
@@ -2816,14 +2932,51 @@ follow_text_pointer(PointerInt, MessageRef)
         PointerInt band 3 =:= 1
         andalso
         (PointerInt bsr 32) band 7 =:= 2 ->
-    PointerOffset = (PointerInt bsr 2) band (1 bsl 30 - 1) + 1,
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
     Offset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = Offset bsl 6,
     Length = PointerInt bsr 35 - 1,
     MessageBits = Length bsl 3,
     <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
         MessageRef#message_ref.current_segment,
-    ListData.
+    ListData;
+follow_text_pointer(PointerInt,
+                    MessageRef = #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    follow_text_pointer(NewPointerInt, NewMessageRef).
 
 'internal_decode_schema.capnp:Annotation'(Data =
                                               <<Varid:64/little-unsigned-integer>>,
@@ -2903,8 +3056,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                          PaddedPointers,
                                          MessageRef).
 
-'internal_decode_schema.capnp:Brand.Binding'(Data, Pointers, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Brand.Binding'(Data =
+                                                 <<_:0,
+                                                   Discriminant:16/little-unsigned-integer,
+                                                   _:48>>,
+                                             Pointers = <<_:64>>,
+                                             MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -2976,8 +3133,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                                PaddedPointers,
                                                MessageRef).
 
-'internal_decode_schema.capnp:Brand.Scope.'(Data, Pointers, MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Brand.Scope.'(Data =
+                                                <<_:64,
+                                                  Discriminant:16/little-unsigned-integer,
+                                                  _:48>>,
+                                            Pointers = <<_:64>>,
+                                            MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
@@ -3242,8 +3403,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                          PaddedPointers,
                                          MessageRef).
 
-'internal_decode_schema.capnp:Field.'(Data, Pointers, MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Field.'(Data =
+                                          <<_:64,
+                                            Discriminant:16/little-unsigned-integer,
+                                            _:112>>,
+                                      Pointers = <<_:256>>,
+                                      MessageRef) ->
     case Discriminant of
         0 ->
             {slot,
@@ -3306,8 +3471,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                                PaddedPointers,
                                                MessageRef).
 
-'internal_decode_schema.capnp:Field.ordinal'(Data, Pointers, MessageRef) ->
-    <<_:80,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Field.ordinal'(Data =
+                                                 <<_:80,
+                                                   Discriminant:16/little-unsigned-integer,
+                                                   _:96>>,
+                                             Pointers = <<_:256>>,
+                                             MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -3547,8 +3716,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                         PaddedPointers,
                                         MessageRef).
 
-'internal_decode_schema.capnp:Node.'(Data, Pointers, MessageRef) ->
-    <<_:96,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Node.'(Data =
+                                         <<_:96,
+                                           Discriminant:16/little-unsigned-integer,
+                                           _:208>>,
+                                     Pointers = <<_:384>>,
+                                     MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -4047,8 +4220,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                               PaddedPointers,
                                               MessageRef).
 
-'internal_decode_schema.capnp:Type'(Data, Pointers, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Type'(Data =
+                                        <<_:0,
+                                          Discriminant:16/little-unsigned-integer,
+                                          _:176>>,
+                                    Pointers = <<_:64>>,
+                                    MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -4146,10 +4323,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                         PaddedPointers,
                                         MessageRef).
 
-'internal_decode_schema.capnp:Type.anyPointer'(Data,
-                                               Pointers,
+'internal_decode_schema.capnp:Type.anyPointer'(Data =
+                                                   <<_:64,
+                                                     Discriminant:16/little-unsigned-integer,
+                                                     _:112>>,
+                                               Pointers = <<_:64>>,
                                                MessageRef) ->
-    <<_:64,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
@@ -4408,8 +4587,12 @@ follow_text_pointer(PointerInt, MessageRef)
                                                PaddedPointers,
                                                MessageRef).
 
-'internal_decode_schema.capnp:Value'(Data, Pointers, MessageRef) ->
-    <<_:0,Discriminant:16/little-unsigned-integer,_/bitstring>> = Data,
+'internal_decode_schema.capnp:Value'(Data =
+                                         <<_:0,
+                                           Discriminant:16/little-unsigned-integer,
+                                           _:112>>,
+                                     Pointers = <<_:64>>,
+                                     MessageRef) ->
     case Discriminant of
         0 ->
             <<_:0,Var:0/integer,_/bitstring>> = Data,
