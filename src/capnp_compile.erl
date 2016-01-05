@@ -921,7 +921,7 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 		}
 	} = schema_lookup(TypeId, Schema),
 	DiscriminantField = DiscriminantFieldRaw#field_info{override={integer, Line, Discriminant}},
-	ast_encode_ptr({1, 0}, 1, Type, <<>>, Line) ++
+	ast_encode_ptr({1, 0}, PWords, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
 				{integer, Line, DWords+PWords},
