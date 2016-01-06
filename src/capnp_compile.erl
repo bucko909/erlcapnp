@@ -910,7 +910,7 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 				{bin, Line, generate_data_binary(0, lists:sort([DiscriminantField, Field#field_info{name={override, 'Var'}}]), encode, DWords) ++ generate_ptr_binary(0, [], encode, PWords)},
 				{nil, Line}
 	]}];
-generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=Type=#ptr_type{}}, TypeId, Schema) ->
+generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminant=Discriminant, type=Type=#ptr_type{}, offset=Offset}, TypeId, Schema) ->
 	#'Node'{
 		''={
 			struct,
@@ -921,7 +921,7 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 		}
 	} = schema_lookup(TypeId, Schema),
 	DiscriminantField = DiscriminantFieldRaw#field_info{override={integer, Line, Discriminant}},
-	ast_encode_ptr({1, 0}, PWords, Type, <<>>, Line) ++
+	ast_encode_ptr({1, Offset bsr 6}, PWords, Type, <<>>, Line) ++
 	[{tuple, Line, [
 				{integer, Line, struct_pointer_header(DWords, PWords)},
 				{integer, Line, DWords+PWords},

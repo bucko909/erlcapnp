@@ -1414,7 +1414,7 @@ encode_Node(undefined, _PtrOffsetWordsFromEnd0) ->
                                     Var),
                     FinalOffset = round(iolist_size(Extra1) / 8),
                     Ptr =
-                        1 bor (0 + PtrOffsetWordsFromEnd0 bsl 2)
+                        1 bor (2 + PtrOffsetWordsFromEnd0 bsl 2)
                         bor
                         (7 bsl 32)
                         bor
