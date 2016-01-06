@@ -15,8 +15,8 @@
                           {uint64, 0..18446744073709551615} |
                           {float32, float()} |
                           {float64, float()} |
-                          {text, undefined | binary()} |
-                          {data, undefined | binary()} |
+                          {text, undefined | iodata()} |
+                          {data, undefined | iodata()} |
                           {list, undefined} |
                           {enum, 0..65535} |
                           {struct, undefined} |
@@ -35,7 +35,7 @@
                                                   0..
                                                   18446744073709551615,
                                               filename ::
-                                                  undefined | binary(),
+                                                  undefined | iodata(),
                                               imports :: any()}).
 
 -record('CodeGeneratorRequest.RequestedFile.Import',{id ::
@@ -43,15 +43,15 @@
                                                          18446744073709551615,
                                                      name ::
                                                          undefined |
-                                                         binary()}).
+                                                         iodata()}).
 
 -record('Enumerant',{codeOrder :: 0..65535,
-                     name :: undefined | binary(),
+                     name :: undefined | iodata(),
                      annotations :: any()}).
 
 -record('Field',{codeOrder :: 0..65535,
                  discriminantValue :: 0..65535,
-                 name :: undefined | binary(),
+                 name :: undefined | iodata(),
                  annotations :: any(),
                  '' :: {slot, any()} | {group, 0..18446744073709551615},
                  ordinal :: {implicit, undefined} | {explicit, 0..65535}}).
@@ -97,8 +97,8 @@
                           {uint64, 0..18446744073709551615} |
                           {float32, float()} |
                           {float64, float()} |
-                          {text, undefined | binary()} |
-                          {data, undefined | binary()} |
+                          {text, undefined | iodata()} |
+                          {data, undefined | iodata()} |
                           {list, undefined} |
                           {enum, 0..65535} |
                           {struct, undefined} |
@@ -108,7 +108,7 @@
 -record('Method',{codeOrder :: 0..65535,
                   paramStructType :: 0..18446744073709551615,
                   resultStructType :: 0..18446744073709551615,
-                  name :: undefined | binary(),
+                  name :: undefined | iodata(),
                   annotations :: any(),
                   paramBrand :: any(),
                   resultBrand :: any(),
@@ -118,7 +118,7 @@
                 displayNamePrefixLength :: 0..4294967295,
                 scopeId :: 0..18446744073709551615,
                 isGeneric :: true | false,
-                displayName :: undefined | binary(),
+                displayName :: undefined | iodata(),
                 nestedNodes :: any(),
                 annotations :: any(),
                 parameters :: any(),
@@ -131,9 +131,9 @@
                     {annotation, any()}}).
 
 -record('Node.NestedNode',{id :: 0..18446744073709551615,
-                           name :: undefined | binary()}).
+                           name :: undefined | iodata()}).
 
--record('Node.Parameter',{name :: undefined | binary()}).
+-record('Node.Parameter',{name :: undefined | iodata()}).
 
 -record('Node.annotation',{targetsGroup :: true | false,
                            targetsUnion :: true | false,
@@ -208,8 +208,8 @@
                           {uint64, 0..18446744073709551615} |
                           {float32, float()} |
                           {float64, float()} |
-                          {text, undefined | binary()} |
-                          {data, undefined | binary()} |
+                          {text, undefined | iodata()} |
+                          {data, undefined | iodata()} |
                           {list, undefined} |
                           {enum, 0..65535} |
                           {struct, undefined} |

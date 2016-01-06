@@ -375,7 +375,7 @@ field_type(Line, RecordName, #field_info{type=#native_type{type=void}}, _Schema)
 field_type(Line, RecordName, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
 	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}}, _Schema) ->
-	or_undefined(Line, {type, Line, binary, []});
+	or_undefined(Line, {type, Line, union, [{type, Line, iodata, []}]});
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, Schema) ->
 	case TypeName of
 		RecordName ->
