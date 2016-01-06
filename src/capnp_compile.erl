@@ -395,7 +395,7 @@ field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primit
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]});
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={text, TextType}}}, _Schema) ->
-	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, binary, []})]});
+	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]});
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!
 	{type, Line, any, []};
