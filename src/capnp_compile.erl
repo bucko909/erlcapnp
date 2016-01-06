@@ -536,9 +536,7 @@ generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#native_type{w
 	ast(quote(Matcher) = Data);
 generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#ptr_type{}}, _Schema) ->
 	Skip = {integer, Line, Offset},
-	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>> = Pointers);
-generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#ptr_type{type=list}}, _Schema) ->
-	ast(Var = not_implemented).
+	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>> = Pointers).
 
 generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
@@ -1413,7 +1411,7 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
-	ast(not_implemented).
+	ast(undefined). % not implemented
 
 field_info(#'Field'{
 		discriminantValue=DiscriminantValue,
