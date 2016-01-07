@@ -222,6 +222,9 @@ find_record_fields(TypeId, Schema) ->
 is_native_type(#field_info{type=#native_type{}}) -> true;
 is_native_type(#field_info{}) -> false.
 
+is_nonvoid_native_type(#field_info{type=#native_type{width=0}}) -> false;
+is_nonvoid_native_type(Field) -> is_native_type(Field).
+
 is_pointer_type(#field_info{type=#ptr_type{}}) -> true;
 is_pointer_type(#field_info{}) -> false.
 
@@ -440,15 +443,29 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			{_, DWords, PWords} = node_name(TypeId, Schema),
 			DBits = {integer, Line, DWords * 64},
 			PBits = {integer, Line, PWords * 64},
-			DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
-			PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
+			DataMatcher1 = {bin, Line, generate_data_binary(0, SortedDataFields, decode, DWords)},
+			PointerMatcher1 = {bin, Line, generate_ptr_binary(0, SortedPtrFields, decode, PWords)},
+			case Groups of
+				[] ->
+					DataMatcher = DataMatcher1,
+					PointerMatcher = PointerMatcher1;
+				_ ->
+					DataMatcher = ast(Data = quote(DataMatcher1)),
+					PointerMatcher = ast(Pointers = quote(PointerMatcher1))
+			end,
+			case Groups ++ SortedPtrFields of
+				[] ->
+					MessageRefVar = ast(_MessageRef);
+				_ ->
+					MessageRefVar = ast(MessageRef)
+			end,
 			Body = {record, Line, record_name(TypeId, Schema),
 				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 			},
 			ast_function(
 				quote(decoder_name(TypeId, Schema)),
 				fun
-					(Data=quote({bin, Line, DataMatcher}), Pointers=quote({bin, Line, PtrMatcher}), MessageRef) ->
+					(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
 						quote(Body);
 					(Data, Pointers, MessageRef) ->
 						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
@@ -484,14 +501,29 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			#field_info{offset=Offset} = discriminant_field(TypeId, Schema),
 			DiscriminantSkip = {integer, Line, Offset},
 			DataRest = {integer, Line, DWords * 64 - Offset - 16},
-			DataMatcher = ast(Data = <<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _:(quote(DataRest))>>),
-			PointerMatcher = ast(Pointers = <<_:(quote(PBits))>>),
+			DataMatcher1 = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _:(quote(DataRest))>>),
+			PointerMatcher1 = ast(<<_:(quote(PBits))>>),
+
+			case lists:any(fun is_group_type/1, UnionFields) orelse lists:any(fun is_nonvoid_native_type/1, UnionFields) of
+				true ->
+					DataMatcher = ast(Data = quote(DataMatcher1));
+				false ->
+					DataMatcher = DataMatcher1
+			end,
+			case lists:any(fun is_group_type/1, UnionFields) orelse lists:any(fun is_pointer_type/1, UnionFields) of
+				true ->
+					MessageRefVar = ast(MessageRef),
+					PointerMatcher = ast(Pointers = quote(PointerMatcher1));
+				false ->
+					MessageRefVar = ast(_MessageRef),
+					PointerMatcher = PointerMatcher1
+			end,
 			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
 			Decoder = {'case', Line, ast(Discriminant), DecoderClauses},
 			ast_function(
 				quote(decoder_name(TypeId, Schema)),
 				fun
-					(quote(DataMatcher), quote(PointerMatcher), MessageRef) ->
+					(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
 						quote(Decoder);
 					(Data, Pointers, MessageRef) ->
 						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
@@ -521,6 +553,11 @@ generate_union_decoder(Line, #field_info{name=Name, default=undefined, type=#gro
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	[
 		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Data, Pointers, MessageRef)})
+	];
+generate_union_decoder(Line, #field_info{name=Name, type=#native_type{width=0}}, _Schema) ->
+	% A bit ugly, but prevents unused Var warnings.
+	[
+		ast({quote(make_atom(Line, Name)), undefined})
 	];
 generate_union_decoder(Line, Field=#field_info{name=Name, default=Default, type=Type}, Schema) ->
 	Var = ast(Var),
@@ -571,7 +608,7 @@ generate_follow_struct_pointer() ->
 	FunDef = ast_function(
 		quote(follow_struct_pointer),
 		fun
-			(DecodeFun, 0, MessageRef) ->
+			(_DecodeFun, 0, _MessageRef) ->
 				undefined;
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
@@ -620,7 +657,7 @@ generate_follow_text_pointer(Type) ->
 	FunDef = ast_function(
 		quote(Name),
 		fun
-			(0, _) ->
+			(0, _MessageRef) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 2 ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
@@ -662,7 +699,7 @@ generate_follow_struct_list_pointer() ->
 	TaggedFunDef = ast_function(
 		quote(follow_tagged_struct_list_pointer),
 		fun
-			(DecodeFun, 0, MessageRef) ->
+			(_DecodeFun, 0, _MessageRef) ->
 				undefined;
 			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
@@ -671,7 +708,7 @@ generate_follow_struct_list_pointer() ->
 				end,
 				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = NewOffset bsl 6,
-				<<_:SkipBits, Tag:64/little-unsigned-integer, Rest/binary>> = MessageRef#message_ref.current_segment,
+				<<_:SkipBits, Tag:64/little-unsigned-integer, _/binary>> = MessageRef#message_ref.current_segment,
 				Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
 				DWords = (Tag bsr 32) band (1 bsl 16 - 1),
 				PWords = (Tag bsr 48) band (1 bsl 16 - 1),
@@ -728,7 +765,7 @@ generate_follow_primitive_list_pointer(_Line, #native_type{type=void}) ->
 	FunDef = ast_function(
 		quote(follow_void_list_pointer),
 		fun
-			(0, _) ->
+			(0, _MessageRef) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 0 ->
 				Length = PointerInt bsr 35,
@@ -740,7 +777,7 @@ generate_follow_primitive_list_pointer(_Line, #native_type{type=boolean}) ->
 	FunDef = ast_function(
 		quote(follow_bool_list_pointer),
 		fun
-			(0, _) ->
+			(0, _MessageRef) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 1 ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
@@ -770,7 +807,7 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 	FunDef = ast_function(
 		quote(to_atom(append(follow_, append(Name, "_list_pointer")))),
 		fun
-			(0, _) ->
+			(0, _MessageRef) ->
 				undefined;
 			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= quote({integer, Line, Tag}) ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
@@ -871,10 +908,14 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
+	case lists:any(fun is_pointer_type/1, UnionFields) orelse lists:any(fun is_group_type/1, UnionFields) of
+		true -> PtrOffsetWordsFromEnd0Var = ast(PtrOffsetWordsFromEnd0);
+		false -> PtrOffsetWordsFromEnd0Var = ast(_PtrOffsetWordsFromEnd0)
+	end,
 
 	ast_function(
 		quote(encoder_name(TypeId, Schema)),
-		fun ({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody) end
+		fun ({VarDiscriminant, Var}, quote(PtrOffsetWordsFromEnd0Var)) -> quote_block(EncodeBody) end
 	).
 
 discriminant_field(TypeId, Schema) ->
