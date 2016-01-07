@@ -203,7 +203,7 @@ do_job({generate_envelope, TypeId}, Schema) ->
 	{[], [FunDef], []};
 do_job({generate_text, TextType}, _Schema) ->
 	% Needed when we have a list of text.
-	generate_text();
+	generate_text(TextType);
 do_job(generate_follow_struct_pointer, _Schema) ->
 	generate_follow_struct_pointer();
 do_job({generate_follow_text_pointer, Type}, _Schema) ->
@@ -243,7 +243,7 @@ has_discriminant(#field_info{}) -> true.
 
 has_no_discriminant(F) -> not has_discriminant(F).
 
-find_notag_fields({anonunion, TypeId}, Schema) ->
+find_notag_fields({anonunion, _TypeId}, _Schema) ->
 	[];
 find_notag_fields(TypeId, Schema) ->
 	lists:filter(fun has_no_discriminant/1, find_fields(TypeId, Schema)).
@@ -357,7 +357,7 @@ or_undefined(Line, Type) ->
 is_signed(#native_type{binary_options=Opts}) ->
 	lists:member(signed, Opts).
 
-field_type(Line, RecordName, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
 	RawRange = 1 bsl Bits,
 	{Min, Max} = case is_signed(Type) of
 		true ->
@@ -366,15 +366,15 @@ field_type(Line, RecordName, #field_info{type=Type=#native_type{type=integer, wi
 			{0, RawRange - 1}
 	end,
 	{type, Line, range, [{integer, Line, Min}, {integer, Line, Max}]};
-field_type(Line, RecordName, #field_info{type=#native_type{type=float}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#native_type{type=float}}, _Schema) ->
 	{type, Line, float, []};
-field_type(Line, RecordName, #field_info{type=#native_type{type=boolean}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#native_type{type=boolean}}, _Schema) ->
 	{type, Line, union, [{atom, Line, true}, {atom, Line, false}]};
-field_type(Line, RecordName, #field_info{type=#native_type{type=void}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#native_type{type=void}}, _Schema) ->
 	{atom, Line, undefined};
-field_type(Line, RecordName, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
 	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=text_or_data, extra=TextType}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#ptr_type{type=text_or_data, extra=_TextType}}, _Schema) ->
 	or_undefined(Line, {type, Line, union, [{type, Line, iodata, []}]});
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, Schema) ->
 	case TypeName of
@@ -390,13 +390,13 @@ field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={Type
 					%or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]})
 			end
 	end;
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, Schema) ->
+field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, _Schema) ->
 	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
 	or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]});
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={text, TextType}}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={text, _TextType}}}, _Schema) ->
 	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]});
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!
 	{type, Line, any, []};
 	%or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});
@@ -409,7 +409,7 @@ field_type(Line, RecordName, #field_info{type=#group_type{type_id=TypeId}}, Sche
 			{type, Line, any, []}
 			%{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
 	end;
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=unknown}, default=undefined}, _Schema) ->
+field_type(Line, _RecordName, #field_info{type=#ptr_type{type=unknown}, default=undefined}, _Schema) ->
 	{atom, Line, undefined}.
 
 generate_record_def(Line, TypeId, RecordFields, Schema) ->
@@ -424,11 +424,11 @@ make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
 
 % This points all pointers in the data segment at somewhat junk, but
 % data decoders never need this information!
-message_ref(_, #field_info{type=#group_type{}}) ->
+message_ref(#field_info{type=#group_type{}}) ->
 	ast(MessageRef);
-message_ref(_, #field_info{type=#native_type{}}) ->
+message_ref(#field_info{type=#native_type{}}) ->
 	undefined;
-message_ref(Line, #field_info{type=#ptr_type{}, offset=Offset}) ->
+message_ref(#field_info{type=#ptr_type{}, offset=Offset}) ->
 	WordOffset = {integer, 0, (Offset bsr 6)},
 	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote(WordOffset)}).
 
@@ -443,7 +443,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			DataMatcher = generate_data_binary(0, SortedDataFields, decode, DWords),
 			PtrMatcher = generate_ptr_binary(0, SortedPtrFields, decode, PWords),
 			Body = {record, Line, record_name(TypeId, Schema),
-				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Line, Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 			},
 			ast_function(
 				quote(decoder_name(TypeId, Schema)),
@@ -526,15 +526,15 @@ generate_union_decoder(Line, Field=#field_info{name=Name, default=Default, type=
 	Var = ast(Var),
 	[
 		generate_union_matcher(Line, Field, Schema),
-		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Default, Var, Line, message_ref(Line, Field), Schema))})
+		ast({quote(make_atom(Line, Name)), quote(decoder(Type, Default, Var, Line, message_ref(Field), Schema))})
 	].
 
-generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
+generate_union_matcher(Line, #field_info{offset=Offset, type=#native_type{width=Width, binary_options=BinaryOptions}}, _Schema) ->
 	Skip = {integer, Line, Offset},
 	Junk = junkterm(Line, decode),
 	Matcher = {bin, Line, [{bin_element, Line, Junk, Skip, default}, {bin_element, Line, ast(Var), {integer, Line, Width}, BinaryOptions}, {bin_element, Line, Junk, default, [bitstring]}]},
 	ast(quote(Matcher) = Data);
-generate_union_matcher(Line, #field_info{offset=Offset, type=Type=#ptr_type{}}, _Schema) ->
+generate_union_matcher(Line, #field_info{offset=Offset, type=#ptr_type{}}, _Schema) ->
 	Skip = {integer, Line, Offset},
 	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>> = Pointers).
 
@@ -542,7 +542,7 @@ generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
 	% We just take the binary for now and break if we get a pointer type.
 	Decoder = {'fun', Line, {function, to_atom(decoder_name(TypeId, Schema)), 3}},
-	FunDef = ast_function(
+	ast_function(
 		quote(full_decoder_name(TypeId, Schema)),
 		fun (Data) ->
 			{MessageRef, Ptr, Dregs} = decode_envelope(Data),
@@ -724,7 +724,7 @@ generate_follow_struct_list_pointer() ->
 	),
 	{ [], [TaggedFunDef, ListFunDef], [] }.
 
-generate_follow_primitive_list_pointer(Line, #native_type{type=void}) ->
+generate_follow_primitive_list_pointer(_Line, #native_type{type=void}) ->
 	FunDef = ast_function(
 		quote(follow_void_list_pointer),
 		fun
@@ -736,7 +736,7 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=void}) ->
 		end
 	),
 	{ [], [FunDef], [] };
-generate_follow_primitive_list_pointer(Line, #native_type{type=boolean}) ->
+generate_follow_primitive_list_pointer(_Line, #native_type{type=boolean}) ->
 	FunDef = ast_function(
 		quote(follow_bool_list_pointer),
 		fun
@@ -817,19 +817,27 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	},
 	ast_function(quote(encoder_name(TypeId, Schema)), fun (quote(Matcher), PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody); (undefined, _PtrOffsetWordsFromEnd0) -> {0, 0, 0, [], []} end).
 
-generate_text() ->
+generate_text(TextType) ->
+	case TextType of
+		text ->
+			DataLenAst = ast(iolist_size(List) + 1),
+			DataAst = ast([List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>]);
+		data ->
+			DataLenAst = ast(iolist_size(List)),
+			DataAst = ast([List, <<0:(-DataLen band 7 * 8)/unsigned-little-integer>>])
+	end,
 	Line = 0,
 	% This is a pointer to a struct with 1 pointer, which is what the caller /believes/ we are.
 	% We pass it in just so that struct pointers are consistently generated.
 	FakePointerInt = {integer, Line, struct_pointer_header(0, 1)},
 
-	Func = ast_function(quote(encode_text),
+	Func = ast_function(quote(to_atom(append(encode_, TextType))),
 		fun
 			(undefined, _Offset) ->
 				{quote(FakePointerInt), 1, 0, [<<0:64>>], []};
 			(List, Offset) ->
-				DataLen = iolist_size(List) + 1,
-				Data = [List, <<0:8, 0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
+				DataLen = quote(DataLenAst),
+				Data = quote(DataAst),
 				Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
 				{quote(FakePointerInt), 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}
 		end),
@@ -960,7 +968,7 @@ encode_function_body_inline(Line, TypeId, SortedDataFields, SortedPtrFields, Sch
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DataMaker = generate_data_binary(0, SortedDataFields, encode, DWords),
 	PtrMaker = generate_ptr_binary(0, SortedPtrFields, encode, PWords),
-	EncodePointers = lists:append([ begin undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, I=#field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
+	EncodePointers = lists:append([ begin undefined = Default, ast_encode_ptr({N, Offset bsr 6}, PWords, Type, FieldName, Line) end || {N, #field_info{offset=Offset, default=Default, name=FieldName, type=Type=#ptr_type{}}} <- lists:zip(lists:seq(1, length(SortedPtrFields)), SortedPtrFields) ]),
 	{
 		EncodePointers,
 		{op, Line, '-', var_p(Line, "PtrOffsetWordsFromEnd", length(SortedPtrFields)), {var, Line, 'PtrOffsetWordsFromEnd0'}}, % Extra len that we added
@@ -1084,7 +1092,7 @@ struct_pointer_header(DWords, PWords) ->
 	0 + (DWords bsl 32) + (PWords bsl 48).
 
 % This is just a variable aligning function which passes through to ast_encode_ptr_
-ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}, VarName, Line) ->
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}, VarName, Line) ->
 	EncodeFun = make_atom(Line, append("encode_", TypeName)),
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_/3, [EncodeFun], VarName, Line);
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=unknown}, VarName, Line) ->
@@ -1118,7 +1126,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=st
 ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text, TextType}}, VarName, Line) ->
 	% This is a bit of a hack; we encode a list of text fields as a list of structs which have the first field being text.
 	% They should really be anyPointer, I think, which doesn't need a header tag word.
-	EncodeFun = {atom, Line, encode_text},
+	EncodeFun = make_atom(Line, append("encode_", TextType)),
 	StructSizePreformatted = {integer, Line, struct_pointer_header(0, 1)},
 	StructLen = {integer, Line, 1},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line).
@@ -1397,10 +1405,10 @@ decoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line, _MessageR
 decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, Schema) ->
+decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, Schema) ->
+decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=text}, undefined, Var, _Line, MessageRef, _Schema) ->
