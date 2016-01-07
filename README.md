@@ -32,7 +32,6 @@ Very much WIP!
 
 * Namespacing (by prefixing type names?).
 * A prettier compile interface (so that capnpc can be used).
-* Decoding of some message types (list(text/data)/far pointers).
 * Defaults. Right now defaults on struct and float valued fields are not supported. (Float defaults other than 0.0 are messy; struct is probably impossible to implement at all if the default is recursive, hence scary.)
 
 ## NIF branch

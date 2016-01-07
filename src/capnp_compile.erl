@@ -344,7 +344,7 @@ generate_basic(TypeId, Schema) ->
 	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_fields(TypeId, Schema) ],
 	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_fields(TypeId, Schema) ],
 	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
-	ExtraTextList = [ {generate_text, TextType} || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_fields(TypeId, Schema) ],
+	ExtraTextList = lists:append([ [{generate_text, TextType}, {generate_follow_text_pointer, TextType}] || #field_info{type=#ptr_type{type=list, extra={text, TextType}}} <- find_fields(TypeId, Schema) ]),
 	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_fields(TypeId, Schema) ],
@@ -587,6 +587,26 @@ generate_full_decoder_fun(Line, TypeId, Schema) ->
 			{Decoded, Dregs}
 		end
 	).
+
+generate_decode_text_fun(TextType) ->
+	case TextType of
+		text ->
+			Name = internal_decode_text,
+			Follow = ast(follow_text_pointer);
+		data ->
+			Name = internal_decode_data,
+			Follow = ast(follow_data_pointer)
+	end,
+	FunDef = ast_function(
+		quote(Name),
+		fun
+			(_, <<Var:64/little-unsigned-integer, _/binary>>, MessageRef) ->
+				(quote(Follow))(Var, MessageRef);
+			(_, <<>>, _MessageRef) ->
+				undefined
+		end
+	),
+	{ [], [FunDef], [] }.
 
 generate_decode_envelope_fun() ->
 	RecDef = {attribute, 0, record, {message_ref, [{record_field, 0, ast(current_offset)}, {record_field, 0, ast(current_segment)}, {record_field, 0, ast(segments)}]}},
@@ -878,7 +898,8 @@ generate_text(TextType) ->
 				Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
 				{quote(FakePointerInt), 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}
 		end),
-	{[], [Func], []}.
+	{[], [DecodeFunc], []} = generate_decode_text_fun(TextType),
+	{[], [Func, DecodeFunc], []}.
 
 encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
 	#'Node'{
@@ -1452,6 +1473,10 @@ decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeNa
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
+decoder(#ptr_type{type=list, extra={text, TextType}}, undefined, Var, Line, MessageRef, _Schema) ->
+	DecoderName = to_atom(append("internal_decode_", TextType)),
+	Decoder = {'fun', Line, {function, DecoderName, 3}},
+	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=text}, undefined, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=data}, undefined, Var, _Line, MessageRef, _Schema) ->
