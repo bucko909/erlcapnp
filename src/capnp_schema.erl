@@ -943,7 +943,7 @@ encode_Field(undefined, _PtrOffsetWordsFromEnd0) ->
 'encode_Field.group'(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]}.
 
-'encode_Field.ordinal'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+'encode_Field.ordinal'({VarDiscriminant,Var}, _PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         implicit ->
             {1125912791744512,
@@ -2653,7 +2653,7 @@ envelope_Value(Input) ->
                     MainData,
                     ExtraData]).
 
-follow_data_pointer(0, _) ->
+follow_data_pointer(0, _MessageRef) ->
     undefined;
 follow_data_pointer(PointerInt, MessageRef)
     when
@@ -2706,7 +2706,7 @@ follow_data_pointer(PointerInt,
     end,
     follow_text_pointer(NewPointerInt, NewMessageRef).
 
-follow_struct_pointer(DecodeFun, 0, MessageRef) ->
+follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
     undefined;
 follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     when PointerInt band 3 == 0 ->
@@ -2761,7 +2761,7 @@ follow_struct_pointer(DecodeFun,
     end,
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
-follow_tagged_struct_list_pointer(DecodeFun, 0, MessageRef) ->
+follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
     undefined;
 follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
     when PointerInt band 3 == 1 ->
@@ -2774,7 +2774,7 @@ follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
         end,
     NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = NewOffset bsl 6,
-    <<_:SkipBits,Tag:64/little-unsigned-integer,Rest/binary>> =
+    <<_:SkipBits,Tag:64/little-unsigned-integer,_/binary>> =
         MessageRef#message_ref.current_segment,
     Length = (Tag bsr 2) band (1 bsl 30 - 1),
     DWords = (Tag bsr 32) band (1 bsl 16 - 1),
@@ -2821,7 +2821,7 @@ follow_tagged_struct_list_pointer(DecodeFun,
                                       NewPointerInt,
                                       NewMessageRef).
 
-follow_text_pointer(0, _) ->
+follow_text_pointer(0, _MessageRef) ->
     undefined;
 follow_text_pointer(PointerInt, MessageRef)
     when
@@ -2874,10 +2874,9 @@ follow_text_pointer(PointerInt,
     end,
     follow_text_pointer(NewPointerInt, NewMessageRef).
 
-internal_decode_Annotation(Data = <<Varid:64/little-unsigned-integer>>,
-                           Pointers =
-                               <<Varvalue:64/little-unsigned-integer,
-                                 Varbrand:64/little-unsigned-integer>>,
+internal_decode_Annotation(<<Varid:64/little-unsigned-integer>>,
+                           <<Varvalue:64/little-unsigned-integer,
+                             Varbrand:64/little-unsigned-integer>>,
                            MessageRef) ->
     #'Annotation'{id = Varid,
                   value =
@@ -2915,9 +2914,8 @@ internal_decode_Annotation(Data, Pointers, MessageRef) ->
     end,
     internal_decode_Annotation(PaddedData, PaddedPointers, MessageRef).
 
-internal_decode_Brand(Data = <<>>,
-                      Pointers =
-                          <<Varscopes:64/little-unsigned-integer>>,
+internal_decode_Brand(<<>>,
+                      <<Varscopes:64/little-unsigned-integer>>,
                       MessageRef) ->
     #'Brand'{scopes =
                  follow_tagged_struct_list_pointer(fun 'internal_decode_Brand.Scope'/3,
@@ -2947,15 +2945,13 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
     end,
     internal_decode_Brand(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Brand.Binding'(Data =
-                                    <<_:0,
-                                      Discriminant:16/little-unsigned-integer,
-                                      _:48>>,
+'internal_decode_Brand.Binding'(<<_:0,
+                                  Discriminant:16/little-unsigned-integer,
+                                  _:48>>,
                                 Pointers = <<_:64>>,
                                 MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {unbound,undefined};
         1 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
@@ -3024,10 +3020,9 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
                                   PaddedPointers,
                                   MessageRef).
 
-'internal_decode_Brand.Scope.'(Data =
-                                   <<_:64,
-                                     Discriminant:16/little-unsigned-integer,
-                                     _:48>>,
+'internal_decode_Brand.Scope.'(<<_:64,
+                                 Discriminant:16/little-unsigned-integer,
+                                 _:48>>,
                                Pointers = <<_:64>>,
                                MessageRef) ->
     case Discriminant of
@@ -3042,7 +3037,6 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
                                                                           +
                                                                           0})};
         1 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {inherit,undefined}
     end;
 'internal_decode_Brand.Scope.'(Data, Pointers, MessageRef) ->
@@ -3068,10 +3062,9 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
                                    PaddedPointers,
                                    MessageRef).
 
-internal_decode_CodeGeneratorRequest(Data = <<>>,
-                                     Pointers =
-                                         <<Varnodes:64/little-unsigned-integer,
-                                           VarrequestedFiles:64/little-unsigned-integer>>,
+internal_decode_CodeGeneratorRequest(<<>>,
+                                     <<Varnodes:64/little-unsigned-integer,
+                                       VarrequestedFiles:64/little-unsigned-integer>>,
                                      MessageRef) ->
     #'CodeGeneratorRequest'{nodes =
                                 follow_tagged_struct_list_pointer(fun internal_decode_Node/3,
@@ -3110,11 +3103,9 @@ internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
                                          PaddedPointers,
                                          MessageRef).
 
-'internal_decode_CodeGeneratorRequest.RequestedFile'(Data =
-                                                         <<Varid:64/little-unsigned-integer>>,
-                                                     Pointers =
-                                                         <<Varfilename:64/little-unsigned-integer,
-                                                           Varimports:64/little-unsigned-integer>>,
+'internal_decode_CodeGeneratorRequest.RequestedFile'(<<Varid:64/little-unsigned-integer>>,
+                                                     <<Varfilename:64/little-unsigned-integer,
+                                                       Varimports:64/little-unsigned-integer>>,
                                                      MessageRef) ->
     #'CodeGeneratorRequest.RequestedFile'{id = Varid,
                                           filename =
@@ -3155,10 +3146,8 @@ internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
                                                          PaddedPointers,
                                                          MessageRef).
 
-'internal_decode_CodeGeneratorRequest.RequestedFile.Import'(Data =
-                                                                <<Varid:64/little-unsigned-integer>>,
-                                                            Pointers =
-                                                                <<Varname:64/little-unsigned-integer>>,
+'internal_decode_CodeGeneratorRequest.RequestedFile.Import'(<<Varid:64/little-unsigned-integer>>,
+                                                            <<Varname:64/little-unsigned-integer>>,
                                                             MessageRef) ->
     #'CodeGeneratorRequest.RequestedFile.Import'{id = Varid,
                                                  name =
@@ -3192,12 +3181,10 @@ internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
                                                                 PaddedPointers,
                                                                 MessageRef).
 
-internal_decode_Enumerant(Data =
-                              <<VarcodeOrder:16/little-unsigned-integer,
-                                _:48/integer>>,
-                          Pointers =
-                              <<Varname:64/little-unsigned-integer,
-                                Varannotations:64/little-unsigned-integer>>,
+internal_decode_Enumerant(<<VarcodeOrder:16/little-unsigned-integer,
+                            _:48/integer>>,
+                          <<Varname:64/little-unsigned-integer,
+                            Varannotations:64/little-unsigned-integer>>,
                           MessageRef) ->
     #'Enumerant'{codeOrder = VarcodeOrder,
                  name =
@@ -3319,11 +3306,10 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Field.'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Field.group'(Data =
-                                  <<_:128/integer,
-                                    VartypeId:64/little-unsigned-integer>>,
-                              Pointers = <<_:256/integer>>,
-                              MessageRef) ->
+'internal_decode_Field.group'(<<_:128/integer,
+                                VartypeId:64/little-unsigned-integer>>,
+                              <<_:256/integer>>,
+                              _MessageRef) ->
     #'Field.group'{typeId = VartypeId};
 'internal_decode_Field.group'(Data, Pointers, MessageRef) ->
     DataPadLength = 192 - bit_size(Data),
@@ -3352,11 +3338,10 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
                                     <<_:80,
                                       Discriminant:16/little-unsigned-integer,
                                       _:96>>,
-                                Pointers = <<_:256>>,
-                                MessageRef) ->
+                                <<_:256>>,
+                                _MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {implicit,undefined};
         1 ->
             <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Data,
@@ -3385,16 +3370,14 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
                                     PaddedPointers,
                                     MessageRef).
 
-'internal_decode_Field.slot'(Data =
-                                 <<_:32/integer,
-                                   Varoffset:32/little-unsigned-integer,
-                                   _:71/integer,
-                                   VarhadExplicitDefault:1/integer,
-                                   _:56/integer>>,
-                             Pointers =
-                                 <<_:128/integer,
-                                   Vartype:64/little-unsigned-integer,
-                                   VardefaultValue:64/little-unsigned-integer>>,
+'internal_decode_Field.slot'(<<_:32/integer,
+                               Varoffset:32/little-unsigned-integer,
+                               _:71/integer,
+                               VarhadExplicitDefault:1/integer,
+                               _:56/integer>>,
+                             <<_:128/integer,
+                               Vartype:64/little-unsigned-integer,
+                               VardefaultValue:64/little-unsigned-integer>>,
                              MessageRef) ->
     #'Field.slot'{offset = Varoffset,
                   hadExplicitDefault =
@@ -3439,17 +3422,15 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Field.slot'(PaddedData, PaddedPointers, MessageRef).
 
-internal_decode_Method(Data =
-                           <<VarcodeOrder:16/little-unsigned-integer,
-                             _:48/integer,
-                             VarparamStructType:64/little-unsigned-integer,
-                             VarresultStructType:64/little-unsigned-integer>>,
-                       Pointers =
-                           <<Varname:64/little-unsigned-integer,
-                             Varannotations:64/little-unsigned-integer,
-                             VarparamBrand:64/little-unsigned-integer,
-                             VarresultBrand:64/little-unsigned-integer,
-                             VarimplicitParameters:64/little-unsigned-integer>>,
+internal_decode_Method(<<VarcodeOrder:16/little-unsigned-integer,
+                         _:48/integer,
+                         VarparamStructType:64/little-unsigned-integer,
+                         VarresultStructType:64/little-unsigned-integer>>,
+                       <<Varname:64/little-unsigned-integer,
+                         Varannotations:64/little-unsigned-integer,
+                         VarparamBrand:64/little-unsigned-integer,
+                         VarresultBrand:64/little-unsigned-integer,
+                         VarimplicitParameters:64/little-unsigned-integer>>,
                        MessageRef) ->
     #'Method'{codeOrder = VarcodeOrder,
               paramStructType = VarparamStructType,
@@ -3591,7 +3572,6 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                         MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {file,undefined};
         1 ->
             {struct,
@@ -3641,10 +3621,8 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Node.'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Node.NestedNode'(Data =
-                                      <<Varid:64/little-unsigned-integer>>,
-                                  Pointers =
-                                      <<Varname:64/little-unsigned-integer>>,
+'internal_decode_Node.NestedNode'(<<Varid:64/little-unsigned-integer>>,
+                                  <<Varname:64/little-unsigned-integer>>,
                                   MessageRef) ->
     #'Node.NestedNode'{id = Varid,
                        name =
@@ -3676,9 +3654,8 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                                       PaddedPointers,
                                       MessageRef).
 
-'internal_decode_Node.Parameter'(Data = <<>>,
-                                 Pointers =
-                                     <<Varname:64/little-unsigned-integer>>,
+'internal_decode_Node.Parameter'(<<>>,
+                                 <<Varname:64/little-unsigned-integer>>,
                                  MessageRef) ->
     #'Node.Parameter'{name =
                           follow_text_pointer(Varname,
@@ -3709,26 +3686,24 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                                      PaddedPointers,
                                      MessageRef).
 
-'internal_decode_Node.annotation'(Data =
-                                      <<_:112/integer,
-                                        VartargetsGroup:1/integer,
-                                        VartargetsUnion:1/integer,
-                                        VartargetsField:1/integer,
-                                        VartargetsStruct:1/integer,
-                                        VartargetsEnumerant:1/integer,
-                                        VartargetsEnum:1/integer,
-                                        VartargetsConst:1/integer,
-                                        VartargetsFile:1/integer,
-                                        _:4/integer,
-                                        VartargetsAnnotation:1/integer,
-                                        VartargetsParam:1/integer,
-                                        VartargetsMethod:1/integer,
-                                        VartargetsInterface:1/integer,
-                                        _:192/integer>>,
-                                  Pointers =
-                                      <<_:192/integer,
-                                        Vartype:64/little-unsigned-integer,
-                                        _:128/integer>>,
+'internal_decode_Node.annotation'(<<_:112/integer,
+                                    VartargetsGroup:1/integer,
+                                    VartargetsUnion:1/integer,
+                                    VartargetsField:1/integer,
+                                    VartargetsStruct:1/integer,
+                                    VartargetsEnumerant:1/integer,
+                                    VartargetsEnum:1/integer,
+                                    VartargetsConst:1/integer,
+                                    VartargetsFile:1/integer,
+                                    _:4/integer,
+                                    VartargetsAnnotation:1/integer,
+                                    VartargetsParam:1/integer,
+                                    VartargetsMethod:1/integer,
+                                    VartargetsInterface:1/integer,
+                                    _:192/integer>>,
+                                  <<_:192/integer,
+                                    Vartype:64/little-unsigned-integer,
+                                    _:128/integer>>,
                                   MessageRef) ->
     #'Node.annotation'{targetsGroup =
                            case VartargetsGroup of
@@ -3844,12 +3819,11 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                                       PaddedPointers,
                                       MessageRef).
 
-'internal_decode_Node.const'(Data = <<_:320/integer>>,
-                             Pointers =
-                                 <<_:192/integer,
-                                   Vartype:64/little-unsigned-integer,
-                                   Varvalue:64/little-unsigned-integer,
-                                   _:64/integer>>,
+'internal_decode_Node.const'(<<_:320/integer>>,
+                             <<_:192/integer,
+                               Vartype:64/little-unsigned-integer,
+                               Varvalue:64/little-unsigned-integer,
+                               _:64/integer>>,
                              MessageRef) ->
     #'Node.const'{type =
                       follow_struct_pointer(fun internal_decode_Type/3,
@@ -3886,11 +3860,10 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Node.const'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Node.enum'(Data = <<_:320/integer>>,
-                            Pointers =
-                                <<_:192/integer,
-                                  Varenumerants:64/little-unsigned-integer,
-                                  _:128/integer>>,
+'internal_decode_Node.enum'(<<_:320/integer>>,
+                            <<_:192/integer,
+                              Varenumerants:64/little-unsigned-integer,
+                              _:128/integer>>,
                             MessageRef) ->
     #'Node.enum'{enumerants =
                      follow_tagged_struct_list_pointer(fun internal_decode_Enumerant/3,
@@ -3920,12 +3893,11 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Node.enum'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Node.interface'(Data = <<_:320/integer>>,
-                                 Pointers =
-                                     <<_:192/integer,
-                                       Varmethods:64/little-unsigned-integer,
-                                       Varsuperclasses:64/little-unsigned-integer,
-                                       _:64/integer>>,
+'internal_decode_Node.interface'(<<_:320/integer>>,
+                                 <<_:192/integer,
+                                   Varmethods:64/little-unsigned-integer,
+                                   Varsuperclasses:64/little-unsigned-integer,
+                                   _:64/integer>>,
                                  MessageRef) ->
     #'Node.interface'{methods =
                           follow_tagged_struct_list_pointer(fun internal_decode_Method/3,
@@ -3964,22 +3936,20 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                                      PaddedPointers,
                                      MessageRef).
 
-'internal_decode_Node.struct'(Data =
-                                  <<_:112/integer,
-                                    VardataWordCount:16/little-unsigned-integer,
-                                    _:64/integer,
-                                    VarpointerCount:16/little-unsigned-integer,
-                                    VarpreferredListEncoding:16/little-unsigned-integer,
-                                    _:7/integer,
-                                    VarisGroup:1/integer,
-                                    _:8/integer,
-                                    VardiscriminantCount:16/little-unsigned-integer,
-                                    VardiscriminantOffset:32/little-unsigned-integer,
-                                    _:32/integer>>,
-                              Pointers =
-                                  <<_:192/integer,
-                                    Varfields:64/little-unsigned-integer,
-                                    _:128/integer>>,
+'internal_decode_Node.struct'(<<_:112/integer,
+                                VardataWordCount:16/little-unsigned-integer,
+                                _:64/integer,
+                                VarpointerCount:16/little-unsigned-integer,
+                                VarpreferredListEncoding:16/little-unsigned-integer,
+                                _:7/integer,
+                                VarisGroup:1/integer,
+                                _:8/integer,
+                                VardiscriminantCount:16/little-unsigned-integer,
+                                VardiscriminantOffset:32/little-unsigned-integer,
+                                _:32/integer>>,
+                              <<_:192/integer,
+                                Varfields:64/little-unsigned-integer,
+                                _:128/integer>>,
                               MessageRef) ->
     #'Node.struct'{dataWordCount = VardataWordCount,
                    pointerCount = VarpointerCount,
@@ -4032,9 +4002,8 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
                                   PaddedPointers,
                                   MessageRef).
 
-internal_decode_Superclass(Data = <<Varid:64/little-unsigned-integer>>,
-                           Pointers =
-                               <<Varbrand:64/little-unsigned-integer>>,
+internal_decode_Superclass(<<Varid:64/little-unsigned-integer>>,
+                           <<Varbrand:64/little-unsigned-integer>>,
                            MessageRef) ->
     #'Superclass'{id = Varid,
                   brand =
@@ -4073,46 +4042,32 @@ internal_decode_Type(Data =
                      MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {void,undefined};
         1 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {bool,undefined};
         2 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int8,undefined};
         3 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int16,undefined};
         4 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int32,undefined};
         5 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {int64,undefined};
         6 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint8,undefined};
         7 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint16,undefined};
         8 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint32,undefined};
         9 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {uint64,undefined};
         10 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {float32,undefined};
         11 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {float64,undefined};
         12 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {text,undefined};
         13 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {data,undefined};
         14 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
@@ -4170,7 +4125,6 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
                                   MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {unconstrained,undefined};
         1 ->
             {parameter,
@@ -4204,13 +4158,11 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
                                       PaddedPointers,
                                       MessageRef).
 
-'internal_decode_Type.anyPointer.implicitMethodParameter'(Data =
-                                                              <<_:80/integer,
-                                                                VarparameterIndex:16/little-unsigned-integer,
-                                                                _:96/integer>>,
-                                                          Pointers =
-                                                              <<_:64/integer>>,
-                                                          MessageRef) ->
+'internal_decode_Type.anyPointer.implicitMethodParameter'(<<_:80/integer,
+                                                            VarparameterIndex:16/little-unsigned-integer,
+                                                            _:96/integer>>,
+                                                          <<_:64/integer>>,
+                                                          _MessageRef) ->
     #'Type.anyPointer.implicitMethodParameter'{parameterIndex =
                                                    VarparameterIndex};
 'internal_decode_Type.anyPointer.implicitMethodParameter'(Data,
@@ -4238,13 +4190,12 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
                                                               PaddedPointers,
                                                               MessageRef).
 
-'internal_decode_Type.anyPointer.parameter'(Data =
-                                                <<_:80/integer,
-                                                  VarparameterIndex:16/little-unsigned-integer,
-                                                  _:32/integer,
-                                                  VarscopeId:64/little-unsigned-integer>>,
-                                            Pointers = <<_:64/integer>>,
-                                            MessageRef) ->
+'internal_decode_Type.anyPointer.parameter'(<<_:80/integer,
+                                              VarparameterIndex:16/little-unsigned-integer,
+                                              _:32/integer,
+                                              VarscopeId:64/little-unsigned-integer>>,
+                                            <<_:64/integer>>,
+                                            _MessageRef) ->
     #'Type.anyPointer.parameter'{parameterIndex = VarparameterIndex,
                                  scopeId = VarscopeId};
 'internal_decode_Type.anyPointer.parameter'(Data, Pointers, MessageRef) ->
@@ -4270,12 +4221,10 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
                                                 PaddedPointers,
                                                 MessageRef).
 
-'internal_decode_Type.enum'(Data =
-                                <<_:64/integer,
-                                  VartypeId:64/little-unsigned-integer,
-                                  _:64/integer>>,
-                            Pointers =
-                                <<Varbrand:64/little-unsigned-integer>>,
+'internal_decode_Type.enum'(<<_:64/integer,
+                              VartypeId:64/little-unsigned-integer,
+                              _:64/integer>>,
+                            <<Varbrand:64/little-unsigned-integer>>,
                             MessageRef) ->
     #'Type.enum'{typeId = VartypeId,
                  brand =
@@ -4306,12 +4255,10 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Type.enum'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Type.interface'(Data =
-                                     <<_:64/integer,
-                                       VartypeId:64/little-unsigned-integer,
-                                       _:64/integer>>,
-                                 Pointers =
-                                     <<Varbrand:64/little-unsigned-integer>>,
+'internal_decode_Type.interface'(<<_:64/integer,
+                                   VartypeId:64/little-unsigned-integer,
+                                   _:64/integer>>,
+                                 <<Varbrand:64/little-unsigned-integer>>,
                                  MessageRef) ->
     #'Type.interface'{typeId = VartypeId,
                       brand =
@@ -4344,9 +4291,8 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
                                      PaddedPointers,
                                      MessageRef).
 
-'internal_decode_Type.list'(Data = <<_:192/integer>>,
-                            Pointers =
-                                <<VarelementType:64/little-unsigned-integer>>,
+'internal_decode_Type.list'(<<_:192/integer>>,
+                            <<VarelementType:64/little-unsigned-integer>>,
                             MessageRef) ->
     #'Type.list'{elementType =
                      follow_struct_pointer(fun internal_decode_Type/3,
@@ -4376,12 +4322,10 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
     end,
     'internal_decode_Type.list'(PaddedData, PaddedPointers, MessageRef).
 
-'internal_decode_Type.struct'(Data =
-                                  <<_:64/integer,
-                                    VartypeId:64/little-unsigned-integer,
-                                    _:64/integer>>,
-                              Pointers =
-                                  <<Varbrand:64/little-unsigned-integer>>,
+'internal_decode_Type.struct'(<<_:64/integer,
+                                VartypeId:64/little-unsigned-integer,
+                                _:64/integer>>,
+                              <<Varbrand:64/little-unsigned-integer>>,
                               MessageRef) ->
     #'Type.struct'{typeId = VartypeId,
                    brand =
@@ -4422,7 +4366,6 @@ internal_decode_Value(Data =
                       MessageRef) ->
     case Discriminant of
         0 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {void,undefined};
         1 ->
             <<_:23,Var:1/integer,_/bitstring>> = Data,
@@ -4484,21 +4427,20 @@ internal_decode_Value(Data =
         14 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {list,not_implemented};
+            {list,undefined};
         15 ->
             <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {enum,Var};
         16 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {struct,not_implemented};
+            {struct,undefined};
         17 ->
-            <<_:0,Var:0/integer,_/bitstring>> = Data,
             {interface,undefined};
         18 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {anyPointer,not_implemented}
+            {anyPointer,undefined}
     end;
 internal_decode_Value(Data, Pointers, MessageRef) ->
     DataPadLength = 128 - bit_size(Data),
