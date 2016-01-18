@@ -26,19 +26,19 @@
 
 -record('Brand',{scopes :: any()}).
 
--record('Brand.Scope',{scopeId :: 0..18446744073709551615,
+-record('Brand_Scope',{scopeId :: 0..18446744073709551615,
                        '' :: {bind, any()} | {inherit, undefined}}).
 
 -record('CodeGeneratorRequest',{nodes :: any(),requestedFiles :: any()}).
 
--record('CodeGeneratorRequest.RequestedFile',{id ::
+-record('CodeGeneratorRequest_RequestedFile',{id ::
                                                   0..
                                                   18446744073709551615,
                                               filename ::
                                                   undefined | iodata(),
                                               imports :: any()}).
 
--record('CodeGeneratorRequest.RequestedFile.Import',{id ::
+-record('CodeGeneratorRequest_RequestedFile_Import',{id ::
                                                          0..
                                                          18446744073709551615,
                                                      name ::
@@ -56,9 +56,9 @@
                  '' :: {slot, any()} | {group, 0..18446744073709551615},
                  ordinal :: {implicit, undefined} | {explicit, 0..65535}}).
 
--record('Field.group',{typeId :: 0..18446744073709551615}).
+-record('Field_group',{typeId :: 0..18446744073709551615}).
 
--record('Field.slot',{offset :: 0..4294967295,
+-record('Field_slot',{offset :: 0..4294967295,
                       hadExplicitDefault :: true | false,
                       type ::
                           {void, undefined} |
@@ -130,12 +130,12 @@
                     {const, any()} |
                     {annotation, any()}}).
 
--record('Node.NestedNode',{id :: 0..18446744073709551615,
+-record('Node_NestedNode',{id :: 0..18446744073709551615,
                            name :: undefined | iodata()}).
 
--record('Node.Parameter',{name :: undefined | iodata()}).
+-record('Node_Parameter',{name :: undefined | iodata()}).
 
--record('Node.annotation',{targetsGroup :: true | false,
+-record('Node_annotation',{targetsGroup :: true | false,
                            targetsUnion :: true | false,
                            targetsField :: true | false,
                            targetsStruct :: true | false,
@@ -171,7 +171,7 @@
                                 {parameter, any()} |
                                 {implicitMethodParameter, 0..65535}}}).
 
--record('Node.const',{type ::
+-record('Node_const',{type ::
                           {void, undefined} |
                           {bool, undefined} |
                           {int8, undefined} |
@@ -216,11 +216,11 @@
                           {interface, undefined} |
                           {anyPointer, undefined}}).
 
--record('Node.enum',{enumerants :: any()}).
+-record('Node_enum',{enumerants :: any()}).
 
--record('Node.interface',{methods :: any(),superclasses :: any()}).
+-record('Node_interface',{methods :: any(),superclasses :: any()}).
 
--record('Node.struct',{dataWordCount :: 0..65535,
+-record('Node_struct',{dataWordCount :: 0..65535,
                        pointerCount :: 0..65535,
                        preferredListEncoding ::
                            empty |
@@ -238,18 +238,18 @@
 
 -record('Superclass',{id :: 0..18446744073709551615,brand :: any()}).
 
--record('Type.anyPointer.implicitMethodParameter',{parameterIndex ::
+-record('Type_anyPointer_implicitMethodParameter',{parameterIndex ::
                                                        0..65535}).
 
--record('Type.anyPointer.parameter',{parameterIndex :: 0..65535,
+-record('Type_anyPointer_parameter',{parameterIndex :: 0..65535,
                                      scopeId :: 0..18446744073709551615}).
 
--record('Type.enum',{typeId :: 0..18446744073709551615,brand :: any()}).
+-record('Type_enum',{typeId :: 0..18446744073709551615,brand :: any()}).
 
--record('Type.interface',{typeId :: 0..18446744073709551615,
+-record('Type_interface',{typeId :: 0..18446744073709551615,
                           brand :: any()}).
 
--record('Type.list',{elementType ::
+-record('Type_list',{elementType ::
                          {void, undefined} |
                          {bool, undefined} |
                          {int8, undefined} |
@@ -273,7 +273,7 @@
                           {parameter, any()} |
                           {implicitMethodParameter, 0..65535}}}).
 
--record('Type.struct',{typeId :: 0..18446744073709551615,brand :: any()}).
+-record('Type_struct',{typeId :: 0..18446744073709551615,brand :: any()}).
 
 -record(message_ref,{current_offset,current_segment,segments}).
 

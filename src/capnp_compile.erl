@@ -269,7 +269,7 @@ find_anon_union(TypeId, Schema) ->
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				discriminantCount=DiscriminantCount
 			}
 		}
@@ -285,7 +285,7 @@ find_fields(TypeId, Schema) ->
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				fields=Fields
 			}
 		}
@@ -300,7 +300,7 @@ is_group(TypeId, Schema) ->
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				isGroup=IsGroup
 			}
 		}
@@ -916,7 +916,7 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -954,7 +954,7 @@ discriminant_field(TypeId, Schema) ->
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				discriminantOffset=DiscriminantOffset
 			}
 		}
@@ -975,7 +975,7 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -993,7 +993,7 @@ generate_union_encoder(Line, DiscriminantFieldRaw, Field=#field_info{discriminan
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -1012,7 +1012,7 @@ generate_union_encoder(Line, #field_info{offset=Offset}, #field_info{discriminan
 	#'Node'{
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
@@ -1503,7 +1503,7 @@ field_info(#'Field'{
 		name=Name,
 		''={
 			slot,
-			#'Field.slot'{
+			#'Field_slot'{
 				offset=N,
 				defaultValue={TypeClass, DefaultValue},
 				type=Type={TypeClass, _TypeDescription}
@@ -1549,10 +1549,10 @@ type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= dat
 	{64, #ptr_type{type=text_or_data, extra=TextType}};
 type_info(anyPointer, undefined, _Schema) ->
 	{64, #ptr_type{type=unknown}}; % Not really possible
-type_info(struct, #'Type.struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-type_info(list, {enum, #'Type.enum'{typeId=TypeId}}, Schema) ->
+type_info(list, {enum, #'Type_enum'{typeId=TypeId}}, Schema) ->
 	% List of enums.
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
@@ -1576,7 +1576,7 @@ type_info(list, {interface,_LTypeId}, _Schema) ->
 	erlang:error({not_implemented, list, interface}); % TODO
 % TODO decoders for pointers.
 % Data types
-type_info(enum, #'Type.enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
+type_info(enum, #'Type_enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	EnumerantNames = enumerant_names(TypeId, Schema),
 	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
 type_info(TypeClass, undefined, _Schema) ->
@@ -1613,7 +1613,7 @@ node_name(TypeId, Schema) ->
 		displayName=Name,
 		''={
 			struct,
-			#'Node.struct'{
+			#'Node_struct'{
 				dataWordCount=DWords,
 				pointerCount=PWords
 			}
