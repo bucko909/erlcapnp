@@ -12,12 +12,14 @@
 -export([
 		to_ast/1,
 		to_ast/2,
-		load_directly/2,
-		self_contained_source/2,
+		load_directly/3,
+		self_contained_source/3,
 		output_source_with_include/3,
-		source_with_include/3,
+		output_source_with_include/4,
+		source_with_include/4,
 		output_header/2,
-		header_only/2
+		output_header/3,
+		header_only/3
 	]).
 
 % Be sure offset is first in #field_info{} to get a nice ordering.
@@ -31,9 +33,9 @@
 
 -compile({parse_transform, uberpt}).
 
-load_directly(SchemaFile, ModuleName) ->
+load_directly(SchemaFile, ModuleName, Prefix) ->
 	% We go via source to make sure we didn't generate anything kooky.
-	Source = self_contained_source(SchemaFile, ModuleName),
+	Source = self_contained_source(SchemaFile, ModuleName, Prefix),
 	{ok, Tokens, _} = erl_scan:string(Source),
 	Forms = split_forms(Tokens, []),
 	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
@@ -42,18 +44,20 @@ load_directly(SchemaFile, ModuleName) ->
 format_erl(Forms) ->
 	[ [ erl_pp:form(erl_syntax:revert(Form)), $\n ] || Form <- Forms ].
 
-self_contained_source(SchemaFile, ModuleName) ->
-	{Recs, Funs} = to_ast(SchemaFile),
+self_contained_source(SchemaFile, ModuleName, Prefix) ->
+	{Recs, Funs} = to_ast(SchemaFile, Prefix),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	format_erl(Forms).
 
 output_source_with_include(SchemaFile, ModuleName, Path) ->
-	io:format("~s", [source_with_include(SchemaFile, ModuleName, Path)]).
+	output_source_with_include(SchemaFile, ModuleName, Path, "").
+output_source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
+	io:format("~s", [source_with_include(SchemaFile, ModuleName, Path, Prefix)]).
 
-source_with_include(SchemaFile, ModuleName, Path) ->
-	{_Recs, Funs} = to_ast(SchemaFile),
+source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
+	{_Recs, Funs} = to_ast(SchemaFile, Prefix),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	IncludeFileName = Path ++ "/" ++ atom_to_list(ModuleName) ++ ".hrl",
@@ -61,40 +65,52 @@ source_with_include(SchemaFile, ModuleName, Path) ->
 	format_erl(Forms).
 
 output_header(SchemaFile, ModuleName) ->
-	io:format("~s", [header_only(SchemaFile, ModuleName)]).
+	output_header(SchemaFile, ModuleName, "").
+output_header(SchemaFile, ModuleName, Prefix) ->
+	io:format("~s", [header_only(SchemaFile, ModuleName, Prefix)]).
 
-header_only(SchemaFile, ModuleName) ->
-	{Recs, _Funs} = to_ast(SchemaFile),
+header_only(SchemaFile, ModuleName, Prefix) ->
+	{Recs, _Funs} = to_ast(SchemaFile, Prefix),
 	IncludeFileName = atom_to_list(ModuleName) ++ ".hrl",
 	Forms = [{attribute,1,file,{IncludeFileName,1}}] ++ Recs ++ [{eof,0}],
 	format_erl(Forms).
 
-massage_name(Name, Filename) ->
-	String = binary_to_list(Name),
-	case {String == Filename, lists:prefix(Filename, String)} of
-		{false, true} ->
-			list_to_binary(lists:sublist(String, length(Filename) + 2, length(String) - length(Filename) - 1));
-		_ ->
-			Name
-	end.
-
-make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}, Filename) ->
-	MassagedNodes = [ X#'Node'{displayName=massage_name(Name, Filename)} || X=#'Node'{displayName=Name} <- Nodes ],
-	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- MassagedNodes ]),
-	NameToId = dict:from_list([{Name, Id} || #'Node'{id=Id, displayName=Name} <- MassagedNodes ]),
+make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}) ->
+	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- Nodes ]),
+	NameToId = dict:from_list([{Name, Id} || #'Node'{id=Id, displayName=Name} <- Nodes ]),
 	#capnp_context{
 		by_id = ById,
 		name_to_id = NameToId
 	}.
 
-load_raw(Filename) ->
+massage_names(Schema=#'CodeGeneratorRequest'{nodes=Nodes}, Filename, Prefix) ->
+	MassagedNodes = [ X#'Node'{displayName=massage_name(Name, Filename, Prefix)} || X=#'Node'{displayName=Name} <- Nodes ],
+	Schema#'CodeGeneratorRequest'{nodes=MassagedNodes}.
+
+massage_name(Name, Filename, Prefix) ->
+	String = binary_to_list(Name),
+	case {String == Filename, lists:prefix(Filename, String)} of
+		{false, true} ->
+			list_to_binary(fix_periods(Prefix ++ lists:sublist(String, length(Filename) + 2, length(String) - length(Filename) - 1)));
+		_ ->
+			list_to_binary(fix_periods(Prefix ++ String))
+	end.
+
+fix_periods(String) ->
+	lists:map(fun ($.) -> $_; (X) -> X end, String).
+
+load_raw(Filename, Prefix) ->
 	{ok, Raw} = file:read_file(Filename),
 	Base = filename:rootname(filename:basename(Filename)),
 	{Schema, <<>>} = capnp_schema:'decode_CodeGeneratorRequest'(Raw),
-	make_objdict(Schema, Base ++ ".capnp").
+	Renamed = massage_names(Schema, Base ++ ".capnp", Prefix),
+	make_objdict(Renamed).
 
 to_ast(SchemaFile) when is_list(SchemaFile) ->
-	Schema = load_raw(SchemaFile),
+	to_ast(SchemaFile, "").
+
+to_ast(SchemaFile, Prefix) when is_list(SchemaFile), is_list(Prefix) ->
+	Schema = load_raw(SchemaFile, Prefix),
 	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
 	to_ast(
 		[
@@ -102,16 +118,11 @@ to_ast(SchemaFile) when is_list(SchemaFile) ->
 			generate_decode_envelope_fun
 			| Tasks
 		],
+		sets:new(),
+		[],
+		[],
 		Schema
 	).
-
-to_ast(Name, SchemaFile) when is_list(SchemaFile) ->
-	Schema = capnp_bootstrap:load_raw_schema(SchemaFile),
-	to_ast(Name, Schema);
-to_ast(Name, Schema) when is_binary(Name) ->
-	to_ast([{generate_name, Name}], Schema);
-to_ast(Tasks, Schema) ->
-	to_ast(Tasks, sets:new(), [], [], Schema).
 
 split_forms([Dot={dot,_}|Rest], Acc) ->
 	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
