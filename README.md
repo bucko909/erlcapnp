@@ -39,3 +39,10 @@ Very much WIP!
 Extremely experimental; uses NIFs to encode exactly one sample message type.
 
 Initial experiments on speed aren't super-encouraging (I do not expect much more than a 2x speedup, if any; it seems like allocating resources is fairly expensive). However, a NIF implementation will be able to support RPC.
+
+## Acknowledgements
+
+A considerable amount of the work for this project was done during working hours for my employer, Gambit Research, as the motivation was to use the code in their systems.
+
+* http://www.gambitresearch.com/
+* https://github.com/GambitResearch
