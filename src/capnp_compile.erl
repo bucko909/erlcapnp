@@ -883,7 +883,19 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	Matcher = {record, Line, record_name(TypeId, Schema),
 		[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 	},
-	ast_function(quote(encoder_name(TypeId, Schema)), fun (quote(Matcher), PtrOffsetWordsFromEnd0) -> quote_block(EncodeBody); (undefined, _PtrOffsetWordsFromEnd0) -> {0, 0, 0, [], []} end).
+	ast_function(
+		quote(encoder_name(TypeId, Schema)),
+		fun
+			(quote(Matcher), PtrOffsetWordsFromEnd0) ->
+				quote_block(EncodeBody);
+			(undefined, _PtrOffsetWordsFromEnd0) ->
+				{0, 0, 0, [], []};
+			({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}, 0)
+					when is_integer(ZeroOffsetPtrInt), is_integer(MainLen), is_integer(ExtraLen) ->
+				% Note that we can't precompute list elements because their encodings might require pointer re-offsetting.
+				% Hence we must check PtrOffsetWordsFromEnd0 == 0.
+				{ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}
+		end).
 
 generate_text(TextType) ->
 	case TextType of
