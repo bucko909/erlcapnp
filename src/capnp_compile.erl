@@ -1199,6 +1199,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={primitive, Type}}, VarNam
 		float -> 0.0;
 		integer -> 0;
 		boolean -> false;
+		enum -> 0;
 		void -> undefined
 	end,
 	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, Default, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
