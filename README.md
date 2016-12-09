@@ -91,9 +91,19 @@ Very much WIP!
 
 ## NIF branch
 
-Extremely experimental; uses NIFs to encode exactly one sample message type.
+Extremely experimental; uses `nif`s to encode exactly one sample message type.
 
-Initial experiments on speed aren't super-encouraging (I do not expect much more than a 2x speedup, if any; it seems like allocating resources is fairly expensive). However, a NIF implementation will be able to support RPC.
+Initial experiments on speed aren't super-encouraging (I do not expect much more than a 2x speedup, if any; it seems like allocating resources is fairly expensive). However, a `nif` implementation will be able to support RPC.
+
+Benchmarks suggest that exposing `nif`s to Erlang to wrap around the capnp functions (initRoot, new MallocMessageBuilder, ...) is quite expensive. The capnp management structures -- builders, message types and so-on must be built onto the heap, and managed by Erlang's garbage collector, meaning many function calls implicity call `enif_alloc` with a penalty of about 200-400 nanoseconds per call. This means a simple "make a new message and set one field" test takes about 3.4 micros, versus the 0.44 micros of `erlcapnp`. I don't think this method will ever win in speed! The `nif` code is still vastly faster than `ecapnp`, however so it may be reasonable way to plug the RPC functionality into Erlang.
+
+On the other hand, there may be some win to making the entire encode step happen in C-space, having a function which mimics the `envelope_capnp` functions in `erlcapnp` and returns either a `MallocMessageBuilder` resource, or a plain `binary()` content of the message. There's still a nasty `malloc` penalty, but some fiddling can result in a function which takes a 7-tuple for `TestMultipleIntegers`, decodes it to plain integers (70 ns), then compiles a `capnp` message (almost free) and turns it to a binary (200 ns -- mostly the allocation of the binary) which it returns. This will probably result in a big win with larger structures.
+
+The likely final form, should there be one, then, is that an optimal `nif`-based solution will look like:
+* Encode: have a function to get a `MallocMessageBuilder` which takes an `erlcapnp` structure or reader resource as input. A second function will encode this to a binary/iodata.
+* Decode: have a function which returns a reader resource, and a function to turn that into an `erlcapnp` structure, blocking/erroring on incomplete data.
+
+This should give enough flexibility to use any existing `capnp`-based API while enough speed to be able to claim to be faster than the pure Erlang implementation in many/most cases.
 
 ## Acknowledgements
 
