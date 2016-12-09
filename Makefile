@@ -6,9 +6,11 @@ all:
 	erlc -o ebin -I include src/capnp_schema.erl
 	erlc -o ebin -I include src/capnp_raw.erl
 	erlc -o ebin -I include src/capnp_compile_tests.erl
-	g++ -g -std=c++11 -c -Wall -Werror -fpic capnp_nif.cpp
-	g++ -g -std=c++11 -c -Wall -Werror -fpic test1.capnp.c++
-	g++ -g -lkj -lcapnp -shared -o capnp_nif.so test1.capnp.o capnp_nif.o
+	erlc -o ebin -I include src/capnp_nif.erl
+	capnpc -oc++ data/tests/test1.capnp
+	g++ -g -O3 -Idata/tests -std=c++11 -c -Wall -Werror -fpic capnp_nif.cpp
+	g++ -g -O3 -Idata/tests -std=c++11 -c -Wall -Werror -fpic data/tests/test1.capnp.c++
+	g++ -g -O3 -lkj -lcapnp -shared -o capnp_nif.so test1.capnp.o capnp_nif.o
 
 contrib_r:
 	$(MAKE) -C contrib

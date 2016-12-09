@@ -24,6 +24,12 @@ bench_ecapnp_integer_encode({X}) ->
 	ecapnp_teardown(Message),
 	Value.
 
+bench_nif_integer_encode({X}) ->
+	Builder = capnp_nif:new_message_builder(),
+	Message = capnp_nif:initRoot_TestMultipleIntegers(Builder),
+	capnp_nif:set_TestMultipleIntegers_testVar1(Message, X),
+	capnp_nif:to_binary(Builder).
+
 bench_ecapnp_integer_encode_hotloop() ->
 	{setup,
 		fun
@@ -64,6 +70,18 @@ bench_ecapnp_multiple_integer_encode({X1, X2, X3, X4, X5, X6, X7}) ->
 	Value = ecapnp_message:write(Message),
 	ecapnp_teardown(Message),
 	Value.
+
+bench_nif_mutiple_integer_encode({X1, X2, X3, X4, X5, X6, X7}) ->
+	Builder = capnp_nif:new_message_builder(),
+	Message = capnp_nif:initRoot_TestMultipleIntegers(Builder),
+	capnp_nif:set_TestMultipleIntegers_testVar1(Message, X1),
+	capnp_nif:set_TestMultipleIntegers_testVar2(Message, X2),
+	capnp_nif:set_TestMultipleIntegers_testVar1(Message, X3),
+	capnp_nif:set_TestMultipleIntegers_testVar2(Message, X4),
+	capnp_nif:set_TestMultipleIntegers_testVar1(Message, X5),
+	capnp_nif:set_TestMultipleIntegers_testVar2(Message, X6),
+	capnp_nif:set_TestMultipleIntegers_testVar1(Message, X7),
+	capnp_nif:to_binary(Builder).
 
 bench_ecapnp_multiple_integer_encode_hotloop() ->
 	{setup,
@@ -200,9 +218,12 @@ bench() ->
 	bench_run(fun ?MODULE:bench_erlcapnp_integer_encode/1, {-1}),
 	bench_run(fun ?MODULE:bench_ecapnp_integer_encode/1, {-1}),
 	bench_run(fun ?MODULE:bench_ecapnp_integer_encode_hotloop/0, {-1}),
+	bench_run(fun ?MODULE:bench_nif_integer_encode/1, {-1}),
 	bench_run(fun ?MODULE:bench_erlcapnp_multiple_integer_encode/1, {1, 2, 3, 4, 5, 6, 7}),
 	bench_run(fun ?MODULE:bench_ecapnp_multiple_integer_encode/1, {1, 2, 3, 4, 5, 6, 7}),
 	bench_run(fun ?MODULE:bench_ecapnp_multiple_integer_encode_hotloop/0, {1, 2, 3, 4, 5, 6, 7}),
+	bench_run(fun ?MODULE:bench_nif_mutiple_integer_encode/1, {1, 2, 3, 4, 5, 6, 7}),
+	bench_run(fun capnp_nif:encode_TestMultipleIntegers/1, {1, 2, 3, 4, 5, 6, 7}),
 	bench_run(fun ?MODULE:bench_erlcapnp_multiple_integer_decode/1, <<0,0,0,0,5,0,0,0,0,0,0,0,4,0,0,0,1,0,0,0,0,0,0,0,2,0,0,0,3,0,4,5,6,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0>>),
 	bench_run(fun ?MODULE:bench_ecapnp_multiple_integer_decode/1, <<0,0,0,0,5,0,0,0,0,0,0,0,4,0,0,0,1,0,0,0,0,0,0,0,2,0,0,0,3,0,4,5,6,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0>>),
 	bench_run(fun ?MODULE:bench_ecapnp_multiple_integer_decode_singlefield/1, <<0,0,0,0,5,0,0,0,0,0,0,0,4,0,0,0,1,0,0,0,0,0,0,0,2,0,0,0,3,0,4,5,6,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0>>),

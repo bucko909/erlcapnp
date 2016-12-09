@@ -205,6 +205,71 @@ static ERL_NIF_TERM set_TestMultipleIntegers_testVar2(ErlNifEnv* env, int argc, 
 	return atom_ok;
 }
 
+capnp::word scratch_[100];
+kj::ArrayPtr<capnp::word> scratch = scratch_;
+//kj::ArrayPtr<capnp::word> scratch = kj::heapArray<capnp::word>(new capnp::word[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 100);
+//kj::FixedArray<capnp::word, 100> scratch;
+//scratch.size();
+
+static ERL_NIF_TERM encode_TestMultipleIntegers(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	int arity;
+	const ERL_NIF_TERM *tuple_terms;
+	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
+	if (arity != 7) return raise_internal_error(env, "argument_1_wrong_length");
+
+	long argv_decoded[7];
+	for(int i=0; i<7; i++) {
+		if (!enif_get_long(env, tuple_terms[i], &argv_decoded[i])) {
+			return raise_internal_error(env, "non_integer_param");
+		}
+	}
+
+	::capnp::MallocMessageBuilder messageBuilder(scratch);
+	TestMultipleIntegers::Builder builder = messageBuilder.initRoot<TestMultipleIntegers>();
+	builder.setTestVar1(argv_decoded[0]);
+	builder.setTestVar2(argv_decoded[1]);
+	builder.setTestVar3(argv_decoded[2]);
+	builder.setTestVar4(argv_decoded[3]);
+	builder.setTestVar5(argv_decoded[4]);
+	builder.setTestVar6(argv_decoded[5]);
+	builder.setTestVar7(argv_decoded[6]);
+
+	kj::ArrayPtr<const kj::ArrayPtr<const capnp::word>> segments = messageBuilder.getSegmentsForOutput();
+
+	int size = sizeof(uint32_t);
+	for (uint i = 0; i < segments.size(); i++) {
+		size += sizeof(uint32_t);
+		size += segments[i].size() * sizeof(capnp::word);
+	}
+	if (segments.size() % 2 == 0) {
+		// Set padding byte.
+		size += sizeof(uint32_t);
+	}
+
+	ErlNifBinary bin;
+	if (!enif_alloc_binary(size, &bin)) return raise_internal_error(env);
+
+	uint32_t *table = (uint32_t *)bin.data;
+	*(table++) = segments.size() - 1;
+	for (uint i = 0; i < segments.size(); i++) {
+		*(table++) = segments[i].size();
+	}
+	if (segments.size() % 2 == 0) {
+		// Set padding byte.
+		*(table++) = 0;
+	}
+
+	char *pieces = (char *)table;
+	for (uint i = 0; i < segments.size(); i++) {
+		int len = segments[i].size() * sizeof(capnp::word);
+		memcpy(pieces, segments[i].begin(), len);
+		pieces += len;
+	}
+
+	return enif_make_binary(env, &bin);
+//	return atom_ok;
+}
+
 static ERL_NIF_TERM to_binary(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 	::capnp::MallocMessageBuilder *messageBuilder;
 	if (!enif_get_resource(env, argv[0], MallocMessageBuilder_TYPE, (void **)&messageBuilder)) return enif_make_badarg(env);
@@ -291,6 +356,7 @@ static ErlNifFunc nif_funcs[] = {
 	{"set_TestTextType_testVar2", 2, set_TestTextType_testVar2},
 	{"set_TestMultipleIntegers_testVar1", 2, set_TestMultipleIntegers_testVar1},
 	{"set_TestMultipleIntegers_testVar2", 2, set_TestMultipleIntegers_testVar2},
+	{"encode_TestMultipleIntegers", 1, encode_TestMultipleIntegers},
     {"lol", 0, lol}
 };
 

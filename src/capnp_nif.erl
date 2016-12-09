@@ -38,6 +38,9 @@ set_TestMultipleIntegers_testVar1(_TestTextType, _Int) ->
 set_TestMultipleIntegers_testVar2(_TestTextType, _Int) ->
 	erlang:error(nif_not_loaded).
 
+encode_TestMultipleIntegers(_Data) ->
+	erlang:error(nif_not_loaded).
+
 bench2(X) ->
 	M=new_message_builder(),
 	initRoot_TestTextType(M),

@@ -261,7 +261,18 @@ encode_erlcapnp_SimpleShortStruct(#erlcapnp_SimpleShortStruct{testVar1 =
        0:32/integer>>,
      []};
 encode_erlcapnp_SimpleShortStruct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_SimpleShortStruct({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestBoringInteger(#erlcapnp_TestBoringInteger{testVar1 =
                                                                   VartestVar1},
@@ -272,7 +283,18 @@ encode_erlcapnp_TestBoringInteger(#erlcapnp_TestBoringInteger{testVar1 =
      <<VartestVar1:64/little-unsigned-integer>>,
      []};
 encode_erlcapnp_TestBoringInteger(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestBoringInteger({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestBoringPointer(#erlcapnp_TestBoringPointer{testVar1 =
                                                                   VartestVar1},
@@ -300,7 +322,18 @@ encode_erlcapnp_TestBoringPointer(#erlcapnp_TestBoringPointer{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestBoringPointer(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestBoringPointer({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
                                                                   VartestVar1,
@@ -388,7 +421,18 @@ encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestCompositeList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestCompositeList({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
                                                         VartestVar1,
@@ -466,7 +510,18 @@ encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
        PtrtestVar4:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3]};
 encode_erlcapnp_TestDefaults(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestDefaults({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestEnum(#erlcapnp_TestEnum{testVar1 = VartestVar1},
                          PtrOffsetWordsFromEnd0) ->
@@ -484,7 +539,18 @@ encode_erlcapnp_TestEnum(#erlcapnp_TestEnum{testVar1 = VartestVar1},
        0:48/integer>>,
      []};
 encode_erlcapnp_TestEnum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestEnum({ZeroOffsetPtrInt,
+                          MainLen,
+                          ExtraLen,
+                          MainData,
+                          ExtraData},
+                         0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
                                                         VartestVar1},
@@ -526,7 +592,18 @@ encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestEnumList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestEnumList({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroup(#erlcapnp_TestGroup{testVar3 = VartestVar3,
                                               group1 = Vargroup1},
@@ -551,7 +628,18 @@ encode_erlcapnp_TestGroup(#erlcapnp_TestGroup{testVar3 = VartestVar3,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFromgroup1):128/integer>>,
      [[]|ExtraDatagroup1]};
 encode_erlcapnp_TestGroup(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroup({ZeroOffsetPtrInt,
+                           MainLen,
+                           ExtraLen,
+                           MainData,
+                           ExtraData},
+                          0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroupInUnion(#erlcapnp_TestGroupInUnion{'' = Var,
                                                             union2 =
@@ -587,7 +675,18 @@ encode_erlcapnp_TestGroupInUnion(#erlcapnp_TestGroupInUnion{'' = Var,
         BodyDataAsIntFromunion2):256/integer>>,
      [[[]|ExtraData]|ExtraDataunion2]};
 encode_erlcapnp_TestGroupInUnion(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroupInUnion({ZeroOffsetPtrInt,
+                                  MainLen,
+                                  ExtraLen,
+                                  MainData,
+                                  ExtraData},
+                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_erlcapnp_TestGroupInUnion.'({VarDiscriminant,Var},
                                     PtrOffsetWordsFromEnd0) ->
@@ -694,7 +793,18 @@ encode_erlcapnp_TestGroupInUnion_unionVar1(#erlcapnp_TestGroupInUnion_unionVar1{
      []};
 encode_erlcapnp_TestGroupInUnion_unionVar1(undefined,
                                            _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroupInUnion_unionVar1({ZeroOffsetPtrInt,
+                                            MainLen,
+                                            ExtraLen,
+                                            MainData,
+                                            ExtraData},
+                                           0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroup_group1(#erlcapnp_TestGroup_group1{testVar1 =
                                                                 VartestVar1,
@@ -709,7 +819,18 @@ encode_erlcapnp_TestGroup_group1(#erlcapnp_TestGroup_group1{testVar1 =
        VartestVar2:64/little-signed-integer>>,
      []};
 encode_erlcapnp_TestGroup_group1(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroup_group1({ZeroOffsetPtrInt,
+                                  MainLen,
+                                  ExtraLen,
+                                  MainData,
+                                  ExtraData},
+                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestLessBoringPointer(#erlcapnp_TestLessBoringPointer{testVar2 =
                                                                           VartestVar2,
@@ -762,7 +883,18 @@ encode_erlcapnp_TestLessBoringPointer(#erlcapnp_TestLessBoringPointer{testVar2 =
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestLessBoringPointer(undefined,
                                       _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestLessBoringPointer({ZeroOffsetPtrInt,
+                                       MainLen,
+                                       ExtraLen,
+                                       MainData,
+                                       ExtraData},
+                                      0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestMultipleIntegers(#erlcapnp_TestMultipleIntegers{testVar1 =
                                                                         VartestVar1,
@@ -792,7 +924,18 @@ encode_erlcapnp_TestMultipleIntegers(#erlcapnp_TestMultipleIntegers{testVar1 =
        VartestVar7:64/little-signed-integer>>,
      []};
 encode_erlcapnp_TestMultipleIntegers(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestMultipleIntegers({ZeroOffsetPtrInt,
+                                      MainLen,
+                                      ExtraLen,
+                                      MainData,
+                                      ExtraData},
+                                     0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
                                                               VartestVar1},
@@ -840,7 +983,18 @@ encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestPointerList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestPointerList({ZeroOffsetPtrInt,
+                                 MainLen,
+                                 ExtraLen,
+                                 MainData,
+                                 ExtraData},
+                                0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                                                                   VartestVar1,
@@ -991,7 +1145,18 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
        PtrtestVar5:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4,Data5,Extra5]};
 encode_erlcapnp_TestPrimitiveList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestPrimitiveList({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
                                                           VartestVar1,
@@ -1079,7 +1244,18 @@ encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestShortList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestShortList({ZeroOffsetPtrInt,
+                               MainLen,
+                               ExtraLen,
+                               MainData,
+                               ExtraData},
+                              0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
                                                         VartestVar1},
@@ -1124,7 +1300,18 @@ encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestTextList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestTextList({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestTextType(#erlcapnp_TestTextType{testVar1 =
                                                         VartestVar1,
@@ -1177,7 +1364,18 @@ encode_erlcapnp_TestTextType(#erlcapnp_TestTextType{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestTextType(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestTextType({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestUnion(#erlcapnp_TestUnion{testVar1 = VartestVar1,
                                               '' = Var},
@@ -1198,7 +1396,18 @@ encode_erlcapnp_TestUnion(#erlcapnp_TestUnion{testVar1 = VartestVar1,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):256/integer>>,
      [[]|ExtraData]};
 encode_erlcapnp_TestUnion(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestUnion({ZeroOffsetPtrInt,
+                           MainLen,
+                           ExtraLen,
+                           MainData,
+                           ExtraData},
+                          0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_erlcapnp_TestUnion.'({VarDiscriminant,Var},
                              PtrOffsetWordsFromEnd0) ->
