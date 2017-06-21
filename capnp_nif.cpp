@@ -212,20 +212,25 @@ kj::ArrayPtr<capnp::word> scratch = scratch_;
 //scratch.size();
 
 static ERL_NIF_TERM encode_TestMultipleIntegers(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+	// 24ns to just return.
 	int arity;
 	const ERL_NIF_TERM *tuple_terms;
+	// 6ns
 	if (!enif_get_tuple(env, argv[0], &arity, &tuple_terms)) return raise_internal_error(env, "argument_1_not_tuple");
 	if (arity != 7) return raise_internal_error(env, "argument_1_wrong_length");
 
 	long argv_decoded[7];
+	// 20ns
 	for(int i=0; i<7; i++) {
 		if (!enif_get_long(env, tuple_terms[i], &argv_decoded[i])) {
 			return raise_internal_error(env, "non_integer_param");
 		}
 	}
 
+	// 53ns
 	::capnp::MallocMessageBuilder messageBuilder(scratch);
 	TestMultipleIntegers::Builder builder = messageBuilder.initRoot<TestMultipleIntegers>();
+	// freeeee
 	builder.setTestVar1(argv_decoded[0]);
 	builder.setTestVar2(argv_decoded[1]);
 	builder.setTestVar3(argv_decoded[2]);
@@ -234,6 +239,7 @@ static ERL_NIF_TERM encode_TestMultipleIntegers(ErlNifEnv* env, int argc, const 
 	builder.setTestVar6(argv_decoded[5]);
 	builder.setTestVar7(argv_decoded[6]);
 
+	// 5ns
 	kj::ArrayPtr<const kj::ArrayPtr<const capnp::word>> segments = messageBuilder.getSegmentsForOutput();
 
 	int size = sizeof(uint32_t);
@@ -246,9 +252,11 @@ static ERL_NIF_TERM encode_TestMultipleIntegers(ErlNifEnv* env, int argc, const 
 		size += sizeof(uint32_t);
 	}
 
+	// 129ns -- using malloc/free saves 80ns
 	ErlNifBinary bin;
 	if (!enif_alloc_binary(size, &bin)) return raise_internal_error(env);
 
+	// 6ns (for the full copy op)
 	uint32_t *table = (uint32_t *)bin.data;
 	*(table++) = segments.size() - 1;
 	for (uint i = 0; i < segments.size(); i++) {
@@ -266,6 +274,7 @@ static ERL_NIF_TERM encode_TestMultipleIntegers(ErlNifEnv* env, int argc, const 
 		pieces += len;
 	}
 
+	// free!
 	return enif_make_binary(env, &bin);
 //	return atom_ok;
 }
