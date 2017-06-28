@@ -377,7 +377,14 @@ encode_Annotation(#'Annotation'{id = Varid,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_Annotation(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Annotation({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
     if
@@ -421,7 +428,13 @@ encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
      <<Ptrscopes:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Brand(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Brand({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Brand_Binding({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -472,7 +485,18 @@ encode_Brand_Scope(#'Brand_Scope'{scopeId = VarscopeId,'' = Var},
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):192/integer>>,
      [[]|ExtraData]};
 encode_Brand_Scope(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Brand_Scope({ZeroOffsetPtrInt,
+                    MainLen,
+                    ExtraLen,
+                    MainData,
+                    ExtraData},
+                   0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_Brand_Scope.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -624,7 +648,18 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
        PtrrequestedFiles:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_CodeGeneratorRequest(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_CodeGeneratorRequest({ZeroOffsetPtrInt,
+                             MainLen,
+                             ExtraLen,
+                             MainData,
+                             ExtraData},
+                            0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{id =
                                                                                     Varid,
@@ -699,7 +734,18 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
      [Data1,Extra1,Data2,Extra2]};
 encode_CodeGeneratorRequest_RequestedFile(undefined,
                                           _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_CodeGeneratorRequest_RequestedFile({ZeroOffsetPtrInt,
+                                           MainLen,
+                                           ExtraLen,
+                                           MainData,
+                                           ExtraData},
+                                          0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_CodeGeneratorRequest_RequestedFile_Import(#'CodeGeneratorRequest_RequestedFile_Import'{id =
                                                                                                   Varid,
@@ -734,7 +780,18 @@ encode_CodeGeneratorRequest_RequestedFile_Import(#'CodeGeneratorRequest_Requeste
      [Data1,Extra1]};
 encode_CodeGeneratorRequest_RequestedFile_Import(undefined,
                                                  _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_CodeGeneratorRequest_RequestedFile_Import({ZeroOffsetPtrInt,
+                                                  MainLen,
+                                                  ExtraLen,
+                                                  MainData,
+                                                  ExtraData},
+                                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
                               name = Varname,
@@ -806,7 +863,14 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
        Ptrannotations:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_Enumerant(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Enumerant({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Field(#'Field'{codeOrder = VarcodeOrder,
                       discriminantValue = VardiscriminantValue,
@@ -905,7 +969,13 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
         BodyDataAsIntFromordinal):448/integer>>,
      [[[Data1,Extra1,Data2,Extra2]|ExtraData]|ExtraDataordinal]};
 encode_Field(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Field({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_Field.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -941,7 +1011,18 @@ encode_Field_group(#'Field_group'{typeId = VartypeId},
      <<0:128/integer,VartypeId:64/little-unsigned-integer,0:256/integer>>,
      []};
 encode_Field_group(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Field_group({ZeroOffsetPtrInt,
+                    MainLen,
+                    ExtraLen,
+                    MainData,
+                    ExtraData},
+                   0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Field_ordinal({VarDiscriminant,Var}, _PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -1024,7 +1105,14 @@ encode_Field_slot(#'Field_slot'{offset = Varoffset,
        PtrdefaultValue:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_Field_slot(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Field_slot({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Method(#'Method'{codeOrder = VarcodeOrder,
                         paramStructType = VarparamStructType,
@@ -1182,7 +1270,13 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
        PtrimplicitParameters:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4,Data5,Extra5]};
 encode_Method(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Method({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node(#'Node'{id = Varid,
                     displayNamePrefixLength = VardisplayNamePrefixLength,
@@ -1353,7 +1447,13 @@ encode_Node(#'Node'{id = Varid,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):704/integer>>,
      [[Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4]|ExtraData]};
 encode_Node(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_Node.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -1500,7 +1600,18 @@ encode_Node_NestedNode(#'Node_NestedNode'{id = Varid,name = Varname},
        Ptrname:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Node_NestedNode(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_NestedNode({ZeroOffsetPtrInt,
+                        MainLen,
+                        ExtraLen,
+                        MainData,
+                        ExtraData},
+                       0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_Parameter(#'Node_Parameter'{name = Varname},
                       PtrOffsetWordsFromEnd0) ->
@@ -1530,7 +1641,18 @@ encode_Node_Parameter(#'Node_Parameter'{name = Varname},
      <<Ptrname:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Node_Parameter(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_Parameter({ZeroOffsetPtrInt,
+                       MainLen,
+                       ExtraLen,
+                       MainData,
+                       ExtraData},
+                      0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
                                           targetsUnion = VartargetsUnion,
@@ -1645,7 +1767,18 @@ encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
        0:128/integer>>,
      [Data1,Extra1]};
 encode_Node_annotation(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_annotation({ZeroOffsetPtrInt,
+                        MainLen,
+                        ExtraLen,
+                        MainData,
+                        ExtraData},
+                       0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_const(#'Node_const'{type = Vartype,value = Varvalue},
                   PtrOffsetWordsFromEnd0) ->
@@ -1681,7 +1814,14 @@ encode_Node_const(#'Node_const'{type = Vartype,value = Varvalue},
        0:64/integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_Node_const(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_const({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
                  PtrOffsetWordsFromEnd0) ->
@@ -1731,7 +1871,14 @@ encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
        0:128/integer>>,
      [Data1,Extra1]};
 encode_Node_enum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_enum({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_interface(#'Node_interface'{methods = Varmethods,
                                         superclasses = Varsuperclasses},
@@ -1818,7 +1965,18 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
        0:64/integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_Node_interface(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_interface({ZeroOffsetPtrInt,
+                       MainLen,
+                       ExtraLen,
+                       MainData,
+                       ExtraData},
+                      0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
                                   pointerCount = VarpointerCount,
@@ -1906,7 +2064,18 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
        0:128/integer>>,
      [Data1,Extra1]};
 encode_Node_struct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Node_struct({ZeroOffsetPtrInt,
+                    MainLen,
+                    ExtraLen,
+                    MainData,
+                    ExtraData},
+                   0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Superclass(#'Superclass'{id = Varid,brand = Varbrand},
                   PtrOffsetWordsFromEnd0) ->
@@ -1928,7 +2097,14 @@ encode_Superclass(#'Superclass'{id = Varid,brand = Varbrand},
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Superclass(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Superclass({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
@@ -2140,7 +2316,18 @@ encode_Type_anyPointer_implicitMethodParameter(#'Type_anyPointer_implicitMethodP
      []};
 encode_Type_anyPointer_implicitMethodParameter(undefined,
                                                _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_anyPointer_implicitMethodParameter({ZeroOffsetPtrInt,
+                                                MainLen,
+                                                ExtraLen,
+                                                MainData,
+                                                ExtraData},
+                                               0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type_anyPointer_parameter(#'Type_anyPointer_parameter'{parameterIndex =
                                                                   VarparameterIndex,
@@ -2157,7 +2344,18 @@ encode_Type_anyPointer_parameter(#'Type_anyPointer_parameter'{parameterIndex =
        0:64/integer>>,
      []};
 encode_Type_anyPointer_parameter(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_anyPointer_parameter({ZeroOffsetPtrInt,
+                                  MainLen,
+                                  ExtraLen,
+                                  MainData,
+                                  ExtraData},
+                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type_enum(#'Type_enum'{typeId = VartypeId,brand = Varbrand},
                  PtrOffsetWordsFromEnd0) ->
@@ -2181,7 +2379,14 @@ encode_Type_enum(#'Type_enum'{typeId = VartypeId,brand = Varbrand},
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Type_enum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_enum({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type_interface(#'Type_interface'{typeId = VartypeId,
                                         brand = Varbrand},
@@ -2206,7 +2411,18 @@ encode_Type_interface(#'Type_interface'{typeId = VartypeId,
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Type_interface(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_interface({ZeroOffsetPtrInt,
+                       MainLen,
+                       ExtraLen,
+                       MainData,
+                       ExtraData},
+                      0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type_list(#'Type_list'{elementType = VarelementType},
                  PtrOffsetWordsFromEnd0) ->
@@ -2235,7 +2451,14 @@ encode_Type_list(#'Type_list'{elementType = VarelementType},
      <<0:192/integer,PtrelementType:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Type_list(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_list({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Type_struct(#'Type_struct'{typeId = VartypeId,brand = Varbrand},
                    PtrOffsetWordsFromEnd0) ->
@@ -2259,7 +2482,18 @@ encode_Type_struct(#'Type_struct'{typeId = VartypeId,brand = Varbrand},
        Ptrbrand:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_Type_struct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_Type_struct({ZeroOffsetPtrInt,
+                    MainLen,
+                    ExtraLen,
+                    MainData,
+                    ExtraData},
+                   0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
