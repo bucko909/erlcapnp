@@ -48,8 +48,19 @@ self_contained_source(SchemaFile, ModuleName, Prefix) ->
 	{Recs, Funs} = to_ast(SchemaFile, Prefix),
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
-	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,compile,[export_all]}] ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
+	Forms = self_contained_source_preamble(ModuleFileName, ModuleName) ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	format_erl(Forms).
+
+-ast_forms_function(#{
+		name => self_contained_source_preamble,
+		params => ['ModuleFileName', 'ModuleName']
+}).
+	% Most of the preamble is preprocessor instructions.
+	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
+	-uberpt_raw_file({{raw, {var, 1, 'ModuleFileName'}}, 1}).
+	-uberpt_raw_module({raw, {var, 1, 'ModuleName'}}).
+	-compile([export_all]).
+-end_ast_forms_function([]).
 
 output_source_with_include(SchemaFile, ModuleName, Path) ->
 	output_source_with_include(SchemaFile, ModuleName, Path, "").
@@ -61,8 +72,20 @@ source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
 	Line = 0,
 	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
 	IncludeFileName = Path ++ "/" ++ atom_to_list(ModuleName) ++ ".hrl",
-	Forms = [{attribute,1,file,{ModuleFileName,1}},{attribute,Line,module,ModuleName},{attribute,Line,include_lib,IncludeFileName},{attribute,Line,compile,[export_all]}] ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
+	Forms = source_with_include_preamble(ModuleFileName, IncludeFileName, ModuleName) ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
 	format_erl(Forms).
+
+-ast_forms_function(#{
+		name => source_with_include_preamble,
+		params => ['ModuleFileName', 'IncludeFileName', 'ModuleName']
+}).
+	% Most of the preamble is preprocessor instructions.
+	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
+	-uberpt_raw_file({{raw, {var, 1, 'ModuleFileName'}}, 1}).
+	-uberpt_raw_module({raw, {var, 1, 'ModuleName'}}).
+	-uberpt_raw_include_lib({raw, {var, 1, 'IncludeFileName'}}).
+	-compile([export_all]).
+-end_ast_forms_function([]).
 
 output_header(SchemaFile, ModuleName) ->
 	output_header(SchemaFile, ModuleName, "").
@@ -72,8 +95,17 @@ output_header(SchemaFile, ModuleName, Prefix) ->
 header_only(SchemaFile, ModuleName, Prefix) ->
 	{Recs, _Funs} = to_ast(SchemaFile, Prefix),
 	IncludeFileName = atom_to_list(ModuleName) ++ ".hrl",
-	Forms = [{attribute,1,file,{IncludeFileName,1}}] ++ Recs ++ [{eof,0}],
+	Forms = header_only_preamble(IncludeFileName) ++ Recs ++ [{eof,0}],
 	format_erl(Forms).
+
+-ast_forms_function(#{
+		name => header_only_preamble,
+		params => ['IncludeFileName']
+}).
+	% Most of the preamble is preprocessor instructions.
+	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
+	-uberpt_raw_file({{raw, {var, 1, 'IncludeFileName'}}, 1}).
+-end_ast_forms_function([]).
 
 make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}) ->
 	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- Nodes ]),
