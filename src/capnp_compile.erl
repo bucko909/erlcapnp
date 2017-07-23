@@ -1589,7 +1589,7 @@ type_info({TypeClass, TypeDescription}, Schema) ->
 % Pointer types (composite/list)
 type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= data ->
 	{64, #ptr_type{type=text_or_data, extra=TextType}};
-type_info(anyPointer, undefined, _Schema) ->
+type_info(anyPointer, {unconstrained, undefined}, Schema) ->
 	{64, #ptr_type{type=unknown}}; % Not really possible
 type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
