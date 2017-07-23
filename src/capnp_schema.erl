@@ -2876,58 +2876,8 @@ envelope_Value(Input) ->
                     MainData,
                     ExtraData]).
 
-follow_data_pointer(0, _MessageRef) ->
-    undefined;
-follow_data_pointer(PointerInt, MessageRef)
-    when
-        PointerInt band 3 =:= 1
-        andalso
-        (PointerInt bsr 32) band 7 =:= 2 ->
-    PointerOffset =
-        case PointerInt band (1 bsl 31) of
-            0 ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
-            _ ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
-        end,
-    Offset = MessageRef#message_ref.current_offset + PointerOffset,
-    SkipBits = Offset bsl 6,
-    Length = PointerInt bsr 35 - 0,
-    MessageBits = Length bsl 3,
-    <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
-        MessageRef#message_ref.current_segment,
-    ListData;
-follow_data_pointer(PointerInt,
-                    MessageRef = #message_ref{segments = Segments})
-    when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
-    follow_text_pointer(NewPointerInt, NewMessageRef).
+follow_data_pointer(PointerInt, MessageRef) ->
+    follow_text_or_data_pointer(PointerInt, MessageRef, 0).
 
 follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
     undefined;
@@ -3044,9 +2994,9 @@ follow_tagged_struct_list_pointer(DecodeFun,
                                       NewPointerInt,
                                       NewMessageRef).
 
-follow_text_pointer(0, _MessageRef) ->
+follow_text_or_data_pointer(0, _MessageRef, _Trail) ->
     undefined;
-follow_text_pointer(PointerInt, MessageRef)
+follow_text_or_data_pointer(PointerInt, MessageRef, Trail)
     when
         PointerInt band 3 =:= 1
         andalso
@@ -3060,13 +3010,15 @@ follow_text_pointer(PointerInt, MessageRef)
         end,
     Offset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = Offset bsl 6,
-    Length = PointerInt bsr 35 - 1,
+    Length = PointerInt bsr 35 - Trail,
     MessageBits = Length bsl 3,
     <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
         MessageRef#message_ref.current_segment,
     ListData;
-follow_text_pointer(PointerInt,
-                    MessageRef = #message_ref{segments = Segments})
+follow_text_or_data_pointer(PointerInt,
+                            MessageRef =
+                                #message_ref{segments = Segments},
+                            Trail)
     when PointerInt band 3 == 2 ->
     PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
     SkipBits = PointerOffset bsl 6,
@@ -3095,7 +3047,10 @@ follow_text_pointer(PointerInt,
                                        current_offset =
                                            SecondPointerOffset - 1}
     end,
-    follow_text_pointer(NewPointerInt, NewMessageRef).
+    follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
+
+follow_text_pointer(PointerInt, MessageRef) ->
+    follow_text_or_data_pointer(PointerInt, MessageRef, 1).
 
 internal_decode_Annotation(<<Varid:64/little-unsigned-integer>>,
                            <<Varvalue:64/little-unsigned-integer,

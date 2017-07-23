@@ -710,51 +710,59 @@ generate_follow_struct_pointer() ->
 		follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 -end_ast_forms_function([]).
 
-generate_follow_text_pointer(Type) ->
-	{Name, Trail} = case Type of
-		text -> {follow_text_pointer, ast(1)};
-		data -> {follow_data_pointer, ast(0)}
-	end,
-	FunDef = ast_function(
-		quote(Name),
-		fun
-			(0, _MessageRef) ->
-				undefined;
-			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 2 ->
-				PointerOffset = case PointerInt band (1 bsl 31) of
-					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
-					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
-				end,
-				Offset = MessageRef#message_ref.current_offset + PointerOffset,
-				SkipBits = Offset bsl 6,
-				Length = (PointerInt bsr 35) - quote(Trail),
-				MessageBits = Length bsl 3,
-				<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
-				ListData;
-			(PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
-				% Far pointer
-				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
-				SkipBits = PointerOffset bsl 6,
-				Segment = element((PointerInt bsr 32) + 1, Segments),
-				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-				case PointerInt band 4 of
-					0 ->
-						NewPointerInt = LandingPadInt,
-						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
-					1 ->
-						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
-						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
-						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
-						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
-						% Note that the 0-offset is relative to the end of the pointer at current_offset.
-						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
-						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
-				end,
-				follow_text_pointer(NewPointerInt, NewMessageRef)
-		end
-	),
-	{ [], [FunDef], [] }.
+generate_follow_text_pointer(text) ->
+	{ [], ast_follow_text_pointer(), [{generate_follow_text_pointer, common}] };
+generate_follow_text_pointer(data) ->
+	{ [], ast_follow_data_pointer(), [{generate_follow_text_pointer, common}] };
+generate_follow_text_pointer(common) ->
+	{ [], ast_follow_text_or_data_pointer(), [] }.
+
+-ast_forms_function(#{name => ast_follow_text_pointer}).
+follow_text_pointer(PointerInt, MessageRef) ->
+	follow_text_or_data_pointer(PointerInt, MessageRef, 1).
+-end_ast_forms_function([]).
+
+-ast_forms_function(#{name => ast_follow_data_pointer}).
+follow_data_pointer(PointerInt, MessageRef) ->
+	follow_text_or_data_pointer(PointerInt, MessageRef, 0).
+-end_ast_forms_function([]).
+
+-ast_forms_function(#{name => ast_follow_text_or_data_pointer}).
+	follow_text_or_data_pointer(0, _MessageRef, _Trail) ->
+		undefined;
+	follow_text_or_data_pointer(PointerInt, MessageRef, Trail) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= 2 ->
+		PointerOffset = case PointerInt band (1 bsl 31) of
+			0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+			_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+		end,
+		Offset = MessageRef#message_ref.current_offset + PointerOffset,
+		SkipBits = Offset bsl 6,
+		Length = (PointerInt bsr 35) - Trail,
+		MessageBits = Length bsl 3,
+		<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
+		ListData;
+	follow_text_or_data_pointer(PointerInt, MessageRef=#message_ref{segments=Segments}, Trail) when PointerInt band 3 == 2 ->
+		% Far pointer
+		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+		SkipBits = PointerOffset bsl 6,
+		Segment = element((PointerInt bsr 32) + 1, Segments),
+		<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+		case PointerInt band 4 of
+			0 ->
+				NewPointerInt = LandingPadInt,
+				NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+			1 ->
+				2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+				SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+				SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+				<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+				% Note that the 0-offset is relative to the end of the pointer at current_offset.
+				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+		end,
+		follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
+-end_ast_forms_function([]).
 
 generate_follow_struct_list_pointer() ->
 	TaggedFunDef = ast_function(
