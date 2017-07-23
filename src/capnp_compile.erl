@@ -652,20 +652,20 @@ generate_decode_text_fun(TextType) ->
 	{ [], [FunDef], [] }.
 
 generate_decode_envelope_fun() ->
-	RecDef = {attribute, 0, record, {message_ref, [{record_field, 0, ast(current_offset)}, {record_field, 0, ast(current_segment)}, {record_field, 0, ast(segments)}]}},
-	FunDef = ast_function(
-		quote(decode_envelope),
-		fun (<<RawSegCount:32/little-unsigned-integer, Rest/binary>>) ->
-			SegLengthLength = ((((RawSegCount + 1) bsr 1) bsl 1) + 1) bsl 2,
-			<<SegLengthData:SegLengthLength/binary, SegData/binary>> = Rest,
-			SegLengths = [ X bsl 3 || <<X:32/little-unsigned-integer>> <= SegLengthData, X > 0 ],
-			{SegsR, Dregs} = lists:foldl(fun (Length, {SplitSegs, Data}) -> <<Seg:Length/binary, Remain/binary>> = Data, {[Seg|SplitSegs], Remain} end, {[], SegData}, SegLengths),
-			Segs = lists:reverse(SegsR),
-			<<Ptr:64/little-unsigned-integer, _/binary>> = hd(Segs),
-			{#message_ref{current_offset=0, current_segment=hd(Segs), segments=list_to_tuple(Segs)}, Ptr, Dregs}
-		end
-	),
+	[RecDef, FunDef] = ast_decode_envelope(),
 	{ [RecDef], [FunDef], [] }.
+
+-ast_forms_function(#{name => ast_decode_envelope}).
+	-record(message_ref, {current_offset, current_segment, segments}).
+	decode_envelope(<<RawSegCount:32/little-unsigned-integer, Rest/binary>>) ->
+		SegLengthLength = ((((RawSegCount + 1) bsr 1) bsl 1) + 1) bsl 2,
+		<<SegLengthData:SegLengthLength/binary, SegData/binary>> = Rest,
+		SegLengths = [ X bsl 3 || <<X:32/little-unsigned-integer>> <= SegLengthData, X > 0 ],
+		{SegsR, Dregs} = lists:foldl(fun (Length, {SplitSegs, Data}) -> <<Seg:Length/binary, Remain/binary>> = Data, {[Seg|SplitSegs], Remain} end, {[], SegData}, SegLengths),
+		Segs = lists:reverse(SegsR),
+		<<Ptr:64/little-unsigned-integer, _/binary>> = hd(Segs),
+		{#message_ref{current_offset=0, current_segment=hd(Segs), segments=list_to_tuple(Segs)}, Ptr, Dregs}.
+-end_ast_forms_function([]).
 
 generate_follow_struct_pointer() ->
 	FunDef = ast_function(
