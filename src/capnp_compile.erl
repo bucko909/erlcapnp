@@ -247,6 +247,8 @@ do_job({generate_envelope, TypeId}, Schema) ->
 do_job({generate_text, TextType}, _Schema) ->
 	% Needed when we have a list of text.
 	generate_text(TextType);
+do_job(generate_decode_far_pointer, _Schema) ->
+	generate_decode_far_pointer();
 do_job(generate_follow_struct_pointer, _Schema) ->
 	generate_follow_struct_pointer();
 do_job({generate_follow_text_pointer, Type}, _Schema) ->
@@ -668,7 +670,7 @@ generate_decode_envelope_fun() ->
 -end_ast_forms_function([]).
 
 generate_follow_struct_pointer() ->
-	{ [], ast_follow_struct_pointer(), [] }.
+	{ [], ast_follow_struct_pointer(), [generate_decode_far_pointer] }.
 
 -ast_forms_function(#{name => ast_follow_struct_pointer}).
 	follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
@@ -687,7 +689,16 @@ generate_follow_struct_pointer() ->
 		PBits = PWords bsl 6,
 		<<_:SkipBits, Data:DBits/bitstring, Pointers:PBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
 		DecodeFun(Data, Pointers, NewMessageRef);
-	follow_struct_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+	follow_struct_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{}) when PointerInt band 3 == 2 ->
+		{NewPointerInt, NewMessageRef} = decode_far_pointer(PointerInt, MessageRef),
+		follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+-end_ast_forms_function([]).
+
+generate_decode_far_pointer() ->
+	{ [], ast_decode_far_pointer(), [] }.
+
+-ast_forms_function(#{name => ast_decode_far_pointer}).
+	decode_far_pointer(PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
 		% Far pointer
 		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
 		SkipBits = PointerOffset bsl 6,
@@ -707,7 +718,7 @@ generate_follow_struct_pointer() ->
 				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
 				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
 		end,
-		follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+		{NewPointerInt, NewMessageRef}.
 -end_ast_forms_function([]).
 
 generate_follow_text_pointer(text) ->
@@ -715,7 +726,7 @@ generate_follow_text_pointer(text) ->
 generate_follow_text_pointer(data) ->
 	{ [], ast_follow_data_pointer(), [{generate_follow_text_pointer, common}] };
 generate_follow_text_pointer(common) ->
-	{ [], ast_follow_text_or_data_pointer(), [] }.
+	{ [], ast_follow_text_or_data_pointer(), [generate_decode_far_pointer] }.
 
 -ast_forms_function(#{name => ast_follow_text_pointer}).
 follow_text_pointer(PointerInt, MessageRef) ->
@@ -741,31 +752,13 @@ follow_data_pointer(PointerInt, MessageRef) ->
 		MessageBits = Length bsl 3,
 		<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
 		ListData;
-	follow_text_or_data_pointer(PointerInt, MessageRef=#message_ref{segments=Segments}, Trail) when PointerInt band 3 == 2 ->
-		% Far pointer
-		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
-		SkipBits = PointerOffset bsl 6,
-		Segment = element((PointerInt bsr 32) + 1, Segments),
-		<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-		case PointerInt band 4 of
-			0 ->
-				NewPointerInt = LandingPadInt,
-				NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
-			1 ->
-				2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
-				SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
-				SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
-				<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-				0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
-				% Note that the 0-offset is relative to the end of the pointer at current_offset.
-				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
-				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
-		end,
+	follow_text_or_data_pointer(PointerInt, MessageRef=#message_ref{}, Trail) when PointerInt band 3 == 2 ->
+		{NewPointerInt, NewMessageRef} = decode_far_pointer(PointerInt, MessageRef),
 		follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
 -end_ast_forms_function([]).
 
 generate_follow_struct_list_pointer() ->
-	{ [], ast_follow_struct_list_pointer(), [] }.
+	{ [], ast_follow_struct_list_pointer(), [generate_decode_far_pointer] }.
 
 -ast_forms_function(#{name => ast_follow_struct_list_pointer}).
 	follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
@@ -782,26 +775,8 @@ generate_follow_struct_list_pointer() ->
 		DWords = (Tag bsr 32) band (1 bsl 16 - 1),
 		PWords = (Tag bsr 48) band (1 bsl 16 - 1),
 		decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
-	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
-		% Far pointer
-		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
-		SkipBits = PointerOffset bsl 6,
-		Segment = element((PointerInt bsr 32) + 1, Segments),
-		<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-		case PointerInt band 4 of
-			0 ->
-				NewPointerInt = LandingPadInt,
-				NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
-			1 ->
-				2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
-				SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
-				SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
-				<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-				0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
-				% Note that the 0-offset is relative to the end of the pointer at current_offset.
-				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
-				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
-		end,
+	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{}) when PointerInt band 3 == 2 ->
+		{NewPointerInt, NewMessageRef} = decode_far_pointer(PointerInt, MessageRef),
 		follow_tagged_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
 	decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->

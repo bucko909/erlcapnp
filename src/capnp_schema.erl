@@ -313,6 +313,38 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
      Ptr,
      Dregs}.
 
+decode_far_pointer(PointerInt,
+                   MessageRef = #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    {NewPointerInt,NewMessageRef}.
+
 decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     Offset = MessageRef#message_ref.current_offset,
     SkipBits = Offset * 64,
@@ -2903,35 +2935,10 @@ follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     DecodeFun(Data, Pointers, NewMessageRef);
 follow_struct_pointer(DecodeFun,
                       PointerInt,
-                      MessageRef = #message_ref{segments = Segments})
+                      MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
 follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
@@ -2960,36 +2967,10 @@ follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
                                                   NewOffset + 1});
 follow_tagged_struct_list_pointer(DecodeFun,
                                   PointerInt,
-                                  MessageRef =
-                                      #message_ref{segments = Segments})
+                                  MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
     follow_tagged_struct_list_pointer(DecodeFun,
                                       NewPointerInt,
                                       NewMessageRef).
@@ -3016,37 +2997,11 @@ follow_text_or_data_pointer(PointerInt, MessageRef, Trail)
         MessageRef#message_ref.current_segment,
     ListData;
 follow_text_or_data_pointer(PointerInt,
-                            MessageRef =
-                                #message_ref{segments = Segments},
+                            MessageRef = #message_ref{},
                             Trail)
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
     follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
 
 follow_text_pointer(PointerInt, MessageRef) ->
