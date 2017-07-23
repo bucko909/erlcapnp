@@ -1402,14 +1402,14 @@ ast_encode_struct_list_(
 	end.
 
 -ast_forms_function(#{name => massage_bool_list}).
-massage_bool_list(List) ->
-	try lists:split(8, List) of
-		{First, Last} ->
-			lists:reverse(First) ++ massage_bool_list(Last)
-	catch
-		error:badarg ->
-			lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
-	end.
+	massage_bool_list(List) ->
+		try lists:split(8, List) of
+			{First, Last} ->
+				lists:reverse(First) ++ massage_bool_list(Last)
+		catch
+			error:badarg ->
+				lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
+		end.
 -end_ast_forms_function([]).
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
