@@ -1401,19 +1401,16 @@ ast_encode_struct_list_(
 			NewOffsetFromEnd = OldOffsetFromEnd
 	end.
 
-massage_bool_list() ->
-	[ast_function(
-		quote(massage_bool_list),
-		fun (List) ->
-			try lists:split(8, List) of
-				{First, Last} ->
-					lists:reverse(First) ++ massage_bool_list(Last)
-			catch
-				error:badarg ->
-					lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
-			end
-		end
-	)].
+-ast_forms_function(#{name => massage_bool_list}).
+massage_bool_list(List) ->
+	try lists:split(8, List) of
+		{First, Last} ->
+			lists:reverse(First) ++ massage_bool_list(Last)
+	catch
+		error:badarg ->
+			lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
+	end.
+-end_ast_forms_function([]).
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
 to_list(A) when is_binary(A) -> binary_to_list(A);
