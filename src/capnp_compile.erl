@@ -765,70 +765,64 @@ follow_data_pointer(PointerInt, MessageRef) ->
 -end_ast_forms_function([]).
 
 generate_follow_struct_list_pointer() ->
-	TaggedFunDef = ast_function(
-		quote(follow_tagged_struct_list_pointer),
-		fun
-			(_DecodeFun, 0, _MessageRef) ->
-				undefined;
-			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
-				PointerOffset = case PointerInt band (1 bsl 31) of
-					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
-					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
-				end,
-				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-				SkipBits = NewOffset bsl 6,
-				<<_:SkipBits, Tag:64/little-unsigned-integer, _/binary>> = MessageRef#message_ref.current_segment,
-				Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
-				DWords = (Tag bsr 32) band (1 bsl 16 - 1),
-				PWords = (Tag bsr 48) band (1 bsl 16 - 1),
-				decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
-			(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
-				% Far pointer
-				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
-				SkipBits = PointerOffset bsl 6,
-				Segment = element((PointerInt bsr 32) + 1, Segments),
-				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-				case PointerInt band 4 of
-					0 ->
-						NewPointerInt = LandingPadInt,
-						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
-					1 ->
-						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
-						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
-						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
-						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
-						% Note that the 0-offset is relative to the end of the pointer at current_offset.
-						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
-						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
-				end,
-				follow_tagged_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef)
-		end
-	),
-	ListFunDef = ast_function(
-		quote(decode_struct_list),
-		fun
-			(DecodeFun, Length, DWords, PWords, MessageRef) ->
-				Offset = MessageRef#message_ref.current_offset,
-				SkipBits = Offset * 64,
-				<<_:SkipBits, Rest/binary>> = MessageRef#message_ref.current_segment,
-				Words = DWords + PWords,
-				DBits = DWords * 64,
-				PBits = PWords * 64,
-				{_, ListR} = lists:foldl(
-					fun
-						(N, {OldRest, Acc}) ->
-							<<ThisData:DBits/bitstring, ThisPointers:PBits/bitstring, NewRest/binary>> = OldRest,
-							New = DecodeFun(ThisData, ThisPointers, MessageRef#message_ref{current_offset=Offset+DWords+Words*N}),
-							{NewRest, [New|Acc]}
-					end,
-					{Rest, []},
-					lists:seq(0, Length-1)
-				),
-				lists:reverse(ListR)
-		end
-	),
-	{ [], [TaggedFunDef, ListFunDef], [] }.
+	{ [], ast_follow_struct_list_pointer(), [] }.
+
+-ast_forms_function(#{name => ast_follow_struct_list_pointer}).
+	follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
+		undefined;
+	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
+		PointerOffset = case PointerInt band (1 bsl 31) of
+			0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+			_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+		end,
+		NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
+		SkipBits = NewOffset bsl 6,
+		<<_:SkipBits, Tag:64/little-unsigned-integer, _/binary>> = MessageRef#message_ref.current_segment,
+		Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
+		DWords = (Tag bsr 32) band (1 bsl 16 - 1),
+		PWords = (Tag bsr 48) band (1 bsl 16 - 1),
+		decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
+	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+		% Far pointer
+		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+		SkipBits = PointerOffset bsl 6,
+		Segment = element((PointerInt bsr 32) + 1, Segments),
+		<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+		case PointerInt band 4 of
+			0 ->
+				NewPointerInt = LandingPadInt,
+				NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+			1 ->
+				2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+				SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+				SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+				<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+				% Note that the 0-offset is relative to the end of the pointer at current_offset.
+				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+		end,
+		follow_tagged_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+
+	decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
+		Offset = MessageRef#message_ref.current_offset,
+		SkipBits = Offset * 64,
+		<<_:SkipBits, Rest/binary>> = MessageRef#message_ref.current_segment,
+		Words = DWords + PWords,
+		DBits = DWords * 64,
+		PBits = PWords * 64,
+		{_, ListR} = lists:foldl(
+			fun
+				(N, {OldRest, Acc}) ->
+					<<ThisData:DBits/bitstring, ThisPointers:PBits/bitstring, NewRest/binary>> = OldRest,
+					New = DecodeFun(ThisData, ThisPointers, MessageRef#message_ref{current_offset=Offset+DWords+Words*N}),
+					{NewRest, [New|Acc]}
+			end,
+			{Rest, []},
+			lists:seq(0, Length-1)
+		),
+		lists:reverse(ListR).
+-end_ast_forms_function([]).
 
 generate_follow_primitive_list_pointer(_Line, #native_type{type=void}) ->
 	FunDef = ast_function(
