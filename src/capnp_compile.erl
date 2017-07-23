@@ -481,13 +481,13 @@ message_ref(#field_info{type=#ptr_type{}, offset=Offset}) ->
 	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote(WordOffset)}).
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
-	case is_union(TypeId, Schema) of
+	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
+	% We just take the binary for now and break if we get a pointer type.
+	{_, DWords, PWords} = node_name(TypeId, Schema),
+	DBits = {integer, Line, DWords * 64},
+	PBits = {integer, Line, PWords * 64},
+	Decoder = case is_union(TypeId, Schema) of
 		false ->
-			% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
-			% We just take the binary for now and break if we get a pointer type.
-			{_, DWords, PWords} = node_name(TypeId, Schema),
-			DBits = {integer, Line, DWords * 64},
-			PBits = {integer, Line, PWords * 64},
 			DataMatcher1 = {bin, Line, generate_data_binary(0, SortedDataFields, decode, DWords)},
 			PointerMatcher1 = {bin, Line, generate_ptr_binary(0, SortedPtrFields, decode, PWords)},
 			case Groups of
@@ -504,40 +504,10 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 				_ ->
 					MessageRefVar = ast(MessageRef)
 			end,
-			Body = {record, Line, record_name(TypeId, Schema),
+			{record, Line, record_name(TypeId, Schema),
 				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
-			},
-			ast_function(
-				quote(decoder_name(TypeId, Schema)),
-				fun
-					(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
-						quote(Body);
-					(Data, Pointers, MessageRef) ->
-						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
-						if
-							DataPadLength > 0 ->
-								PaddedData = <<Data/binary, 0:DataPadLength>>;
-							DataPadLength =:= 0 ->
-								PaddedData = Data;
-							DataPadLength < 0 ->
-								<<PaddedData:(quote(DBits))/bitstring>> = Data
-						end,
-						PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
-						if
-							PointerPadLength > 0 ->
-								PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
-							PointerPadLength =:= 0 ->
-								PaddedPointers = Pointers;
-							PointerPadLength < 0 ->
-								<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
-						end,
-						(quote({atom, Line, decoder_name(TypeId, Schema)}))(PaddedData, PaddedPointers, MessageRef)
-				end
-			);
+			};
 		true ->
-			{_, DWords, PWords} = node_name(TypeId, Schema),
-			DBits = {integer, Line, DWords * 64},
-			PBits = {integer, Line, PWords * 64},
 			UnionFields = find_tag_fields(TypeId, Schema),
 			Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
 			Expected = lists:seq(0, length(Sorted)-1),
@@ -564,35 +534,36 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 					PointerMatcher = PointerMatcher1
 			end,
 			DecoderClauses = [ {clause, Line, [{integer, Line, Discriminant}], [], generate_union_decoder(Line, Field, Schema)} || Field=#field_info{discriminant=Discriminant} <- Sorted ],
-			Decoder = {'case', Line, ast(Discriminant), DecoderClauses},
-			ast_function(
-				quote(decoder_name(TypeId, Schema)),
-				fun
-					(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
-						quote(Decoder);
-					(Data, Pointers, MessageRef) ->
-						DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
-						if
-							DataPadLength > 0 ->
-								PaddedData = <<Data/binary, 0:DataPadLength>>;
-							DataPadLength =:= 0 ->
-								PaddedData = Data;
-							DataPadLength < 0 ->
-								<<PaddedData:(quote(DBits))/bitstring>> = Data
-						end,
-						PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
-						if
-							PointerPadLength > 0 ->
-								PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
-							PointerPadLength =:= 0 ->
-								PaddedPointers = Pointers;
-							PointerPadLength < 0 ->
-								<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
-						end,
-						(quote({atom, Line, decoder_name(TypeId, Schema)}))(PaddedData, PaddedPointers, MessageRef)
-				end
-			)
-	end.
+			{'case', Line, ast(Discriminant), DecoderClauses}
+	end,
+	Name = decoder_name(TypeId, Schema),
+	ast_function(
+		quote(Name),
+		fun
+			(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
+				quote(Decoder);
+			(Data, Pointers, MessageRef) ->
+				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
+				if
+					DataPadLength > 0 ->
+						PaddedData = <<Data/binary, 0:DataPadLength>>;
+					DataPadLength =:= 0 ->
+						PaddedData = Data;
+					DataPadLength < 0 ->
+						<<PaddedData:(quote(DBits))/bitstring>> = Data
+				end,
+				PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
+				if
+					PointerPadLength > 0 ->
+						PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
+					PointerPadLength =:= 0 ->
+						PaddedPointers = Pointers;
+					PointerPadLength < 0 ->
+						<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
+				end,
+				(quote({atom, Line, Name}))(PaddedData, PaddedPointers, MessageRef)
+		end
+	).
 
 generate_union_decoder(Line, #field_info{name=Name, default=undefined, type=#group_type{type_id=TypeId}}, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
