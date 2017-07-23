@@ -668,49 +668,47 @@ generate_decode_envelope_fun() ->
 -end_ast_forms_function([]).
 
 generate_follow_struct_pointer() ->
-	FunDef = ast_function(
-		quote(follow_struct_pointer),
-		fun
-			(_DecodeFun, 0, _MessageRef) ->
-				undefined;
-			(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
-				PointerOffset = case PointerInt band (1 bsl 31) of
-					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
-					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
-				end,
-				NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-				DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
-				PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
-				NewMessageRef = MessageRef#message_ref{current_offset=NewOffset + DWords}, % Point at start of pointer area.
-				SkipBits = NewOffset bsl 6,
-				DBits = DWords bsl 6,
-				PBits = PWords bsl 6,
-				<<_:SkipBits, Data:DBits/bitstring, Pointers:PBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
-				DecodeFun(Data, Pointers, NewMessageRef);
-			(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
-				% Far pointer
-				PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
-				SkipBits = PointerOffset bsl 6,
-				Segment = element((PointerInt bsr 32) + 1, Segments),
-				<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-				case PointerInt band 4 of
-					0 ->
-						NewPointerInt = LandingPadInt,
-						NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
-					1 ->
-						2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
-						SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
-						SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
-						<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
-						0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
-						% Note that the 0-offset is relative to the end of the pointer at current_offset.
-						% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
-						NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
-				end,
-				follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef)
-		end
-	),
-	{ [], [FunDef], [] }.
+	{ [], ast_follow_struct_pointer(), [] }.
+
+-ast_forms_function(#{name => ast_follow_struct_pointer}).
+	follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
+		undefined;
+	follow_struct_pointer(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 0 ->
+		PointerOffset = case PointerInt band (1 bsl 31) of
+			0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
+			_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
+		end,
+		NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
+		DWords = (PointerInt bsr 32) band (1 bsl 16 - 1),
+		PWords = (PointerInt bsr 48) band (1 bsl 16 - 1),
+		NewMessageRef = MessageRef#message_ref{current_offset=NewOffset + DWords}, % Point at start of pointer area.
+		SkipBits = NewOffset bsl 6,
+		DBits = DWords bsl 6,
+		PBits = PWords bsl 6,
+		<<_:SkipBits, Data:DBits/bitstring, Pointers:PBits/bitstring, _/binary>> = MessageRef#message_ref.current_segment,
+		DecodeFun(Data, Pointers, NewMessageRef);
+	follow_struct_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{segments=Segments}) when PointerInt band 3 == 2 ->
+		% Far pointer
+		PointerOffset = ((PointerInt bsr 3) band (1 bsl 29 - 1)),
+		SkipBits = PointerOffset bsl 6,
+		Segment = element((PointerInt bsr 32) + 1, Segments),
+		<<_:SkipBits, LandingPadInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+		case PointerInt band 4 of
+			0 ->
+				NewPointerInt = LandingPadInt,
+				NewMessageRef = MessageRef#message_ref{current_segment=Segment, current_offset=PointerOffset};
+			1 ->
+				2 = LandingPadInt band 7, % Sanity check (far pointer, one byte)
+				SecondPointerOffset = ((LandingPadInt bsr 3) band (1 bsl 29 - 1)),
+				SecondSegment = element((LandingPadInt bsr 32) + 1, Segments),
+				<<_:SkipBits, 0:64, NewPointerInt:64/little-unsigned-integer, _/bitstring>> = Segment,
+				0 = ((NewPointerInt bsr 2) band (1 bsl 30 - 1)), % Sanity check (offset=0)
+				% Note that the 0-offset is relative to the end of the pointer at current_offset.
+				% So we need to subtract 1 from SecondPointerOffset to get the decode to work correctly.
+				NewMessageRef = MessageRef#message_ref{current_segment=SecondSegment, current_offset=SecondPointerOffset-1}
+		end,
+		follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+-end_ast_forms_function([]).
 
 generate_follow_text_pointer(Type) ->
 	{Name, Trail} = case Type of
