@@ -62,13 +62,22 @@ output_header(SchemaFile, ModuleName, Prefix) ->
 % We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
 % When passed to internal_decode_X, it's the start of the pointer words section.
 
+% Convenience method. Might be useful for testing.
 load_directly(SchemaFile, ModuleName, Prefix) ->
 	% We go via source to make sure we didn't generate anything kooky.
-	Source = capnp_format:self_contained_source(SchemaFile, ModuleName, Prefix),
+	Source = self_contained_source(SchemaFile, ModuleName, Prefix),
 	{ok, Tokens, _} = erl_scan:string(Source),
 	Forms = split_forms(Tokens, []),
 	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
+
+split_forms([Dot={dot,_}|Rest], Acc) ->
+	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
+	[Form | split_forms(Rest, [])];
+split_forms([Other|Rest], Acc) ->
+	split_forms(Rest, [Other|Acc]);
+split_forms([], []) ->
+	[].
 
 % Main compiler entry point.
 to_ast(Schema=#capnp_context{by_id=ById}) ->
@@ -86,15 +95,6 @@ to_ast(Schema=#capnp_context{by_id=ById}) ->
 		Schema
 	).
 
-
-
-split_forms([Dot={dot,_}|Rest], Acc) ->
-	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
-	[Form | split_forms(Rest, [])];
-split_forms([Other|Rest], Acc) ->
-	split_forms(Rest, [Other|Acc]);
-split_forms([], []) ->
-	[].
 
 type_depends(L) when is_list(L) ->
 	lists:append(lists:map(fun type_depends/1, L));
