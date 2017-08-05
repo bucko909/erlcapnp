@@ -4,6 +4,8 @@
 
 -module(capnp_compile).
 
+-compile({parse_transform, uberpt}).
+
 -include_lib("capnp.hrl").
 -include_lib("capnp_raw.hrl").
 -include_lib("capnp_bootstrap.hrl").
@@ -30,8 +32,6 @@
 
 % We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
 % When passed to internal_decode_X, it's the start of the pointer words section.
-
--compile({parse_transform, uberpt}).
 
 load_directly(SchemaFile, ModuleName, Prefix) ->
 	% We go via source to make sure we didn't generate anything kooky.
