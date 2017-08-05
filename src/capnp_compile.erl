@@ -146,8 +146,9 @@ to_ast(SchemaFile, Prefix) when is_list(SchemaFile), is_list(Prefix) ->
 	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
 	to_ast(
 		[
-			generate_follow_struct_pointer,
-			generate_decode_envelope_fun
+			generate_massage_bool_list,
+			generate_decode_envelope_fun,
+			generate_follow_struct_pointer
 			| Tasks
 		],
 		sets:new(),
@@ -251,6 +252,8 @@ do_job(generate_decode_far_pointer, _Schema) ->
 	generate_decode_far_pointer();
 do_job(generate_follow_struct_pointer, _Schema) ->
 	generate_follow_struct_pointer();
+do_job(generate_massage_bool_list, _Schema) ->
+	generate_massage_bool_list();
 do_job({generate_follow_text_pointer, Type}, _Schema) ->
 	generate_follow_text_pointer(Type);
 do_job(generate_follow_struct_list_pointer, _Schema) ->
@@ -638,6 +641,20 @@ generate_decode_envelope_fun() ->
 		Segs = lists:reverse(SegsR),
 		<<Ptr:64/little-unsigned-integer, _/binary>> = hd(Segs),
 		{#message_ref{current_offset=0, current_segment=hd(Segs), segments=list_to_tuple(Segs)}, Ptr, Dregs}.
+-end_ast_forms_function([]).
+
+generate_massage_bool_list() ->
+	{ [], ast_massage_bool_list(), [generate_decode_far_pointer] }.
+
+-ast_forms_function(#{name => ast_massage_bool_list}).
+	massage_bool_list(List) ->
+		try lists:split(8, List) of
+			{First, Last} ->
+				lists:reverse(First) ++ massage_bool_list(Last)
+		catch
+			error:badarg ->
+				lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
+		end.
 -end_ast_forms_function([]).
 
 generate_follow_struct_pointer() ->
@@ -1346,17 +1363,6 @@ ast_encode_struct_list_(
 			PointerAsInt = 0,
 			NewOffsetFromEnd = OldOffsetFromEnd
 	end.
-
--ast_forms_function(#{name => massage_bool_list}).
-	massage_bool_list(List) ->
-		try lists:split(8, List) of
-			{First, Last} ->
-				lists:reverse(First) ++ massage_bool_list(Last)
-		catch
-			error:badarg ->
-				lists:reverse(List ++ lists:duplicate(-length(List) band 7, 0))
-		end.
--end_ast_forms_function([]).
 
 to_list(A) when is_atom(A) -> atom_to_list(A);
 to_list(A) when is_binary(A) -> binary_to_list(A);
