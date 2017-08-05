@@ -484,15 +484,20 @@ message_ref(#field_info{type=#ptr_type{}, offset=Offset}) ->
 	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote(WordOffset)}).
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
-	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
-	% We just take the binary for now and break if we get a pointer type.
+	% Should be decode_<Name>(PrimitiveData, PointerData, CompleteMessage) -> #<Name>{}
+	% or decode_<Name>(PrimitiveData, PointerData, CompleteMessage) -> {UnionTag, UnionData}
 	{_, DWords, PWords} = node_name(TypeId, Schema),
 	DBits = {integer, Line, DWords * 64},
 	PBits = {integer, Line, PWords * 64},
 	Decoder = case is_union(TypeId, Schema) of
 		false ->
+			% This is the usual case. The type is to be treated as a usual struct.
 			DataMatcher1 = {bin, Line, generate_data_binary(0, SortedDataFields, decode, DWords)},
 			PointerMatcher1 = {bin, Line, generate_ptr_binary(0, SortedPtrFields, decode, PWords)},
+
+			% These case statements just mask out variables that might be
+			% needed to decode certain fields if we have no such fields, to
+			% prevent some compile warnings.
 			case Groups of
 				[] ->
 					DataMatcher = DataMatcher1,
@@ -511,6 +516,8 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 				[{record_field, Line, make_atom(Line, FieldName), decoder(Type, Default, var_p(Line, "Var", FieldName), Line, message_ref(Info), Schema)} || Info=#field_info{name=FieldName, default=Default, type=Type} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 			};
 		true ->
+			% The type is to be treated as a union. We need to find the
+			% discriminant and then decode based on that.
 			UnionFields = find_tag_fields(TypeId, Schema),
 			Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
 			Expected = lists:seq(0, length(Sorted)-1),
@@ -1541,7 +1548,7 @@ type_info({TypeClass, TypeDescription}, Schema) ->
 % Pointer types (composite/list)
 type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= data ->
 	{64, #ptr_type{type=text_or_data, extra=TextType}};
-type_info(anyPointer, {unconstrained, undefined}, Schema) ->
+type_info(anyPointer, {unconstrained, undefined}, _Schema) ->
 	{64, #ptr_type{type=unknown}}; % Not really possible
 type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
