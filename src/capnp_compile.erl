@@ -24,11 +24,42 @@
 		output_header/3
 	]).
 
-% Be sure offset is first in #field_info{} to get a nice ordering.
--record(field_info, {offset, type, name, default, discriminant, override}).
--record(native_type, {name, type, width, extra, binary_options, list_tag}).
--record(ptr_type, {type, extra}).
--record(group_type, {type_id}).
+-import(capnp_common, [
+		encoder_name/2,
+		decoder_name/2,
+		full_decoder_name/2,
+		record_name/2,
+		envelope_fun_name/2,
+
+		field_name/1,
+
+		append/2,
+		to_list/1,
+		to_atom/1,
+		make_atom/2
+	]).
+
+-import(capnp_schema_wrangle, [
+		node_name/2,
+
+		schema_lookup/2,
+		find_fields/2,
+		find_record_fields/2,
+		find_notag_fields/2,
+		find_notag_groups/2,
+		find_notag_data_fields/2,
+		find_notag_pointer_fields/2,
+		find_tag_fields/2,
+		find_anon_union/2,
+		discriminant_field/2,
+		is_union/2,
+		is_group/2,
+
+		is_native_type/1,
+		is_nonvoid_native_type/1,
+		is_pointer_type/1,
+		is_group_type/1
+	]).
 
 % Formatters.
 self_contained_source(SchemaFile, ModuleName, Prefix) ->
@@ -93,43 +124,11 @@ to_ast(Schema=#capnp_context{by_id=ById}) ->
 	).
 
 
-type_depends(L) when is_list(L) ->
-	lists:append(lists:map(fun type_depends/1, L));
-type_depends({integer, _, _}) ->
-	[];
-type_depends({atom, _, _}) ->
-	[];
-type_depends({type, _, record, [{atom, _, N}]}) ->
-	[{record, N}];
-type_depends({type, _, _, Deps}) ->
-	lists:append(lists:map(fun type_depends/1, Deps));
-type_depends({typed_record_field, _Field, T}) ->
-	type_depends(T);
-type_depends({record_field, _, _}) ->
-	[];
-type_depends({user_type, _, T, Deps}) ->
-	[{type, T} | type_depends(Deps)].
-
-shuffle_forms(Forms) ->
-	{New, _, []} = shuffle_forms(Forms, [], [], []),
-	New.
-
-shuffle_forms([A={attribute, _, T, {N, AV}}|Rest], Seen, Buffer, Acc) when T =:= record; T =:= type ->
-	case [ bad || D <- type_depends(AV), not lists:member(D, Seen) ] of
-		[] ->
-			{New, NewSeen, NewBuffer} = shuffle_forms(Buffer, [{T, N}|Seen], [], []),
-			shuffle_forms(Rest, NewSeen, NewBuffer, Acc ++ [A|New]);
-		_ ->
-			shuffle_forms(Rest, Seen, Buffer ++ [A], Acc)
-	end;
-shuffle_forms([], Seen, Buffer, Acc) ->
-	{Acc, Seen, Buffer}.
-
-ignore_line(A, B) ->
-	setelement(2, A, 0) =< setelement(2, B, 0).
-
 to_ast([], _Done, Recs, Funs, _Schema) ->
-	{shuffle_forms(lists:sort(fun ignore_line/2, Recs)), lists:sort(fun ignore_line/2, Funs)};
+	{
+		capnp_records:sort(Recs),
+		lists:sort(fun capnp_common:cmp_ignore_line/2, Funs)
+	};
 to_ast([Job|Rest], Done, Recs, Funs, Schema) ->
 	case sets:is_element(Job, Done) of
 		true ->
@@ -147,7 +146,7 @@ do_job({generate, TypeId}, Schema) ->
 do_job({generate_record, TypeId}, Schema) ->
 	Line = 0,
 	SortedFields = find_record_fields(TypeId, Schema),
-	RecDef = generate_record_def(Line, TypeId, SortedFields, Schema),
+	RecDef = capnp_records:generate_record_def(Line, TypeId, SortedFields, Schema),
 	{[RecDef], [], []};
 do_job({generate_decode, TypeId}, Schema) ->
 	Line = 0,
@@ -192,85 +191,6 @@ do_job({generate_follow_primitive_list_pointer, Type}, _Schema) ->
 do_job(generate_decode_envelope_fun, _Schema) ->
 	generate_decode_envelope_fun().
 
-find_record_fields(TypeId, Schema) ->
-	find_notag_data_fields(TypeId, Schema) ++ find_notag_pointer_fields(TypeId, Schema) ++ find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema).
-
-is_native_type(#field_info{type=#native_type{}}) -> true;
-is_native_type(#field_info{}) -> false.
-
-is_nonvoid_native_type(#field_info{type=#native_type{width=0}}) -> false;
-is_nonvoid_native_type(Field) -> is_native_type(Field).
-
-is_pointer_type(#field_info{type=#ptr_type{}}) -> true;
-is_pointer_type(#field_info{}) -> false.
-
-is_group_type(#field_info{type=#group_type{}}) -> true;
-is_group_type(#field_info{}) -> false.
-
-find_notag_data_fields(TypeId, Schema) ->
-	lists:sort(lists:filter(fun is_native_type/1, find_notag_fields(TypeId, Schema))).
-
-find_notag_pointer_fields(TypeId, Schema) ->
-	lists:sort(lists:filter(fun is_pointer_type/1, find_notag_fields(TypeId, Schema))).
-
-find_notag_groups(TypeId, Schema) ->
-	% TODO SORT!!!
-	lists:filter(fun is_group_type/1, find_notag_fields(TypeId, Schema)).
-
-has_discriminant(#field_info{discriminant=undefined}) -> false;
-has_discriminant(#field_info{}) -> true.
-
-has_no_discriminant(F) -> not has_discriminant(F).
-
-find_notag_fields({anonunion, _TypeId}, _Schema) ->
-	[];
-find_notag_fields(TypeId, Schema) ->
-	lists:filter(fun has_no_discriminant/1, find_fields(TypeId, Schema)).
-
-find_tag_fields(TypeId, Schema) ->
-	lists:filter(fun has_discriminant/1, find_fields(TypeId, Schema)).
-
-find_anon_union(TypeId, Schema) ->
-	#'Node'{
-		''={
-			struct,
-			#'Node_struct'{
-				discriminantCount=DiscriminantCount
-			}
-		}
-	} = schema_lookup(TypeId, Schema),
-	case DiscriminantCount of
-		0 ->
-			[];
-		X when X > 0 ->
-			[ #field_info{name= <<>>, type=#group_type{type_id={anonunion, TypeId}}} ]
-	end.
-
-find_fields(TypeId, Schema) ->
-	#'Node'{
-		''={
-			struct,
-			#'Node_struct'{
-				fields=Fields
-			}
-		}
-	} = schema_lookup(TypeId, Schema),
-	% Start by finding the bit offsets of each field, so that we can order them.
-	[ field_info(Field, Schema) || Field <- Fields ].
-
-is_union(TypeId, Schema) ->
-	find_notag_fields(TypeId, Schema) == [] andalso find_tag_fields(TypeId, Schema) /= [].
-
-is_group(TypeId, Schema) ->
-	#'Node'{
-		''={
-			struct,
-			#'Node_struct'{
-				isGroup=IsGroup
-			}
-		}
-	} = schema_lookup(TypeId, Schema),
-	IsGroup.
 
 generate_basic(TypeId, Schema) ->
 	IsGroup = is_group(TypeId, Schema),
@@ -330,77 +250,6 @@ generate_basic(TypeId, Schema) ->
 
 	{ [], [], Jobs }.
 
-or_undefined(Line, Type) ->
-	{type, Line, union, [make_atom(Line, undefined), Type]}.
-
-is_signed(#native_type{binary_options=Opts}) ->
-	lists:member(signed, Opts).
-
-field_type(Line, _RecordName, #field_info{type=Type=#native_type{type=integer, width=Bits}}, _Schema) ->
-	RawRange = 1 bsl Bits,
-	{Min, Max} = case is_signed(Type) of
-		true ->
-			{-(RawRange bsr 1), (RawRange bsr 1) - 1};
-		false ->
-			{0, RawRange - 1}
-	end,
-	{type, Line, range, [{integer, Line, Min}, {integer, Line, Max}]};
-field_type(Line, _RecordName, #field_info{type=#native_type{type=float}}, _Schema) ->
-	{type, Line, float, []};
-field_type(Line, _RecordName, #field_info{type=#native_type{type=boolean}}, _Schema) ->
-	{type, Line, union, [{atom, Line, true}, {atom, Line, false}]};
-field_type(Line, _RecordName, #field_info{type=#native_type{type=void}}, _Schema) ->
-	{atom, Line, undefined};
-field_type(Line, _RecordName, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
-	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
-field_type(Line, _RecordName, #field_info{type=#ptr_type{type=text_or_data, extra=_TextType}}, _Schema) ->
-	or_undefined(Line, {type, Line, union, [{type, Line, iodata, []}]});
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, Schema) ->
-	case TypeName of
-		RecordName ->
-			% Avoid mutual recursion.
-			{type, Line, any, []};
-		_ ->
-			case is_union(TypeName, Schema) of
-				true ->
-					field_type(Line, TypeName, #field_info{type=#group_type{type_id=TypeName}}, Schema);
-				false ->
-					{type, Line, any, []}
-					%or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]})
-			end
-	end;
-field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, _Schema) ->
-	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
-field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
-	or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]});
-field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={text, _TextType}}}, _Schema) ->
-	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]});
-field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
-	% Recursive call is or_undefined, which is not allowed here!
-	{type, Line, any, []};
-	%or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});
-field_type(Line, RecordName, #field_info{type=#group_type{type_id=TypeId}}, Schema) ->
-	case is_union(TypeId, Schema) of
-		true ->
-			UnionFields = find_tag_fields(TypeId, Schema),
-			{type, Line, union, [ {type, Line, tuple, [make_atom(Line, Name), field_type(Line, RecordName, Field, Schema)]} || Field=#field_info{name=Name} <- UnionFields ]};
-		false ->
-			{type, Line, any, []}
-			%{type, Line, record, [make_atom(Line, record_name(TypeId, Schema))]}
-	end;
-field_type(Line, _RecordName, #field_info{type=#ptr_type{type=unknown}, default=undefined}, _Schema) ->
-	{atom, Line, undefined}.
-
-generate_record_def(Line, TypeId, RecordFields, Schema) ->
-	RecordName = record_name(TypeId, Schema),
-	{attribute, Line, record, {RecordName, [{typed_record_field, {record_field, Line, {atom, Line, field_name(Info)}}, field_type(Line, RecordName, Info, Schema)} || Info=#field_info{} <- RecordFields]}}.
-
-append(A, B) -> to_list(A) ++ to_list(B).
-
-to_atom(Val) -> list_to_atom(to_list(Val)).
-
-make_atom(Line, Name) -> {atom, Line, to_atom(Name)}.
-
 % This points all pointers in the data segment at somewhat junk, but
 % data decoders never need this information!
 message_ref(#field_info{type=#group_type{}}) ->
@@ -457,13 +306,13 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			DataMatcher1 = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _:(quote(DataRest))>>),
 			PointerMatcher1 = ast(<<_:(quote(PBits))>>),
 
-			case lists:any(fun is_group_type/1, UnionFields) orelse lists:any(fun is_nonvoid_native_type/1, UnionFields) of
+			case lists:any(fun capnp_schema_wrangle:is_group_type/1, UnionFields) orelse lists:any(fun capnp_schema_wrangle:is_nonvoid_native_type/1, UnionFields) of
 				true ->
 					DataMatcher = ast(Data = quote(DataMatcher1));
 				false ->
 					DataMatcher = DataMatcher1
 			end,
-			case lists:any(fun is_group_type/1, UnionFields) orelse lists:any(fun is_pointer_type/1, UnionFields) of
+			case lists:any(fun capnp_schema_wrangle:is_group_type/1, UnionFields) orelse lists:any(fun capnp_schema_wrangle:is_pointer_type/1, UnionFields) of
 				true ->
 					MessageRefVar = ast(MessageRef),
 					PointerMatcher = ast(Pointers = quote(PointerMatcher1));
@@ -882,7 +731,7 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 
 generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 	EncodeBody = union_encode_function_body(Line, TypeId, UnionFields, Schema),
-	case lists:any(fun is_pointer_type/1, UnionFields) orelse lists:any(fun is_group_type/1, UnionFields) of
+	case lists:any(fun capnp_schema_wrangle:is_pointer_type/1, UnionFields) orelse lists:any(fun capnp_schema_wrangle:is_group_type/1, UnionFields) of
 		true -> PtrOffsetWordsFromEnd0Var = ast(PtrOffsetWordsFromEnd0);
 		false -> PtrOffsetWordsFromEnd0Var = ast(_PtrOffsetWordsFromEnd0)
 	end,
@@ -891,17 +740,6 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 		quote(encoder_name(TypeId, Schema)),
 		fun ({VarDiscriminant, Var}, quote(PtrOffsetWordsFromEnd0Var)) -> quote_block(EncodeBody) end
 	).
-
-discriminant_field(TypeId, Schema) ->
-	#'Node'{
-		''={
-			struct,
-			#'Node_struct'{
-				discriminantOffset=DiscriminantOffset
-			}
-		}
-	} = schema_lookup(TypeId, Schema),
-	#field_info{name= <<"Discriminant">>, offset=DiscriminantOffset*16, type=builtin_info(uint16), default=0}.
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
 	Sorted = lists:sort(fun (#field_info{discriminant=X}, #field_info{discriminant=Y}) -> X < Y end, UnionFields),
@@ -1028,32 +866,6 @@ ast_encode_group_(
 		{temp, [_ZeroOffsetPtrInt, _NewBodyLen]} % These are the same as the full struct, since a group can't encode to null.
 	) ->
 	{_ZeroOffsetPtrInt, _NewBodyLen, NewExtraLen, NewBodyData, NewExtraData} = GroupEncodeFun(MatchVar, InitialExtraLen).
-
-to_list(Line, List) ->
-	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
-
-encoder_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	to_atom(append("encode_", TypeName)).
-
-decoder_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	to_atom(append("internal_decode_", TypeName)).
-
-full_decoder_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	to_atom(append("decode_", TypeName)).
-
-record_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	to_atom(TypeName).
-
-envelope_fun_name(TypeId, Schema) ->
-	{TypeName, _, _} = node_name(TypeId, Schema),
-	to_atom(append("envelope_", TypeName)).
-
-field_name(#field_info{name=FieldName}) ->
-	to_atom(FieldName).
 
 
 generate_envelope_fun(Line, TypeId, Schema) ->
@@ -1299,10 +1111,8 @@ ast_encode_struct_list_(
 			NewOffsetFromEnd = OldOffsetFromEnd
 	end.
 
-to_list(A) when is_atom(A) -> atom_to_list(A);
-to_list(A) when is_binary(A) -> binary_to_list(A);
-to_list(A) when is_integer(A) -> integer_to_list(A);
-to_list(A) when is_list(A) -> A.
+to_list(Line, List) ->
+	lists:foldr(fun (Item, SoFar) -> {cons, Line, Item, SoFar} end, {nil, Line}, List).
 
 var_p(Line, _Prepend, {override, Name}) ->
 	{var, Line, Name};
@@ -1426,140 +1236,3 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(undefined). % not implemented
-
-field_info(#'Field'{
-		discriminantValue=DiscriminantValue,
-		name=Name,
-		''={
-			slot,
-			#'Field_slot'{
-				offset=N,
-				defaultValue={TypeClass, DefaultValue},
-				type=Type={TypeClass, _TypeDescription}
-			}
-		}
-	}, Schema) ->
-	{Size, Info} = type_info(Type, Schema),
-	Offset = case Size of
-		1 ->
-			% Correct for erlang's endianness
-			(N band -8) + (7 - (N band 7));
-		_ ->
-			Size * N
-	end,
-	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of not_implemented -> undefined; _ -> DefaultValue end};
-field_info(#'Field'{
-		discriminantValue=DiscriminantValue,
-		name=Name,
-		''={
-			group,
-			TypeId
-		}
-	}, Schema) ->
-	Fields = find_fields(TypeId, Schema),
-	% If there are no fields, destroy this group.
-	% If there's just one field, replace this group with it.
-	% If there's multiple fields, generate a group_type field.
-	case Fields of
-		[] ->
-			#field_info{offset=undefined, type=deleted};
-		[Field=#field_info{}] ->
-			Field#field_info{name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end};
-		_ ->
-			% Groups and unions.
-			#field_info{offset=undefined, type=#group_type{type_id=TypeId}, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end}
-	end.
-
-type_info({TypeClass, TypeDescription}, Schema) ->
-	type_info(TypeClass, TypeDescription, Schema).
-
-% Pointer types (composite/list)
-type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= data ->
-	{64, #ptr_type{type=text_or_data, extra=TextType}};
-type_info(anyPointer, {unconstrained, undefined}, _Schema) ->
-	{64, #ptr_type{type=unknown}}; % Not really possible
-type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
-	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
-	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-type_info(list, {enum, #'Type_enum'{typeId=TypeId}}, Schema) ->
-	% List of enums.
-	EnumerantNames = enumerant_names(TypeId, Schema),
-	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
-type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
-	% List of text types; this is a list-of-lists.
-	{64, #ptr_type{type=list, extra={text, TextType}}};
-type_info(list, {PtrType, _LTypeDescription}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
-	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
-	erlang:error({not_implemented, list, list}); % TODO
-type_info(list, {PrimitiveType, undefined}, _Schema) ->
-	% List of any normal primitive type.
-	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
-type_info(list, InnerType={struct, _}, Schema) ->
-	% List of structs.
-	% These will be encoded in-line.
-	{64, TypeInfo} = type_info(InnerType, Schema),
-	{64, #ptr_type{type=list, extra={struct, TypeInfo}}};
-type_info(list, {anyPointer, undefined}, _Schema) ->
-	erlang:error({not_implemented, list, anyPointer}); % TODO
-type_info(list, {interface,_LTypeId}, _Schema) ->
-	erlang:error({not_implemented, list, interface}); % TODO
-% TODO decoders for pointers.
-% Data types
-type_info(enum, #'Type_enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
-	EnumerantNames = enumerant_names(TypeId, Schema),
-	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
-type_info(TypeClass, undefined, _Schema) ->
-	Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
-	{Size1, Info1};
-% Catchall
-type_info(TypeClass, TypeDescription, _Schema) ->
-	io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
-	{64, #ptr_type{type=unknown}}.
-
-schema_lookup({anonunion, TypeId}, Schema) ->
-	schema_lookup(TypeId, Schema);
-schema_lookup(Name, Schema) when is_binary(Name) ->
-	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
-	schema_lookup(TypeId, Schema);
-schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
-	dict:fetch(TypeId, Schema#capnp_context.by_id).
-
-
-enumerant_names(TypeId, Schema) ->
-	#'Node'{
-		''={
-			enum,
-			Enumerants
-		}
-	} = schema_lookup(TypeId, Schema),
-	[ to_atom(EName) || #'Enumerant'{name=EName} <- Enumerants ].
-
-node_name({anonunion, TypeId}, Schema) ->
-	{Name, DWords, PWords} = node_name(TypeId, Schema),
-	{<<Name/binary, $.>>, DWords, PWords};
-node_name(TypeId, Schema) ->
-	#'Node'{
-		displayName=Name,
-		''={
-			struct,
-			#'Node_struct'{
-				dataWordCount=DWords,
-				pointerCount=PWords
-			}
-		}
-	} = schema_lookup(TypeId, Schema),
-	{Name, DWords, PWords}.
-
-% {BroadType, Bits, BinaryType}
-builtin_info(int64) -> #native_type{name=int64, type=integer, width=64, binary_options=[little, signed, integer], list_tag=5};
-builtin_info(int32) -> #native_type{name=int32, type=integer, width=32, binary_options=[little, signed, integer], list_tag=4};
-builtin_info(int16) -> #native_type{name=int16, type=integer, width=16, binary_options=[little, signed, integer], list_tag=3};
-builtin_info(int8) -> #native_type{name=int8, type=integer, width=8, binary_options=[little, signed, integer], list_tag=2};
-builtin_info(uint64) -> #native_type{name=uint64, type=integer, width=64, binary_options=[little, unsigned, integer], list_tag=5};
-builtin_info(uint32) -> #native_type{name=uint32, type=integer, width=32, binary_options=[little, unsigned, integer], list_tag=4};
-builtin_info(uint16) -> #native_type{name=uint16, type=integer, width=16, binary_options=[little, unsigned, integer], list_tag=3};
-builtin_info(uint8) -> #native_type{name=uint8, type=integer, width=8, binary_options=[little, unsigned, integer], list_tag=2};
-builtin_info(float32) -> #native_type{name=float32, type=float, width=32, binary_options=[little, float], list_tag=4};
-builtin_info(float64) -> #native_type{name=float64, type=float, width=64, binary_options=[little, float], list_tag=5};
-builtin_info(bool) -> #native_type{name=bool, type=boolean, width=1, binary_options=[integer], list_tag=1};
-builtin_info(void) -> #native_type{name=void, type=void, width=0, binary_options=[integer], list_tag=0}.
