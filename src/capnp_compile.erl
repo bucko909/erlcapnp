@@ -13,7 +13,6 @@
 
 -export([
 		to_ast/1,
-		to_ast/2,
 		load_directly/3,
 
 		self_contained_source/3,
@@ -34,13 +33,20 @@
 
 % Formatters.
 self_contained_source(SchemaFile, ModuleName, Prefix) ->
-	capnp_format:self_contained_source(to_ast(SchemaFile, Prefix), ModuleName).
+	capnp_format:self_contained_source(
+		to_ast(capnp_load:load_raw(SchemaFile, Prefix)),
+		ModuleName).
 
 source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
-	capnp_format:source_with_include(to_ast(SchemaFile, Prefix), ModuleName, Path).
+	capnp_format:source_with_include(
+		to_ast(capnp_load:load_raw(SchemaFile, Prefix)),
+		ModuleName,
+		Path).
 
 header_only(SchemaFile, ModuleName, Prefix) ->
-	capnp_format:header_only(to_ast(SchemaFile, Prefix), ModuleName).
+	capnp_format:header_only(
+		to_ast(capnp_load:load_raw(SchemaFile, Prefix)),
+		ModuleName).
 
 % Outputters
 output_source_with_include(SchemaFile, ModuleName, Path) ->
@@ -64,44 +70,9 @@ load_directly(SchemaFile, ModuleName, Prefix) ->
 	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
 
-
-make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}) ->
-	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- Nodes ]),
-	NameToId = dict:from_list([{Name, Id} || #'Node'{id=Id, displayName=Name} <- Nodes ]),
-	#capnp_context{
-		by_id = ById,
-		name_to_id = NameToId
-	}.
-
-massage_names(Schema=#'CodeGeneratorRequest'{nodes=Nodes}, Filename, Prefix) ->
-	MassagedNodes = [ X#'Node'{displayName=massage_name(Name, Filename, Prefix)} || X=#'Node'{displayName=Name} <- Nodes ],
-	Schema#'CodeGeneratorRequest'{nodes=MassagedNodes}.
-
-massage_name(Name, Filename, Prefix) ->
-	String = binary_to_list(Name),
-	case {String == Filename, lists:prefix(Filename, String)} of
-		{false, true} ->
-			list_to_binary(fix_periods(Prefix ++ lists:sublist(String, length(Filename) + 2, length(String) - length(Filename) - 1)));
-		_ ->
-			list_to_binary(fix_periods(Prefix ++ String))
-	end.
-
-fix_periods(String) ->
-	lists:map(fun ($.) -> $_; (X) -> X end, String).
-
-load_raw(Filename, Prefix) ->
-	{ok, Raw} = file:read_file(Filename),
-	Base = filename:rootname(filename:basename(Filename)),
-	{Schema, <<>>} = capnp_schema:'decode_CodeGeneratorRequest'(Raw),
-	Renamed = massage_names(Schema, Base ++ ".capnp", Prefix),
-	make_objdict(Renamed).
-
-to_ast(SchemaFile) when is_list(SchemaFile) ->
-	to_ast(SchemaFile, "").
-
-to_ast(SchemaFile, Prefix) when is_list(SchemaFile), is_list(Prefix) ->
-	Schema = load_raw(SchemaFile, Prefix),
-	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(Schema#capnp_context.by_id)  ],
+% Main compiler entry point.
+to_ast(Schema=#capnp_context{by_id=ById}) ->
+	Tasks = [ {generate_name, Name} || {_, #'Node'{''={struct, _}, displayName=Name}} <- dict:to_list(ById) ],
 	to_ast(
 		[
 			generate_massage_bool_list,
@@ -114,6 +85,8 @@ to_ast(SchemaFile, Prefix) when is_list(SchemaFile), is_list(Prefix) ->
 		[],
 		Schema
 	).
+
+
 
 split_forms([Dot={dot,_}|Rest], Acc) ->
 	{ok, Form} = erl_parse:parse_form(lists:reverse([Dot|Acc])),
