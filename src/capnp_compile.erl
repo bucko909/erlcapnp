@@ -59,8 +59,6 @@ output_header(SchemaFile, ModuleName) ->
 output_header(SchemaFile, ModuleName, Prefix) ->
 	io:format("~s", [header_only(SchemaFile, ModuleName, Prefix)]).
 
-% We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
-% When passed to internal_decode_X, it's the start of the pointer words section.
 
 % Convenience method. Might be useful for testing.
 load_directly(SchemaFile, ModuleName, Prefix) ->
