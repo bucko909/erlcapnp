@@ -8,7 +8,6 @@
 
 -include_lib("capnp.hrl").
 -include_lib("capnp_raw.hrl").
--include_lib("capnp_bootstrap.hrl").
 -include_lib("capnp_schema.hrl").
 
 -export([
