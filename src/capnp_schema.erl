@@ -6,17 +6,6 @@
 
 -compile([export_all]).
 
-massage_bool_list(List) ->
-    try lists:split(8, List) of
-        {First,Last} ->
-            lists:reverse(First) ++ massage_bool_list(Last)
-    catch
-        error:badarg ->
-            lists:reverse(List
-                          ++
-                          lists:duplicate(- length(List) band 7, 0))
-    end.
-
 decode_Annotation(Data) ->
     {MessageRef,Ptr,Dregs} = decode_envelope(Data),
     Decoded =
@@ -4578,6 +4567,17 @@ internal_decode_Value(Data, Pointers, MessageRef) ->
             <<PaddedPointers:64/bitstring>> = Pointers
     end,
     internal_decode_Value(PaddedData, PaddedPointers, MessageRef).
+
+massage_bool_list(List) ->
+    try lists:split(8, List) of
+        {First,Last} ->
+            lists:reverse(First) ++ massage_bool_list(Last)
+    catch
+        error:badarg ->
+            lists:reverse(List
+                          ++
+                          lists:duplicate(- length(List) band 7, 0))
+    end.
 
 
 
