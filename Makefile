@@ -3,6 +3,7 @@ all:
 	sleep 1
 	mkdir -p ebin
 	erlc -pa contrib/uberpt/ebin -o ebin -I include src/capnp_compile.erl
+	erlc -pa contrib/uberpt/ebin -o ebin -I include src/capnp_format.erl
 	erlc -o ebin -I include src/capnp_schema.erl
 	erlc -o ebin -I include src/capnp_raw.erl
 	erlc -o ebin -I include src/capnp_compile_tests.erl

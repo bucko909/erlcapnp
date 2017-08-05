@@ -15,13 +15,15 @@
 		to_ast/1,
 		to_ast/2,
 		load_directly/3,
+
 		self_contained_source/3,
+		source_with_include/4,
+		header_only/3,
+
 		output_source_with_include/3,
 		output_source_with_include/4,
-		source_with_include/4,
 		output_header/2,
-		output_header/3,
-		header_only/3
+		output_header/3
 	]).
 
 % Be sure offset is first in #field_info{} to get a nice ordering.
@@ -30,82 +32,38 @@
 -record(ptr_type, {type, extra}).
 -record(group_type, {type_id}).
 
-% We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
-% When passed to internal_decode_X, it's the start of the pointer words section.
-
-load_directly(SchemaFile, ModuleName, Prefix) ->
-	% We go via source to make sure we didn't generate anything kooky.
-	Source = self_contained_source(SchemaFile, ModuleName, Prefix),
-	{ok, Tokens, _} = erl_scan:string(Source),
-	Forms = split_forms(Tokens, []),
-	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
-	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
-
-format_erl(Forms) ->
-	[ [ erl_pp:form(erl_syntax:revert(Form)), $\n ] || Form <- Forms ].
-
+% Formatters.
 self_contained_source(SchemaFile, ModuleName, Prefix) ->
-	{Recs, Funs} = to_ast(SchemaFile, Prefix),
-	Line = 0,
-	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
-	Forms = self_contained_source_preamble(ModuleFileName, ModuleName) ++ Recs ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
-	format_erl(Forms).
+	capnp_format:self_contained_source(to_ast(SchemaFile, Prefix), ModuleName).
 
--ast_forms_function(#{
-		name => self_contained_source_preamble,
-		params => ['ModuleFileName', 'ModuleName']
-}).
-	% Most of the preamble is preprocessor instructions.
-	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
-	-uberpt_raw_file({{raw, {var, 1, 'ModuleFileName'}}, 1}).
-	-uberpt_raw_module({raw, {var, 1, 'ModuleName'}}).
-	-compile([export_all]).
--end_ast_forms_function([]).
+source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
+	capnp_format:source_with_include(to_ast(SchemaFile, Prefix), ModuleName, Path).
 
+header_only(SchemaFile, ModuleName, Prefix) ->
+	capnp_format:header_only(to_ast(SchemaFile, Prefix), ModuleName).
+
+% Outputters
 output_source_with_include(SchemaFile, ModuleName, Path) ->
 	output_source_with_include(SchemaFile, ModuleName, Path, "").
 output_source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
 	io:format("~s", [source_with_include(SchemaFile, ModuleName, Path, Prefix)]).
-
-source_with_include(SchemaFile, ModuleName, Path, Prefix) ->
-	{_Recs, Funs} = to_ast(SchemaFile, Prefix),
-	Line = 0,
-	ModuleFileName = atom_to_list(ModuleName) ++ ".erl",
-	IncludeFileName = Path ++ "/" ++ atom_to_list(ModuleName) ++ ".hrl",
-	Forms = source_with_include_preamble(ModuleFileName, IncludeFileName, ModuleName) ++ massage_bool_list() ++ Funs ++ [{eof,Line}],
-	format_erl(Forms).
-
--ast_forms_function(#{
-		name => source_with_include_preamble,
-		params => ['ModuleFileName', 'IncludeFileName', 'ModuleName']
-}).
-	% Most of the preamble is preprocessor instructions.
-	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
-	-uberpt_raw_file({{raw, {var, 1, 'ModuleFileName'}}, 1}).
-	-uberpt_raw_module({raw, {var, 1, 'ModuleName'}}).
-	-uberpt_raw_include_lib({raw, {var, 1, 'IncludeFileName'}}).
-	-compile([export_all]).
--end_ast_forms_function([]).
 
 output_header(SchemaFile, ModuleName) ->
 	output_header(SchemaFile, ModuleName, "").
 output_header(SchemaFile, ModuleName, Prefix) ->
 	io:format("~s", [header_only(SchemaFile, ModuleName, Prefix)]).
 
-header_only(SchemaFile, ModuleName, Prefix) ->
-	{Recs, _Funs} = to_ast(SchemaFile, Prefix),
-	IncludeFileName = atom_to_list(ModuleName) ++ ".hrl",
-	Forms = header_only_preamble(IncludeFileName) ++ Recs ++ [{eof,0}],
-	format_erl(Forms).
+% We generate message_ref stuff; current_offset is the offset of the /start/ of the current pointer when passed to follow_X_pointer.
+% When passed to internal_decode_X, it's the start of the pointer words section.
 
--ast_forms_function(#{
-		name => header_only_preamble,
-		params => ['IncludeFileName']
-}).
-	% Most of the preamble is preprocessor instructions.
-	% We must use {raw, {var, ...}} because we can't pass in a variable directly...
-	-uberpt_raw_file({{raw, {var, 1, 'IncludeFileName'}}, 1}).
--end_ast_forms_function([]).
+load_directly(SchemaFile, ModuleName, Prefix) ->
+	% We go via source to make sure we didn't generate anything kooky.
+	Source = capnp_format:self_contained_source(SchemaFile, ModuleName, Prefix),
+	{ok, Tokens, _} = erl_scan:string(Source),
+	Forms = split_forms(Tokens, []),
+	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
+	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
+
 
 make_objdict(#'CodeGeneratorRequest'{nodes=Nodes}) ->
 	ById = dict:from_list([{Id, Node} || Node=#'Node'{id=Id} <- Nodes ]),
