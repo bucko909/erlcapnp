@@ -28,3 +28,7 @@ bench:
 	erlc -o ebin -I include src/erlcapnp_test1.erl
 	erlc -o ebin -I include src/capnp_compile_bench.erl
 	erl -pa ./ebin -pa ../ecapnp/ebin -s capnp_compile_bench bench -s erlang halt
+
+test1:
+	capnpc -o/bin/cat test.capnp > test.raw
+	erl -noshell -pa ebin -eval 'file:write_file("erlcapnp_test.erl", capnp_compile:self_contained_source("test.raw", erlcapnp_test, "erlcapnp_"))' -s erlang halt
