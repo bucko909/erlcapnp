@@ -627,19 +627,27 @@ encode_erlcapnp_TestEnumList({ZeroOffsetPtrInt,
     {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroup(#erlcapnp_TestGroup{testVar3 = VartestVar3,
-                                              group1 =
-                                                  #erlcapnp_TestGroup_group1{testVar1 =
-                                                                                 Vargroup1testVar1,
-                                                                             testVar2 =
-                                                                                 Vargroup1testVar2}},
+                                              group1 = Vargroup1},
                           PtrOffsetWordsFromEnd0) ->
+    <<NoGroupBodyDataAsInt:128/integer>> =
+        <<0:32/integer,VartestVar3:32/little-signed-integer,0:64/integer>>,
+    {_ZeroOffsetPtrIntgroup1,
+     _NewBodyLengroup1,
+     ExtraDataLengroup1,
+     BodyDatagroup1,
+     ExtraDatagroup1} =
+        encode_erlcapnp_TestGroup_group1(Vargroup1,
+                                         PtrOffsetWordsFromEnd0
+                                         -
+                                         PtrOffsetWordsFromEnd0),
+    <<BodyDataAsIntFromgroup1:128/integer>> = BodyDatagroup1,
     {8589934592,
      2,
-     PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
-     <<Vargroup1testVar1:32/little-signed-integer,
-       VartestVar3:32/little-signed-integer,
-       Vargroup1testVar2:64/little-signed-integer>>,
-     []};
+     PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0
+     +
+     ExtraDataLengroup1,
+     <<(NoGroupBodyDataAsInt bor BodyDataAsIntFromgroup1):128/integer>>,
+     [[]|ExtraDatagroup1]};
 encode_erlcapnp_TestGroup(undefined, _PtrOffsetWordsFromEnd0) ->
     {0,0,0,[],[]};
 encode_erlcapnp_TestGroup({ZeroOffsetPtrInt,
