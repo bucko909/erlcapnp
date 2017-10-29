@@ -659,9 +659,8 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%
 	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
 
-	Matcher = {record, Line, record_name(TypeId, Schema),
-		[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
-	},
+	Matcher = matcher(TypeId, "Var", Line, Schema),
+
 	ast_function(
 		quote(encoder_name(TypeId, Schema)),
 		fun
@@ -1236,3 +1235,15 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(undefined). % not implemented
+
+matcher(TypeId, Prefix, Line, Schema) ->
+	SortedDataFields = find_notag_data_fields(TypeId, Schema),
+	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
+	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
+	{record, Line, record_name(TypeId, Schema),
+		[{record_field, Line, make_atom(Line, FieldName), field_matcher(Field, Prefix, Line, Schema)}
+			|| Field=#field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+	}.
+
+field_matcher(#field_info{name=FieldName}, Prefix, Line, _Schema) ->
+	var_p(Line, Prefix, FieldName).
