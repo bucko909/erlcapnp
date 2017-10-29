@@ -3023,7 +3023,7 @@ internal_decode_Annotation(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -3032,7 +3032,7 @@ internal_decode_Annotation(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Annotation(PaddedData, PaddedPointers, MessageRef).
 
@@ -3054,7 +3054,7 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3063,7 +3063,7 @@ internal_decode_Brand(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Brand(PaddedData, PaddedPointers, MessageRef).
 
@@ -3094,7 +3094,7 @@ internal_decode_Brand_Binding(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3103,7 +3103,7 @@ internal_decode_Brand_Binding(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Brand_Binding(PaddedData,
                                   PaddedPointers,
@@ -3127,7 +3127,7 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:128/bitstring>> = Data
+            <<PaddedData:128/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3136,7 +3136,7 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Brand_Scope(PaddedData, PaddedPointers, MessageRef).
 
@@ -3167,7 +3167,7 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:128/bitstring>> = Data
+            <<PaddedData:128/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3176,7 +3176,7 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     'internal_decode_Brand_Scope.'(PaddedData,
                                    PaddedPointers,
@@ -3208,7 +3208,7 @@ internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -3217,7 +3217,7 @@ internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_CodeGeneratorRequest(PaddedData,
                                          PaddedPointers,
@@ -3251,7 +3251,7 @@ internal_decode_CodeGeneratorRequest_RequestedFile(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -3260,7 +3260,7 @@ internal_decode_CodeGeneratorRequest_RequestedFile(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_CodeGeneratorRequest_RequestedFile(PaddedData,
                                                        PaddedPointers,
@@ -3286,7 +3286,7 @@ internal_decode_CodeGeneratorRequest_RequestedFile_Import(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3295,7 +3295,7 @@ internal_decode_CodeGeneratorRequest_RequestedFile_Import(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_CodeGeneratorRequest_RequestedFile_Import(PaddedData,
                                                               PaddedPointers,
@@ -3328,7 +3328,7 @@ internal_decode_Enumerant(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -3337,7 +3337,7 @@ internal_decode_Enumerant(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Enumerant(PaddedData, PaddedPointers, MessageRef).
 
@@ -3378,7 +3378,7 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 256 - bit_size(Pointers),
     if
@@ -3387,7 +3387,7 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:256/bitstring>> = Pointers
+            <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Field(PaddedData, PaddedPointers, MessageRef).
 
@@ -3413,7 +3413,7 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 256 - bit_size(Pointers),
     if
@@ -3422,7 +3422,7 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:256/bitstring>> = Pointers
+            <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
     'internal_decode_Field.'(PaddedData, PaddedPointers, MessageRef).
 
@@ -3439,7 +3439,7 @@ internal_decode_Field_group(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 256 - bit_size(Pointers),
     if
@@ -3448,7 +3448,7 @@ internal_decode_Field_group(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:256/bitstring>> = Pointers
+            <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Field_group(PaddedData, PaddedPointers, MessageRef).
 
@@ -3473,7 +3473,7 @@ internal_decode_Field_ordinal(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 256 - bit_size(Pointers),
     if
@@ -3482,7 +3482,7 @@ internal_decode_Field_ordinal(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:256/bitstring>> = Pointers
+            <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Field_ordinal(PaddedData,
                                   PaddedPointers,
@@ -3527,7 +3527,7 @@ internal_decode_Field_slot(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 256 - bit_size(Pointers),
     if
@@ -3536,7 +3536,7 @@ internal_decode_Field_slot(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:256/bitstring>> = Pointers
+            <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Field_slot(PaddedData, PaddedPointers, MessageRef).
 
@@ -3595,7 +3595,7 @@ internal_decode_Method(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 320 - bit_size(Pointers),
     if
@@ -3604,7 +3604,7 @@ internal_decode_Method(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:320/bitstring>> = Pointers
+            <<PaddedPointers:320/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Method(PaddedData, PaddedPointers, MessageRef).
 
@@ -3669,7 +3669,7 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -3678,7 +3678,7 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node(PaddedData, PaddedPointers, MessageRef).
 
@@ -3722,7 +3722,7 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -3731,7 +3731,7 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     'internal_decode_Node.'(PaddedData, PaddedPointers, MessageRef).
 
@@ -3753,7 +3753,7 @@ internal_decode_Node_NestedNode(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3762,7 +3762,7 @@ internal_decode_Node_NestedNode(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_NestedNode(PaddedData,
                                     PaddedPointers,
@@ -3785,7 +3785,7 @@ internal_decode_Node_Parameter(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -3794,7 +3794,7 @@ internal_decode_Node_Parameter(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_Parameter(PaddedData,
                                    PaddedPointers,
@@ -3918,7 +3918,7 @@ internal_decode_Node_annotation(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -3927,7 +3927,7 @@ internal_decode_Node_annotation(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_annotation(PaddedData,
                                     PaddedPointers,
@@ -3961,7 +3961,7 @@ internal_decode_Node_const(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -3970,7 +3970,7 @@ internal_decode_Node_const(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_const(PaddedData, PaddedPointers, MessageRef).
 
@@ -3994,7 +3994,7 @@ internal_decode_Node_enum(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -4003,7 +4003,7 @@ internal_decode_Node_enum(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_enum(PaddedData, PaddedPointers, MessageRef).
 
@@ -4035,7 +4035,7 @@ internal_decode_Node_interface(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -4044,7 +4044,7 @@ internal_decode_Node_interface(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_interface(PaddedData,
                                    PaddedPointers,
@@ -4101,7 +4101,7 @@ internal_decode_Node_struct(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:320/bitstring>> = Data
+            <<PaddedData:320/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 384 - bit_size(Pointers),
     if
@@ -4110,7 +4110,7 @@ internal_decode_Node_struct(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:384/bitstring>> = Pointers
+            <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Node_struct(PaddedData, PaddedPointers, MessageRef).
 
@@ -4133,7 +4133,7 @@ internal_decode_Superclass(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4142,7 +4142,7 @@ internal_decode_Superclass(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Superclass(PaddedData, PaddedPointers, MessageRef).
 
@@ -4211,7 +4211,7 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4220,7 +4220,7 @@ internal_decode_Type(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type(PaddedData, PaddedPointers, MessageRef).
 
@@ -4250,7 +4250,7 @@ internal_decode_Type_anyPointer(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4259,7 +4259,7 @@ internal_decode_Type_anyPointer(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_anyPointer(PaddedData,
                                     PaddedPointers,
@@ -4282,7 +4282,7 @@ internal_decode_Type_anyPointer_implicitMethodParameter(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4291,7 +4291,7 @@ internal_decode_Type_anyPointer_implicitMethodParameter(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_anyPointer_implicitMethodParameter(PaddedData,
                                                             PaddedPointers,
@@ -4313,7 +4313,7 @@ internal_decode_Type_anyPointer_parameter(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4322,7 +4322,7 @@ internal_decode_Type_anyPointer_parameter(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_anyPointer_parameter(PaddedData,
                                               PaddedPointers,
@@ -4349,7 +4349,7 @@ internal_decode_Type_enum(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4358,7 +4358,7 @@ internal_decode_Type_enum(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_enum(PaddedData, PaddedPointers, MessageRef).
 
@@ -4383,7 +4383,7 @@ internal_decode_Type_interface(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4392,7 +4392,7 @@ internal_decode_Type_interface(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_interface(PaddedData,
                                    PaddedPointers,
@@ -4416,7 +4416,7 @@ internal_decode_Type_list(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4425,7 +4425,7 @@ internal_decode_Type_list(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_list(PaddedData, PaddedPointers, MessageRef).
 
@@ -4450,7 +4450,7 @@ internal_decode_Type_struct(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4459,7 +4459,7 @@ internal_decode_Type_struct(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Type_struct(PaddedData, PaddedPointers, MessageRef).
 
@@ -4555,7 +4555,7 @@ internal_decode_Value(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:128/bitstring>> = Data
+            <<PaddedData:128/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -4564,7 +4564,7 @@ internal_decode_Value(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_Value(PaddedData, PaddedPointers, MessageRef).
 

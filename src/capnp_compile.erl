@@ -337,7 +337,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 					DataPadLength =:= 0 ->
 						PaddedData = Data;
 					DataPadLength < 0 ->
-						<<PaddedData:(quote(DBits))/bitstring>> = Data
+						<<PaddedData:(quote(DBits))/bitstring, _/bitstring>> = Data
 				end,
 				PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
 				if
@@ -346,7 +346,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 					PointerPadLength =:= 0 ->
 						PaddedPointers = Pointers;
 					PointerPadLength < 0 ->
-						<<PaddedPointers:(quote(PBits))/bitstring>> = Pointers
+						<<PaddedPointers:(quote(PBits))/bitstring, _/bitstring>> = Pointers
 				end,
 				(quote({atom, Line, Name}))(PaddedData, PaddedPointers, MessageRef)
 		end
