@@ -1245,5 +1245,15 @@ matcher(TypeId, Prefix, Line, Schema) ->
 			|| Field=#field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 	}.
 
+field_matcher(Field=#field_info{type=#group_type{type_id=TypeId}, name=FieldName}, Prefix, Line, Schema) ->
+	case is_union(TypeId, Schema) of
+		true ->
+			var_p(Line, Prefix, FieldName);
+		false ->
+			% Plain group
+			Var = var_p(Line, "Var", FieldName),
+			Matcher = matcher(TypeId, "_" ++ Prefix ++ binary_to_list(FieldName), Line, Schema),
+			ast(quote(Var) = quote(Matcher))
+	end;
 field_matcher(#field_info{name=FieldName}, Prefix, Line, _Schema) ->
 	var_p(Line, Prefix, FieldName).
