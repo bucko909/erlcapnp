@@ -6,17 +6,6 @@
 
 -compile([export_all]).
 
-massage_bool_list(List) ->
-    try lists:split(8, List) of
-        {First,Last} ->
-            lists:reverse(First) ++ massage_bool_list(Last)
-    catch
-        error:badarg ->
-            lists:reverse(List
-                          ++
-                          lists:duplicate(- length(List) band 7, 0))
-    end.
-
 decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
     SegLengthLength = RawSegCount + 1 bsr 1 bsl 1 + 1 bsl 2,
     <<SegLengthData:SegLengthLength/binary,SegData/binary>> = Rest,
@@ -217,6 +206,38 @@ decode_erlcapnp_TestUnion(Data) ->
                               MessageRef),
     {Decoded,Dregs}.
 
+decode_far_pointer(PointerInt,
+                   MessageRef = #message_ref{segments = Segments})
+    when PointerInt band 3 == 2 ->
+    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
+    SkipBits = PointerOffset bsl 6,
+    Segment = element(PointerInt bsr 32 + 1, Segments),
+    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
+        Segment,
+    case PointerInt band 4 of
+        0 ->
+            NewPointerInt = LandingPadInt,
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = Segment,
+                                       current_offset = PointerOffset};
+        1 ->
+            2 = LandingPadInt band 7,
+            SecondPointerOffset =
+                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
+            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
+            <<_:SkipBits,
+              0:64,
+              NewPointerInt:64/little-unsigned-integer,
+              _/bitstring>> =
+                Segment,
+            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
+            NewMessageRef =
+                MessageRef#message_ref{current_segment = SecondSegment,
+                                       current_offset =
+                                           SecondPointerOffset - 1}
+    end,
+    {NewPointerInt,NewMessageRef}.
+
 decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     Offset = MessageRef#message_ref.current_offset,
     SkipBits = Offset * 64,
@@ -261,7 +282,18 @@ encode_erlcapnp_SimpleShortStruct(#erlcapnp_SimpleShortStruct{testVar1 =
        0:32/integer>>,
      []};
 encode_erlcapnp_SimpleShortStruct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_SimpleShortStruct({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestBoringInteger(#erlcapnp_TestBoringInteger{testVar1 =
                                                                   VartestVar1},
@@ -272,7 +304,18 @@ encode_erlcapnp_TestBoringInteger(#erlcapnp_TestBoringInteger{testVar1 =
      <<VartestVar1:64/little-unsigned-integer>>,
      []};
 encode_erlcapnp_TestBoringInteger(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestBoringInteger({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestBoringPointer(#erlcapnp_TestBoringPointer{testVar1 =
                                                                   VartestVar1},
@@ -300,7 +343,18 @@ encode_erlcapnp_TestBoringPointer(#erlcapnp_TestBoringPointer{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestBoringPointer(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestBoringPointer({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
                                                                   VartestVar1,
@@ -388,7 +442,18 @@ encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestCompositeList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestCompositeList({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
                                                         VartestVar1,
@@ -466,7 +531,18 @@ encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
        PtrtestVar4:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3]};
 encode_erlcapnp_TestDefaults(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestDefaults({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestEnum(#erlcapnp_TestEnum{testVar1 = VartestVar1},
                          PtrOffsetWordsFromEnd0) ->
@@ -484,7 +560,18 @@ encode_erlcapnp_TestEnum(#erlcapnp_TestEnum{testVar1 = VartestVar1},
        0:48/integer>>,
      []};
 encode_erlcapnp_TestEnum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestEnum({ZeroOffsetPtrInt,
+                          MainLen,
+                          ExtraLen,
+                          MainData,
+                          ExtraData},
+                         0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
                                                         VartestVar1},
@@ -526,32 +613,46 @@ encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestEnumList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestEnumList({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroup(#erlcapnp_TestGroup{testVar3 = VartestVar3,
-                                              group1 = Vargroup1},
+                                              group1 =
+                                                  #erlcapnp_TestGroup_group1{testVar1 =
+                                                                                 Vargroup1testVar1,
+                                                                             testVar2 =
+                                                                                 Vargroup1testVar2}},
                           PtrOffsetWordsFromEnd0) ->
-    <<NoGroupBodyDataAsInt:128/integer>> =
-        <<0:32/integer,VartestVar3:32/little-signed-integer,0:64/integer>>,
-    {_ZeroOffsetPtrIntgroup1,
-     _NewBodyLengroup1,
-     ExtraDataLengroup1,
-     BodyDatagroup1,
-     ExtraDatagroup1} =
-        encode_erlcapnp_TestGroup_group1(Vargroup1,
-                                         PtrOffsetWordsFromEnd0
-                                         -
-                                         PtrOffsetWordsFromEnd0),
-    <<BodyDataAsIntFromgroup1:128/integer>> = BodyDatagroup1,
     {8589934592,
      2,
-     PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0
-     +
-     ExtraDataLengroup1,
-     <<(NoGroupBodyDataAsInt bor BodyDataAsIntFromgroup1):128/integer>>,
-     [[]|ExtraDatagroup1]};
+     PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
+     <<Vargroup1testVar1:32/little-signed-integer,
+       VartestVar3:32/little-signed-integer,
+       Vargroup1testVar2:64/little-signed-integer>>,
+     []};
 encode_erlcapnp_TestGroup(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroup({ZeroOffsetPtrInt,
+                           MainLen,
+                           ExtraLen,
+                           MainData,
+                           ExtraData},
+                          0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroupInUnion(#erlcapnp_TestGroupInUnion{'' = Var,
                                                             union2 =
@@ -587,7 +688,18 @@ encode_erlcapnp_TestGroupInUnion(#erlcapnp_TestGroupInUnion{'' = Var,
         BodyDataAsIntFromunion2):256/integer>>,
      [[[]|ExtraData]|ExtraDataunion2]};
 encode_erlcapnp_TestGroupInUnion(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroupInUnion({ZeroOffsetPtrInt,
+                                  MainLen,
+                                  ExtraLen,
+                                  MainData,
+                                  ExtraData},
+                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_erlcapnp_TestGroupInUnion.'({VarDiscriminant,Var},
                                     PtrOffsetWordsFromEnd0) ->
@@ -694,7 +806,18 @@ encode_erlcapnp_TestGroupInUnion_unionVar1(#erlcapnp_TestGroupInUnion_unionVar1{
      []};
 encode_erlcapnp_TestGroupInUnion_unionVar1(undefined,
                                            _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroupInUnion_unionVar1({ZeroOffsetPtrInt,
+                                            MainLen,
+                                            ExtraLen,
+                                            MainData,
+                                            ExtraData},
+                                           0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestGroup_group1(#erlcapnp_TestGroup_group1{testVar1 =
                                                                 VartestVar1,
@@ -709,7 +832,18 @@ encode_erlcapnp_TestGroup_group1(#erlcapnp_TestGroup_group1{testVar1 =
        VartestVar2:64/little-signed-integer>>,
      []};
 encode_erlcapnp_TestGroup_group1(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestGroup_group1({ZeroOffsetPtrInt,
+                                  MainLen,
+                                  ExtraLen,
+                                  MainData,
+                                  ExtraData},
+                                 0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestLessBoringPointer(#erlcapnp_TestLessBoringPointer{testVar2 =
                                                                           VartestVar2,
@@ -762,7 +896,18 @@ encode_erlcapnp_TestLessBoringPointer(#erlcapnp_TestLessBoringPointer{testVar2 =
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestLessBoringPointer(undefined,
                                       _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestLessBoringPointer({ZeroOffsetPtrInt,
+                                       MainLen,
+                                       ExtraLen,
+                                       MainData,
+                                       ExtraData},
+                                      0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestMultipleIntegers(#erlcapnp_TestMultipleIntegers{testVar1 =
                                                                         VartestVar1,
@@ -792,7 +937,18 @@ encode_erlcapnp_TestMultipleIntegers(#erlcapnp_TestMultipleIntegers{testVar1 =
        VartestVar7:64/little-signed-integer>>,
      []};
 encode_erlcapnp_TestMultipleIntegers(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestMultipleIntegers({ZeroOffsetPtrInt,
+                                      MainLen,
+                                      ExtraLen,
+                                      MainData,
+                                      ExtraData},
+                                     0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
                                                               VartestVar1},
@@ -840,7 +996,18 @@ encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestPointerList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestPointerList({ZeroOffsetPtrInt,
+                                 MainLen,
+                                 ExtraLen,
+                                 MainData,
+                                 ExtraData},
+                                0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                                                                   VartestVar1,
@@ -991,7 +1158,18 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
        PtrtestVar5:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4,Data5,Extra5]};
 encode_erlcapnp_TestPrimitiveList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestPrimitiveList({ZeroOffsetPtrInt,
+                                   MainLen,
+                                   ExtraLen,
+                                   MainData,
+                                   ExtraData},
+                                  0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
                                                           VartestVar1,
@@ -1079,7 +1257,18 @@ encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestShortList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestShortList({ZeroOffsetPtrInt,
+                               MainLen,
+                               ExtraLen,
+                               MainData,
+                               ExtraData},
+                              0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
                                                         VartestVar1},
@@ -1124,7 +1313,18 @@ encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
      <<PtrtestVar1:64/little-unsigned-integer>>,
      [Data1,Extra1]};
 encode_erlcapnp_TestTextList(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestTextList({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestTextType(#erlcapnp_TestTextType{testVar1 =
                                                         VartestVar1,
@@ -1177,7 +1377,18 @@ encode_erlcapnp_TestTextType(#erlcapnp_TestTextType{testVar1 =
        PtrtestVar2:64/little-unsigned-integer>>,
      [Data1,Extra1,Data2,Extra2]};
 encode_erlcapnp_TestTextType(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestTextType({ZeroOffsetPtrInt,
+                              MainLen,
+                              ExtraLen,
+                              MainData,
+                              ExtraData},
+                             0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_erlcapnp_TestUnion(#erlcapnp_TestUnion{testVar1 = VartestVar1,
                                               '' = Var},
@@ -1198,7 +1409,18 @@ encode_erlcapnp_TestUnion(#erlcapnp_TestUnion{testVar1 = VartestVar1,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):256/integer>>,
      [[]|ExtraData]};
 encode_erlcapnp_TestUnion(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]}.
+    {0,0,0,[],[]};
+encode_erlcapnp_TestUnion({ZeroOffsetPtrInt,
+                           MainLen,
+                           ExtraLen,
+                           MainData,
+                           ExtraData},
+                          0)
+    when
+        is_integer(ZeroOffsetPtrInt),
+        is_integer(MainLen),
+        is_integer(ExtraLen) ->
+    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 'encode_erlcapnp_TestUnion.'({VarDiscriminant,Var},
                              PtrOffsetWordsFromEnd0) ->
@@ -1473,58 +1695,8 @@ follow_bool_list_pointer(PointerInt, MessageRef)
                                ]),
                   Length).
 
-follow_data_pointer(0, _MessageRef) ->
-    undefined;
-follow_data_pointer(PointerInt, MessageRef)
-    when
-        PointerInt band 3 =:= 1
-        andalso
-        (PointerInt bsr 32) band 7 =:= 2 ->
-    PointerOffset =
-        case PointerInt band (1 bsl 31) of
-            0 ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
-            _ ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
-        end,
-    Offset = MessageRef#message_ref.current_offset + PointerOffset,
-    SkipBits = Offset bsl 6,
-    Length = PointerInt bsr 35 - 0,
-    MessageBits = Length bsl 3,
-    <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
-        MessageRef#message_ref.current_segment,
-    ListData;
-follow_data_pointer(PointerInt,
-                    MessageRef = #message_ref{segments = Segments})
-    when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
-    follow_text_pointer(NewPointerInt, NewMessageRef).
+follow_data_pointer(PointerInt, MessageRef) ->
+    follow_text_or_data_pointer(PointerInt, MessageRef, 0).
 
 follow_int16_list_pointer(0, _MessageRef) ->
     undefined;
@@ -1650,35 +1822,10 @@ follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     DecodeFun(Data, Pointers, NewMessageRef);
 follow_struct_pointer(DecodeFun,
                       PointerInt,
-                      MessageRef = #message_ref{segments = Segments})
+                      MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
 follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
@@ -1707,43 +1854,17 @@ follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
                                                   NewOffset + 1});
 follow_tagged_struct_list_pointer(DecodeFun,
                                   PointerInt,
-                                  MessageRef =
-                                      #message_ref{segments = Segments})
+                                  MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
     follow_tagged_struct_list_pointer(DecodeFun,
                                       NewPointerInt,
                                       NewMessageRef).
 
-follow_text_pointer(0, _MessageRef) ->
+follow_text_or_data_pointer(0, _MessageRef, _Trail) ->
     undefined;
-follow_text_pointer(PointerInt, MessageRef)
+follow_text_or_data_pointer(PointerInt, MessageRef, Trail)
     when
         PointerInt band 3 =:= 1
         andalso
@@ -1757,42 +1878,21 @@ follow_text_pointer(PointerInt, MessageRef)
         end,
     Offset = MessageRef#message_ref.current_offset + PointerOffset,
     SkipBits = Offset bsl 6,
-    Length = PointerInt bsr 35 - 1,
+    Length = PointerInt bsr 35 - Trail,
     MessageBits = Length bsl 3,
     <<_:SkipBits,ListData:MessageBits/bitstring,_/bitstring>> =
         MessageRef#message_ref.current_segment,
     ListData;
-follow_text_pointer(PointerInt,
-                    MessageRef = #message_ref{segments = Segments})
+follow_text_or_data_pointer(PointerInt,
+                            MessageRef = #message_ref{},
+                            Trail)
     when PointerInt band 3 == 2 ->
-    PointerOffset = (PointerInt bsr 3) band (1 bsl 29 - 1),
-    SkipBits = PointerOffset bsl 6,
-    Segment = element(PointerInt bsr 32 + 1, Segments),
-    <<_:SkipBits,LandingPadInt:64/little-unsigned-integer,_/bitstring>> =
-        Segment,
-    case PointerInt band 4 of
-        0 ->
-            NewPointerInt = LandingPadInt,
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = Segment,
-                                       current_offset = PointerOffset};
-        1 ->
-            2 = LandingPadInt band 7,
-            SecondPointerOffset =
-                (LandingPadInt bsr 3) band (1 bsl 29 - 1),
-            SecondSegment = element(LandingPadInt bsr 32 + 1, Segments),
-            <<_:SkipBits,
-              0:64,
-              NewPointerInt:64/little-unsigned-integer,
-              _/bitstring>> =
-                Segment,
-            0 = (NewPointerInt bsr 2) band (1 bsl 30 - 1),
-            NewMessageRef =
-                MessageRef#message_ref{current_segment = SecondSegment,
-                                       current_offset =
-                                           SecondPointerOffset - 1}
-    end,
-    follow_text_pointer(NewPointerInt, NewMessageRef).
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
+    follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
+
+follow_text_pointer(PointerInt, MessageRef) ->
+    follow_text_or_data_pointer(PointerInt, MessageRef, 1).
 
 follow_undefined_list_pointer(0, _MessageRef) ->
     undefined;
@@ -1835,7 +1935,7 @@ internal_decode_erlcapnp_SimpleShortStruct(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -1844,7 +1944,7 @@ internal_decode_erlcapnp_SimpleShortStruct(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_SimpleShortStruct(PaddedData,
                                                PaddedPointers,
@@ -1862,7 +1962,7 @@ internal_decode_erlcapnp_TestBoringInteger(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -1871,7 +1971,7 @@ internal_decode_erlcapnp_TestBoringInteger(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestBoringInteger(PaddedData,
                                                PaddedPointers,
@@ -1895,7 +1995,7 @@ internal_decode_erlcapnp_TestBoringPointer(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -1904,7 +2004,7 @@ internal_decode_erlcapnp_TestBoringPointer(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestBoringPointer(PaddedData,
                                                PaddedPointers,
@@ -1936,7 +2036,7 @@ internal_decode_erlcapnp_TestCompositeList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -1945,7 +2045,7 @@ internal_decode_erlcapnp_TestCompositeList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestCompositeList(PaddedData,
                                                PaddedPointers,
@@ -1985,7 +2085,7 @@ internal_decode_erlcapnp_TestDefaults(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 192 - bit_size(Pointers),
     if
@@ -1994,7 +2094,7 @@ internal_decode_erlcapnp_TestDefaults(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:192/bitstring>> = Pointers
+            <<PaddedPointers:192/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestDefaults(PaddedData,
                                           PaddedPointers,
@@ -2015,7 +2115,7 @@ internal_decode_erlcapnp_TestEnum(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -2024,7 +2124,7 @@ internal_decode_erlcapnp_TestEnum(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestEnum(PaddedData,
                                       PaddedPointers,
@@ -2047,7 +2147,7 @@ internal_decode_erlcapnp_TestEnumList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2056,7 +2156,7 @@ internal_decode_erlcapnp_TestEnumList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestEnumList(PaddedData,
                                           PaddedPointers,
@@ -2081,7 +2181,7 @@ internal_decode_erlcapnp_TestGroup(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:128/bitstring>> = Data
+            <<PaddedData:128/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -2090,7 +2190,7 @@ internal_decode_erlcapnp_TestGroup(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestGroup(PaddedData,
                                        PaddedPointers,
@@ -2115,7 +2215,7 @@ internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2124,7 +2224,7 @@ internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestGroupInUnion(PaddedData,
                                               PaddedPointers,
@@ -2157,7 +2257,7 @@ internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2166,7 +2266,7 @@ internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     'internal_decode_erlcapnp_TestGroupInUnion.'(PaddedData,
                                                  PaddedPointers,
@@ -2202,7 +2302,7 @@ internal_decode_erlcapnp_TestGroupInUnion_union2(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2211,7 +2311,7 @@ internal_decode_erlcapnp_TestGroupInUnion_union2(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestGroupInUnion_union2(PaddedData,
                                                      PaddedPointers,
@@ -2235,7 +2335,7 @@ internal_decode_erlcapnp_TestGroupInUnion_unionVar1(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2244,7 +2344,7 @@ internal_decode_erlcapnp_TestGroupInUnion_unionVar1(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestGroupInUnion_unionVar1(PaddedData,
                                                         PaddedPointers,
@@ -2265,7 +2365,7 @@ internal_decode_erlcapnp_TestGroup_group1(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:128/bitstring>> = Data
+            <<PaddedData:128/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -2274,7 +2374,7 @@ internal_decode_erlcapnp_TestGroup_group1(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestGroup_group1(PaddedData,
                                               PaddedPointers,
@@ -2310,7 +2410,7 @@ internal_decode_erlcapnp_TestLessBoringPointer(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:64/bitstring>> = Data
+            <<PaddedData:64/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -2319,7 +2419,7 @@ internal_decode_erlcapnp_TestLessBoringPointer(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestLessBoringPointer(PaddedData,
                                                    PaddedPointers,
@@ -2352,7 +2452,7 @@ internal_decode_erlcapnp_TestMultipleIntegers(Data,
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:256/bitstring>> = Data
+            <<PaddedData:256/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 0 - bit_size(Pointers),
     if
@@ -2361,7 +2461,7 @@ internal_decode_erlcapnp_TestMultipleIntegers(Data,
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:0/bitstring>> = Pointers
+            <<PaddedPointers:0/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestMultipleIntegers(PaddedData,
                                                   PaddedPointers,
@@ -2385,7 +2485,7 @@ internal_decode_erlcapnp_TestPointerList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2394,7 +2494,7 @@ internal_decode_erlcapnp_TestPointerList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestPointerList(PaddedData,
                                              PaddedPointers,
@@ -2445,7 +2545,7 @@ internal_decode_erlcapnp_TestPrimitiveList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 320 - bit_size(Pointers),
     if
@@ -2454,7 +2554,7 @@ internal_decode_erlcapnp_TestPrimitiveList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:320/bitstring>> = Pointers
+            <<PaddedPointers:320/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestPrimitiveList(PaddedData,
                                                PaddedPointers,
@@ -2486,7 +2586,7 @@ internal_decode_erlcapnp_TestShortList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -2495,7 +2595,7 @@ internal_decode_erlcapnp_TestShortList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestShortList(PaddedData,
                                            PaddedPointers,
@@ -2519,7 +2619,7 @@ internal_decode_erlcapnp_TestTextList(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2528,7 +2628,7 @@ internal_decode_erlcapnp_TestTextList(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestTextList(PaddedData,
                                           PaddedPointers,
@@ -2558,7 +2658,7 @@ internal_decode_erlcapnp_TestTextType(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:0/bitstring>> = Data
+            <<PaddedData:0/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 128 - bit_size(Pointers),
     if
@@ -2567,7 +2667,7 @@ internal_decode_erlcapnp_TestTextType(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:128/bitstring>> = Pointers
+            <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestTextType(PaddedData,
                                           PaddedPointers,
@@ -2591,7 +2691,7 @@ internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2600,7 +2700,7 @@ internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     internal_decode_erlcapnp_TestUnion(PaddedData,
                                        PaddedPointers,
@@ -2639,7 +2739,7 @@ internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
         DataPadLength =:= 0 ->
             PaddedData = Data;
         DataPadLength < 0 ->
-            <<PaddedData:192/bitstring>> = Data
+            <<PaddedData:192/bitstring,_/bitstring>> = Data
     end,
     PointerPadLength = 64 - bit_size(Pointers),
     if
@@ -2648,7 +2748,7 @@ internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
         PointerPadLength =:= 0 ->
             PaddedPointers = Pointers;
         PointerPadLength < 0 ->
-            <<PaddedPointers:64/bitstring>> = Pointers
+            <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
     'internal_decode_erlcapnp_TestUnion.'(PaddedData,
                                           PaddedPointers,
@@ -2660,6 +2760,17 @@ internal_decode_text(_,
     follow_text_pointer(Var, MessageRef);
 internal_decode_text(_, <<>>, _MessageRef) ->
     undefined.
+
+massage_bool_list(List) ->
+    try lists:split(8, List) of
+        {First,Last} ->
+            lists:reverse(First) ++ massage_bool_list(Last)
+    catch
+        error:badarg ->
+            lists:reverse(List
+                          ++
+                          lists:duplicate(- length(List) band 7, 0))
+    end.
 
 
 
