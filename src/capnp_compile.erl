@@ -51,6 +51,7 @@
 		find_notag_pointer_fields/2,
 		find_tag_fields/2,
 		find_anon_union/2,
+		flatten_notag_fields/2,
 		discriminant_field/2,
 		is_union/2,
 		is_group/2,
@@ -158,10 +159,7 @@ do_job({generate_decode, TypeId}, Schema) ->
 	{[], [FunDef, EnvFunDef], []};
 do_job({generate_encode, TypeId}, Schema) ->
 	Line = 0,
-	SortedDataFields = find_notag_data_fields(TypeId, Schema),
-	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
-	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
-	FunDef = generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+	FunDef = generate_encode_fun(Line, TypeId, Schema),
 	{[], [FunDef], []};
 do_job({generate_union_encode, TypeId}, Schema) ->
 	Line = 0,
@@ -634,7 +632,7 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 	),
 	{ [], [FunDef], [] }.
 
-generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
+generate_encode_fun(Line, TypeId, Schema) ->
 	% We're going to encode by encoding each type as close to its contents as possible.
 	% So a #a{b=#c{}} looks like [ enc(a), enc(b) ].
 	% This doesn't quite work for lists, as the complete list must be inlined first.
@@ -657,11 +655,14 @@ generate_encode_fun(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sch
 	%     MyPtrs = << X:64/unsigned-little-integer || X <- [Ptr1, Ptr2, ...] >>,
 	%     {DataLen, PtrLen, PtrOffsetWordsFromEndN - PtrOffsetWordsFromEnd0, [MyData, MyPtrs], [Data1, Extra1, Data2, Extra2, ...]}.
 	%
-	EncodeBody = encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema),
+	SortedFields = flatten_notag_fields(TypeId, Schema),
+	SortedDataFields = lists:filter(fun capnp_schema_wrangle:is_native_type/1, SortedFields),
+	SortedPtrFields = lists:filter(fun capnp_schema_wrangle:is_pointer_type/1, SortedFields),
+	Unions = lists:filter(capnp_schema_wrangle:is_union_type(Schema), find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema)),
+	EncodeBody = encode_function_body(Line, TypeId, Unions, SortedDataFields, SortedPtrFields, Schema),
 
-	Matcher = {record, Line, record_name(TypeId, Schema),
-		[{record_field, Line, make_atom(Line, FieldName), var_p(Line, "Var", FieldName)} || #field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
-	},
+	Matcher = matcher(TypeId, "Var", Line, Schema),
+
 	ast_function(
 		quote(encoder_name(TypeId, Schema)),
 		fun
@@ -703,7 +704,7 @@ generate_text(TextType) ->
 	{[], [DecodeFunc], []} = generate_decode_text_fun(TextType),
 	{[], [Func, DecodeFunc], []}.
 
-encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Schema) ->
+encode_function_body(Line, TypeId, Unions, SortedDataFields, SortedPtrFields, Schema) ->
 	#'Node'{
 		''={
 			struct,
@@ -717,14 +718,14 @@ encode_function_body(Line, TypeId, Groups, SortedDataFields, SortedPtrFields, Sc
 	ZeroOffsetPtrInt = {integer, Line, struct_pointer_header(DWords, PWords)},
 	StructSizeInt = {integer, Line, DWords + PWords},
 	if
-		Groups =:= [] ->
+		Unions =:= [] ->
 			% Easy case.
 			NoGroupEncodeBody ++ [ {tuple, Line, [ZeroOffsetPtrInt, StructSizeInt, NoGroupExtraLen, NoGroupBodyData, NoGroupExtraData]} ];
 		true ->
 			NoGroupBodyDataInt = {var, Line, 'NoGroupBodyDataAsInt'},
 			BodyLengthInt = {integer, Line, (PWords+DWords)*64},
 			ToIntBody = [{match, Line, {bin, Line, [{bin_element, Line, NoGroupBodyDataInt, BodyLengthInt, [integer]}]}, NoGroupBodyData}],
-			{FullEncodeBody, ExtraLen, SumBodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Groups, Line, BodyLengthInt, Schema),
+			{FullEncodeBody, ExtraLen, SumBodyData, ExtraData} = group_encoder(NoGroupEncodeBody ++ ToIntBody, NoGroupExtraLen, NoGroupBodyDataInt, NoGroupExtraData, Unions, Line, BodyLengthInt, Schema),
 			BodyData = {bin, Line, [{bin_element, Line, SumBodyData, BodyLengthInt, [integer]}]},
 			FullEncodeBody ++ [ {tuple, Line, [ZeroOffsetPtrInt, StructSizeInt, ExtraLen, BodyData, ExtraData]} ]
 	end.
@@ -1236,3 +1237,23 @@ decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) 
 	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(undefined). % not implemented
+
+matcher(TypeId, Prefix, Line, Schema) ->
+	SortedDataFields = find_notag_data_fields(TypeId, Schema),
+	SortedPtrFields = find_notag_pointer_fields(TypeId, Schema),
+	Groups = find_anon_union(TypeId, Schema) ++ find_notag_groups(TypeId, Schema),
+	{record, Line, record_name(TypeId, Schema),
+		[{record_field, Line, make_atom(Line, FieldName), field_matcher(Field, Prefix, Line, Schema)}
+			|| Field=#field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
+	}.
+
+field_matcher(Field=#field_info{type=#group_type{type_id=TypeId}, name=FieldName}, Prefix, Line, Schema) ->
+	case is_union(TypeId, Schema) of
+		true ->
+			var_p(Line, Prefix, FieldName);
+		false ->
+			% Plain group
+			matcher(TypeId, Prefix ++ binary_to_list(FieldName), Line, Schema)
+	end;
+field_matcher(#field_info{name=FieldName}, Prefix, Line, _Schema) ->
+	var_p(Line, Prefix, FieldName).

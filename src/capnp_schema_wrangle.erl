@@ -16,8 +16,10 @@
 		find_notag_pointer_fields/2,
 		find_tag_fields/2,
 		find_anon_union/2,
+		flatten_notag_fields/2,
 		discriminant_field/2,
 		is_union/2,
+		is_union_type/1,
 		is_group/2,
 
 		is_native_type/1,
@@ -48,6 +50,14 @@ node_name(TypeId, Schema) ->
 
 is_union(TypeId, Schema) ->
 	find_notag_fields(TypeId, Schema) == [] andalso find_tag_fields(TypeId, Schema) /= [].
+
+is_union_type(Schema) ->
+	fun
+		(#field_info{type=#group_type{type_id=TypeId}}) ->
+			is_union(TypeId, Schema);
+		(_) ->
+			false
+	end.
 
 is_group(TypeId, Schema) ->
 	#'Node'{
@@ -89,6 +99,20 @@ find_notag_pointer_fields(TypeId, Schema) ->
 find_notag_groups(TypeId, Schema) ->
 	% TODO SORT!!!
 	lists:filter(fun is_group_type/1, find_notag_fields(TypeId, Schema)).
+
+flatten_notag_fields(GroupTypeId, Schema) ->
+	lists:sort(flatten_notag_fields(GroupTypeId, <<"">>, Schema)).
+
+flatten_notag_fields(TypeId, Prefix, Schema) ->
+	{Groups, Rest} = lists:partition(fun is_group_type/1, find_notag_fields(TypeId, Schema)),
+	RecursiveFields =
+		[flatten_notag_fields(GroupTypeId, <<Prefix/binary, TypeName/binary>>, Schema)
+			|| #field_info{type=#group_type{type_id=GroupTypeId}, name=TypeName} <- Groups,
+			not is_union(GroupTypeId, Schema)],
+	DirectFields =
+		[Info#field_info{name= <<Prefix/binary, TypeName/binary>>}
+			|| Info=#field_info{name=TypeName} <- Rest],
+	lists:append([DirectFields|RecursiveFields]).
 
 find_notag_fields({anonunion, _TypeId}, _Schema) ->
 	[];
