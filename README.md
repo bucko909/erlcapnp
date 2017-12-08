@@ -61,7 +61,7 @@ Time for {name,bench_ecapnp_union_group_encode}: 0.988411s (98.8411us * 10000)
 Time for {name,bench_ecapnp_union_group_encode}: 0.639239s (63.9239us * 10000)
 ```
 
-`erlcapnp` suffer a bit when encoding unions, lists and groups (first test is a group and a list in a union, second just a list in a union, third is just unions). `ecapnp` also suffers though, getting a slowdown of 72 times on the list-in-union and 81 times on the simpler union test. I was unable to get setting of the anonymous union to a deep type to work in `ecapnp`.
+`erlcapnp` suffers a bit when encoding unions and lists (first test is a group and a list in a union, second just a list in a union, third is just unions). `ecapnp` also suffers though, getting a slowdown of 72 times on the list-in-union and 81 times on the simpler union test. I was unable to get setting of the anonymous union to a deep type to work in `ecapnp`.
 
 ## Types
 

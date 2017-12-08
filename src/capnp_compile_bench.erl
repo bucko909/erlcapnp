@@ -131,6 +131,21 @@ bench_ecapnp_text_encode({Text, Data}) ->
 	ecapnp_teardown(Message),
 	Value.
 
+% TestGroup
+
+bench_erlcapnp_group_encode({V1, V2, V3}) ->
+	erlcapnp_test1:envelope_erlcapnp_TestGroup(#erlcapnp_TestGroup{group1=#erlcapnp_TestGroup_group1{testVar1=V1, testVar2=V2}, testVar3=V3}).
+
+bench_ecapnp_group_encode({V1, V2, V3}) ->
+	{ok, Message} = ecapnp:set_root(test1_capnp:'TestGroup'()),
+	Group = ecapnp:get(group1, Message),
+	ecapnp:set(testVar1, V1, Group),
+	ecapnp:set(testVar2, V2, Group),
+	ecapnp:set(testVar3, V3, Message),
+	Value = ecapnp_message:write(Message),
+	ecapnp_teardown(Message),
+	Value.
+
 % TestGroupInUnion
 
 bench_erlcapnp_union_group_encode({Tag, RawTagVal, Tag2, TagVal2}) ->
@@ -213,6 +228,8 @@ bench() ->
 	%bench_run(fun ?MODULE:bench_ecapnp_text_encode/1, {"Hello", "Goodbye"}),
 	bench_run(fun ?MODULE:bench_ecapnp_text_encode/1, {<<"Hello">>, <<"Goodbye">>}),
 	bench_run(fun ?MODULE:bench_ecapnp_text_encode/1, {<<"Hello Goodbye">>, <<"Goodbye Hello">>}),
+	bench_run(fun ?MODULE:bench_erlcapnp_group_encode/1, {1, 2, 3}),
+	bench_run(fun ?MODULE:bench_ecapnp_group_encode/1, {1, 2, 3}),
 	bench_run(fun ?MODULE:bench_erlcapnp_union_group_encode/1, {unionVar1, {1, 2}, testVar2, [4, 5]}),
 	bench_run(fun ?MODULE:bench_erlcapnp_union_group_encode/1, {unionVar2, 1, testVar2, [4, 5]}),
 	bench_run(fun ?MODULE:bench_erlcapnp_union_group_encode/1, {unionVar2, 1, testVar1, 3}),
