@@ -327,7 +327,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 		fun
 			(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
 				quote(Decoder);
-			(Data, Pointers, MessageRef) ->
+			(Data, Pointers, MessageRef=#message_ref{}) ->
 				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
 				if
 					DataPadLength > 0 ->

@@ -3015,7 +3015,7 @@ internal_decode_Annotation(<<Varid:64/little-unsigned-integer>>,
                                                                        MessageRef#message_ref.current_offset
                                                                        +
                                                                        1})};
-internal_decode_Annotation(Data, Pointers, MessageRef) ->
+internal_decode_Annotation(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3046,7 +3046,7 @@ internal_decode_Brand(<<>>,
                                                                               MessageRef#message_ref.current_offset
                                                                               +
                                                                               0})};
-internal_decode_Brand(Data, Pointers, MessageRef) ->
+internal_decode_Brand(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3086,7 +3086,9 @@ internal_decode_Brand_Binding(<<_:0,
                                                               +
                                                               0})}
     end;
-internal_decode_Brand_Binding(Data, Pointers, MessageRef) ->
+internal_decode_Brand_Binding(Data,
+                              Pointers,
+                              MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3119,7 +3121,7 @@ internal_decode_Brand_Scope(Data =
                        'internal_decode_Brand_Scope.'(Data,
                                                       Pointers,
                                                       MessageRef)};
-internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
+internal_decode_Brand_Scope(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3159,7 +3161,9 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef) ->
         1 ->
             {inherit,undefined}
     end;
-'internal_decode_Brand_Scope.'(Data, Pointers, MessageRef) ->
+'internal_decode_Brand_Scope.'(Data,
+                               Pointers,
+                               MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3200,7 +3204,9 @@ internal_decode_CodeGeneratorRequest(<<>>,
                                                                                              MessageRef#message_ref.current_offset
                                                                                              +
                                                                                              1})};
-internal_decode_CodeGeneratorRequest(Data, Pointers, MessageRef) ->
+internal_decode_CodeGeneratorRequest(Data,
+                                     Pointers,
+                                     MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3243,7 +3249,8 @@ internal_decode_CodeGeneratorRequest_RequestedFile(<<Varid:64/little-unsigned-in
                                                                                                            1})};
 internal_decode_CodeGeneratorRequest_RequestedFile(Data,
                                                    Pointers,
-                                                   MessageRef) ->
+                                                   MessageRef =
+                                                       #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3278,7 +3285,8 @@ internal_decode_CodeGeneratorRequest_RequestedFile_Import(<<Varid:64/little-unsi
                                                                                                     0})};
 internal_decode_CodeGeneratorRequest_RequestedFile_Import(Data,
                                                           Pointers,
-                                                          MessageRef) ->
+                                                          MessageRef =
+                                                              #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3320,7 +3328,7 @@ internal_decode_Enumerant(<<VarcodeOrder:16/little-unsigned-integer,
                                                                                   MessageRef#message_ref.current_offset
                                                                                   +
                                                                                   1})};
-internal_decode_Enumerant(Data, Pointers, MessageRef) ->
+internal_decode_Enumerant(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3370,7 +3378,7 @@ internal_decode_Field(Data =
                  internal_decode_Field_ordinal(Data,
                                                Pointers,
                                                MessageRef)};
-internal_decode_Field(Data, Pointers, MessageRef) ->
+internal_decode_Field(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3405,7 +3413,7 @@ internal_decode_Field(Data, Pointers, MessageRef) ->
             <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Data,
             {group,Var}
     end;
-'internal_decode_Field.'(Data, Pointers, MessageRef) ->
+'internal_decode_Field.'(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3431,7 +3439,7 @@ internal_decode_Field_group(<<_:128/integer,
                             <<_:256/integer>>,
                             _MessageRef) ->
     #'Field_group'{typeId = VartypeId};
-internal_decode_Field_group(Data, Pointers, MessageRef) ->
+internal_decode_Field_group(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3465,7 +3473,9 @@ internal_decode_Field_ordinal(Data =
             <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {explicit,Var}
     end;
-internal_decode_Field_ordinal(Data, Pointers, MessageRef) ->
+internal_decode_Field_ordinal(Data,
+                              Pointers,
+                              MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3519,7 +3529,7 @@ internal_decode_Field_slot(<<_:32/integer,
                                                                        MessageRef#message_ref.current_offset
                                                                        +
                                                                        3})};
-internal_decode_Field_slot(Data, Pointers, MessageRef) ->
+internal_decode_Field_slot(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3587,7 +3597,7 @@ internal_decode_Method(<<VarcodeOrder:16/little-unsigned-integer,
                                                                                MessageRef#message_ref.current_offset
                                                                                +
                                                                                4})};
-internal_decode_Method(Data, Pointers, MessageRef) ->
+internal_decode_Method(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3661,7 +3671,7 @@ internal_decode_Node(Data =
                                                                              +
                                                                              5}),
             '' = 'internal_decode_Node.'(Data, Pointers, MessageRef)};
-internal_decode_Node(Data, Pointers, MessageRef) ->
+internal_decode_Node(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3714,7 +3724,7 @@ internal_decode_Node(Data, Pointers, MessageRef) ->
             {annotation,
              internal_decode_Node_annotation(Data, Pointers, MessageRef)}
     end;
-'internal_decode_Node.'(Data, Pointers, MessageRef) ->
+'internal_decode_Node.'(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3745,7 +3755,9 @@ internal_decode_Node_NestedNode(<<Varid:64/little-unsigned-integer>>,
                                                                           MessageRef#message_ref.current_offset
                                                                           +
                                                                           0})};
-internal_decode_Node_NestedNode(Data, Pointers, MessageRef) ->
+internal_decode_Node_NestedNode(Data,
+                                Pointers,
+                                MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3777,7 +3789,9 @@ internal_decode_Node_Parameter(<<>>,
                                                                          MessageRef#message_ref.current_offset
                                                                          +
                                                                          0})};
-internal_decode_Node_Parameter(Data, Pointers, MessageRef) ->
+internal_decode_Node_Parameter(Data,
+                               Pointers,
+                               MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3910,7 +3924,9 @@ internal_decode_Node_annotation(<<_:112/integer,
                                                                             MessageRef#message_ref.current_offset
                                                                             +
                                                                             3})};
-internal_decode_Node_annotation(Data, Pointers, MessageRef) ->
+internal_decode_Node_annotation(Data,
+                                Pointers,
+                                MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3953,7 +3969,7 @@ internal_decode_Node_const(<<_:320/integer>>,
                                                                        MessageRef#message_ref.current_offset
                                                                        +
                                                                        4})};
-internal_decode_Node_const(Data, Pointers, MessageRef) ->
+internal_decode_Node_const(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -3986,7 +4002,7 @@ internal_decode_Node_enum(<<_:320/integer>>,
                                                                                   MessageRef#message_ref.current_offset
                                                                                   +
                                                                                   3})};
-internal_decode_Node_enum(Data, Pointers, MessageRef) ->
+internal_decode_Node_enum(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4027,7 +4043,9 @@ internal_decode_Node_interface(<<_:320/integer>>,
                                                                                        MessageRef#message_ref.current_offset
                                                                                        +
                                                                                        4})};
-internal_decode_Node_interface(Data, Pointers, MessageRef) ->
+internal_decode_Node_interface(Data,
+                               Pointers,
+                               MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4093,7 +4111,7 @@ internal_decode_Node_struct(<<_:112/integer,
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
                                                                                     3})};
-internal_decode_Node_struct(Data, Pointers, MessageRef) ->
+internal_decode_Node_struct(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4125,7 +4143,7 @@ internal_decode_Superclass(<<Varid:64/little-unsigned-integer>>,
                                                                        MessageRef#message_ref.current_offset
                                                                        +
                                                                        0})};
-internal_decode_Superclass(Data, Pointers, MessageRef) ->
+internal_decode_Superclass(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4203,7 +4221,7 @@ internal_decode_Type(Data =
             {anyPointer,
              internal_decode_Type_anyPointer(Data, Pointers, MessageRef)}
     end;
-internal_decode_Type(Data, Pointers, MessageRef) ->
+internal_decode_Type(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4242,7 +4260,9 @@ internal_decode_Type_anyPointer(Data =
             <<_:80,Var:16/little-unsigned-integer,_/bitstring>> = Data,
             {implicitMethodParameter,Var}
     end;
-internal_decode_Type_anyPointer(Data, Pointers, MessageRef) ->
+internal_decode_Type_anyPointer(Data,
+                                Pointers,
+                                MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4274,7 +4294,8 @@ internal_decode_Type_anyPointer_implicitMethodParameter(<<_:80/integer,
                                                    VarparameterIndex};
 internal_decode_Type_anyPointer_implicitMethodParameter(Data,
                                                         Pointers,
-                                                        MessageRef) ->
+                                                        MessageRef =
+                                                            #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4305,7 +4326,9 @@ internal_decode_Type_anyPointer_parameter(<<_:80/integer,
                                           _MessageRef) ->
     #'Type_anyPointer_parameter'{parameterIndex = VarparameterIndex,
                                  scopeId = VarscopeId};
-internal_decode_Type_anyPointer_parameter(Data, Pointers, MessageRef) ->
+internal_decode_Type_anyPointer_parameter(Data,
+                                          Pointers,
+                                          MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4341,7 +4364,7 @@ internal_decode_Type_enum(<<_:64/integer,
                                                                       MessageRef#message_ref.current_offset
                                                                       +
                                                                       0})};
-internal_decode_Type_enum(Data, Pointers, MessageRef) ->
+internal_decode_Type_enum(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4375,7 +4398,9 @@ internal_decode_Type_interface(<<_:64/integer,
                                                                            MessageRef#message_ref.current_offset
                                                                            +
                                                                            0})};
-internal_decode_Type_interface(Data, Pointers, MessageRef) ->
+internal_decode_Type_interface(Data,
+                               Pointers,
+                               MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4408,7 +4433,7 @@ internal_decode_Type_list(<<_:192/integer>>,
                                                                       MessageRef#message_ref.current_offset
                                                                       +
                                                                       0})};
-internal_decode_Type_list(Data, Pointers, MessageRef) ->
+internal_decode_Type_list(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4442,7 +4467,7 @@ internal_decode_Type_struct(<<_:64/integer,
                                                                         MessageRef#message_ref.current_offset
                                                                         +
                                                                         0})};
-internal_decode_Type_struct(Data, Pointers, MessageRef) ->
+internal_decode_Type_struct(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -4547,7 +4572,7 @@ internal_decode_Value(Data =
                 Pointers,
             {anyPointer,undefined}
     end;
-internal_decode_Value(Data, Pointers, MessageRef) ->
+internal_decode_Value(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
