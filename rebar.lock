@@ -1,0 +1,4 @@
+[{<<"uberpt">>,
+  {git,"https://github.com/bucko909/uberpt.git",
+       {ref,"19be460aff5af6879e8fa4021abdd8785670c7e3"}},
+  0}].
