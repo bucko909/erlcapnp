@@ -2,3 +2,6 @@
 .*.swp
 erl_crash.dump
 *.raw
+
+# rebar3
+_build
