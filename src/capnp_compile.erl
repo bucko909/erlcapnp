@@ -1038,17 +1038,20 @@ ast_encode_anyPointer_(
 ast_encode_primitive_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, Width, WidthType, EncodedX]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen]}
+		{temp, [DataLen, MainLen, ExtraLen]}
 	) ->
-	if
-		ValueToEncode =/= undefined ->
+	case ValueToEncode of
+		_ when is_list(ValueToEncode) ->
 			ExtraData = <<>>,
 			DataLen = length(ValueToEncode),
 			% We need to add (-L*W band 63) bytes of padding for alignment.
 			MainData = [EncodedX, <<0:(-DataLen*Width band 63)/unsigned-little-integer>>],
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (WidthType bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen * Width + 63) bsr 6);
-		true ->
+		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+			% Match vars are included above
+			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
+		undefined ->
 			ExtraData = <<>>,
 			MainData = [],
 			PointerAsInt = 0,
@@ -1059,10 +1062,10 @@ ast_encode_primitive_list_(
 ast_encode_bool_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen, DataFixed]}
+		{temp, [DataLen, DataFixed, MainLen, ExtraLen]}
 	) ->
-	if
-		ValueToEncode =/= undefined ->
+	case ValueToEncode of
+		_ when is_list(ValueToEncode) ->
 			ExtraData = <<>>,
 			DataLen = length(ValueToEncode),
 			% Because Erlang will reverse blocks of 8 bools, we pre-reverse them here.
@@ -1071,7 +1074,10 @@ ast_encode_bool_list_(
 			MainData = << (<< <<X:1>> || X <- DataFixed >>)/bitstring, 0:(-length(DataFixed) band 63)/unsigned-little-integer>>,
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6);
-		true ->
+		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+			% Match vars are included above
+			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
+		undefined ->
 			ExtraData = <<>>,
 			MainData = [],
 			PointerAsInt = 0,
@@ -1082,10 +1088,10 @@ ast_encode_bool_list_(
 ast_encode_struct_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun, StructSizePreformatted, StructLen]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen, FinalOffset]}
+		{temp, [DataLen, FinalOffset, MainLen, ExtraLen]}
 	) ->
-	if
-		ValueToEncode =/= undefined ->
+	case ValueToEncode of
+		_ when is_list(ValueToEncode) ->
 			DataLen = length(ValueToEncode),
 			% We need to add (-L band 7) bytes of padding for alignment.
 			{FinalOffset, MainData, ExtraData} = lists:foldl(fun
@@ -1105,7 +1111,10 @@ ast_encode_struct_list_(
 						+ 1 % tag word
 						+ DataLen * StructLen % list contents
 						+ FinalOffset; % extra data length.
-		true ->
+		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+			% Match vars are included above
+			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
+		undefined ->
 			ExtraData = <<>>,
 			MainData = [],
 			PointerAsInt = 0,
