@@ -4,3 +4,11 @@
 -record(native_type, {name, type, width, extra, binary_options, list_tag}).
 -record(ptr_type, {type, extra}).
 -record(group_type, {type_id}).
+-type capnp_preformat() ::
+	{
+		ZeroOffsetPointer :: integer(),
+		BodySize :: integer(),
+		ExtraSize :: integer(),
+		Body :: binary() | iolist(),
+		Extra :: binary() | iolist()
+	}.

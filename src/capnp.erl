@@ -4,6 +4,12 @@
 		split_message/1
 ]).
 
+-export_type([
+		capnp_preformat/0
+]).
+
+-include_lib("capnp.hrl").
+
 split_message(Input = <<SegmentsMinusOne:32/little-unsigned-integer, SegmentsAndDataAndRest/binary>>) ->
 	% Segments is padded to 64 bits.
 	SegmentsLength = (SegmentsMinusOne + 1) * 4,
