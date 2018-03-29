@@ -1038,7 +1038,7 @@ ast_encode_anyPointer_(
 ast_encode_primitive_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, Width, WidthType, EncodedX]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen, MainLen, ExtraLen]}
+		{temp, [DataLen, MainLen, ExtraLen, PointerAsInt1]}
 	) ->
 	case ValueToEncode of
 		_ when is_list(ValueToEncode) ->
@@ -1048,8 +1048,14 @@ ast_encode_primitive_list_(
 			MainData = [EncodedX, <<0:(-DataLen*Width band 63)/unsigned-little-integer>>],
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (WidthType bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen * Width + 63) bsr 6);
-		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+		{0, 0, 0, _, _} ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd;
+		{PointerAsInt1, MainLen, ExtraLen, MainData, ExtraData} ->
 			% Match vars are included above
+			PointerAsInt = PointerAsInt1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2),
 			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
 		undefined ->
 			ExtraData = <<>>,
@@ -1062,7 +1068,7 @@ ast_encode_primitive_list_(
 ast_encode_bool_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen, DataFixed, MainLen, ExtraLen]}
+		{temp, [DataLen, DataFixed, MainLen, ExtraLen, PointerAsInt1]}
 	) ->
 	case ValueToEncode of
 		_ when is_list(ValueToEncode) ->
@@ -1074,8 +1080,14 @@ ast_encode_bool_list_(
 			MainData = << (<< <<X:1>> || X <- DataFixed >>)/bitstring, 0:(-length(DataFixed) band 63)/unsigned-little-integer>>,
 			PointerAsInt = 1 bor ((OldOffsetFromEnd + OffsetToEnd) bsl 2) bor (1 bsl 32) bor (DataLen bsl 35),
 			NewOffsetFromEnd = OldOffsetFromEnd + ((DataLen + 63) bsr 6);
-		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+		{0, 0, 0, _, _} ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd;
+		{PointerAsInt1, MainLen, ExtraLen, MainData, ExtraData} ->
 			% Match vars are included above
+			PointerAsInt = PointerAsInt1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2),
 			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
 		undefined ->
 			ExtraData = <<>>,
@@ -1088,7 +1100,7 @@ ast_encode_bool_list_(
 ast_encode_struct_list_(
 		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode, EncodeFun, StructSizePreformatted, StructLen]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
-		{temp, [DataLen, FinalOffset, MainLen, ExtraLen]}
+		{temp, [DataLen, FinalOffset, MainLen, ExtraLen, PointerAsInt1]}
 	) ->
 	case ValueToEncode of
 		_ when is_list(ValueToEncode) ->
@@ -1111,8 +1123,14 @@ ast_encode_struct_list_(
 						+ 1 % tag word
 						+ DataLen * StructLen % list contents
 						+ FinalOffset; % extra data length.
-		{PointerAsInt, MainLen, ExtraLen, MainData, ExtraData} ->
+		{0, 0, 0, _, _} ->
+			ExtraData = <<>>,
+			MainData = [],
+			PointerAsInt = 0,
+			NewOffsetFromEnd = OldOffsetFromEnd;
+		{PointerAsInt1, MainLen, ExtraLen, MainData, ExtraData} ->
 			% Match vars are included above
+			PointerAsInt = PointerAsInt1 bor ((OffsetToEnd + OldOffsetFromEnd) bsl 2),
 			NewOffsetFromEnd = OldOffsetFromEnd + MainLen + ExtraLen;
 		undefined ->
 			ExtraData = <<>>,
