@@ -81,11 +81,11 @@ field_type(Line, RecordName, #field_info{type=#ptr_type{type=struct, extra={Type
 			end
 	end;
 field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, _Schema) ->
-	or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]});
+	or_preformat(Line, or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]}));
 field_type(Line, RecordName, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
-	or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]});
+	or_preformat(Line, or_undefined(Line, {type, Line, list, [field_type(Line, RecordName, #field_info{type=Inner}, Schema)]}));
 field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={text, _TextType}}}, _Schema) ->
-	or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]});
+	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]}));
 field_type(Line, _RecordName, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!
 	{type, Line, any, []};
@@ -127,6 +127,8 @@ type_depends({integer, _, _}) ->
 	[];
 type_depends({atom, _, _}) ->
 	[];
+type_depends({remote_type, _, _}) ->
+	[];
 type_depends({type, _, record, [{atom, _, N}]}) ->
 	[{record, N}];
 type_depends({type, _, _, Deps}) ->
@@ -141,6 +143,9 @@ type_depends({user_type, _, T, Deps}) ->
 
 or_undefined(Line, Type) ->
 	{type, Line, union, [make_atom(Line, undefined), Type]}.
+
+or_preformat(Line, Type) ->
+	{type, Line, union, [{remote_type,8,[{atom,8,capnp},{atom,8,capnp_preformat},[]]}, Type]}.
 
 is_signed(#native_type{binary_options=Opts}) ->
 	lists:member(signed, Opts).
