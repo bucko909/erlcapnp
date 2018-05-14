@@ -958,7 +958,9 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text, TextType}}, VarName
 	EncodeFun = make_atom(Line, append("encode_", TextType)),
 	StructSizePreformatted = {integer, Line, struct_pointer_header(0, 1)},
 	StructLen = {integer, Line, 1},
-	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line).
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line);
+ast_encode_ptr(N, PtrLen0, #ptr_type{}, VarName, Line) ->
+	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_unknown_/3, [], VarName, Line).
 
 % This are the fragment that are inserted for each pointer.
 % All of them should have the same 'out' params:
@@ -998,6 +1000,23 @@ ast_encode_text_(
 			PointerAsInt = 0,
 			NewOffsetFromEnd = OldOffsetFromEnd
 	end.
+
+-ast_fragment2([]).
+ast_encode_unknown_(
+		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
+		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
+		{temp, []}
+	) ->
+	if
+		ValueToEncode =:= undefined ->
+			ok;
+		true ->
+			erlang:error({cannot_encode, ValueToEncode})
+	end,
+	ExtraData = <<>>,
+	MainData = [],
+	PointerAsInt = 0,
+	NewOffsetFromEnd = OldOffsetFromEnd.
 
 -ast_fragment2([]).
 ast_encode_data_(

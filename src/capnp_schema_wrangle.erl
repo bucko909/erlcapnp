@@ -219,9 +219,12 @@ type_info(list, {enum, #'Type_enum'{typeId=TypeId}}, Schema) ->
 type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	{64, #ptr_type{type=list, extra={text, TextType}}};
-type_info(list, {PtrType, _LTypeDescription}, _Schema) when PtrType =:= list; PtrType =:= text; PtrType =:= data ->
+type_info(list, {list, {TextType, undefined}}, _Schema) when TextType =:= text; TextType =:= data ->
+	% List of text types; this is a list-of-lists.
+	{64, #ptr_type{type=list, extra={list, {text, TextType}}}};
+type_info(list, {PtrType, LTypeDescription}, _Schema) when PtrType =:= list ->
 	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
-	erlang:error({not_implemented, list, list}); % TODO
+	erlang:error({not_implemented, list, list, LTypeDescription}); % TODO
 type_info(list, {PrimitiveType, undefined}, _Schema) ->
 	% List of any normal primitive type.
 	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
