@@ -9,7 +9,7 @@
 -compile({parse_transform, uberpt}).
 
 format_erl(Forms) ->
-	[ [ erl_pp:form(erl_syntax:revert(Form)), $\n ] || Form <- Forms ].
+	lists:flatten([ [ erl_pp:form(erl_syntax:revert(Form)), $\n ] || Form <- Forms ]).
 
 self_contained_source({Recs, Funs}, ModuleName) ->
 	Line = 0,
