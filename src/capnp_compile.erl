@@ -97,7 +97,7 @@ load_directly(SchemaFile, ModuleName, Prefix) ->
 	Source = self_contained_source(SchemaFile, ModuleName, Prefix),
 	{ok, Tokens, _} = erl_scan:string(Source),
 	Forms = split_forms(Tokens, []),
-	{ok, ModuleName, BinData, []} = compile:forms(Forms, [debug_info, return]),
+	{ok, ModuleName, BinData, _} = compile:forms(Forms, [debug_info, return]),
 	code:load_binary(ModuleName, atom_to_list(ModuleName) ++ ".beam", BinData).
 
 split_forms([Dot={dot,_}|Rest], Acc) ->
