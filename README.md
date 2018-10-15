@@ -74,7 +74,7 @@ Time for {name,bench_ecapnp_union_group_encode}: 0.639239s (63.9239us * 10000)
 | struct D { a @0 :Text; } | -record('D', { a :: iodata() }). |
 | struct E { a @0 :Data; } | -record('E', { a :: iodata() }). |
 | struct F { a @0 :A; } | -record('F', { a :: #'A'{} }). |
-| struct G { a :group { b @0 :B; c @1 :C; } } | -record('G_a', { a :: #'A'{}, b :: #'B'{} }).<br/>-record('G', { a :: #'G_a'{} }). |
+| struct G { a :group { b @0 :B; c @1 :C; } } | -record('G_a', { b :: #'B'{}, c :: #'C'{} }).<br/>-record('G', { a :: #'G_a'{} }). |
 | struct H { union { a @0 :A; b @1 :B; } } | -type 'H'() :: { a, #'A'{} } \| { b, #'B'{} } }. |
 | struct I { a @0 :UInt64; union { a @0 :A; b @1 :B; } } | -record('I', { a :: integer(), '' :: H() }). |
 | struct J { a @0 :UInt64; b :union { a @0 :A; b @1 :B; } } | -record('J', { a :: integer(), b :: H() }). |
