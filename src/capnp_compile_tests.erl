@@ -2,7 +2,7 @@
 
 -compile(export_all).
 
-fname() -> "data/tests/test1.capnp".
+fname() -> "data/tests/test1".
 
 test() ->
 	do_test(
@@ -50,12 +50,12 @@ test() ->
 		>>
 	),
 	do_test(
-		{'TestGroup', -2, {'TestGroup.group1', 1, -3}},
+		{'TestGroup', -2, {'TestGroup_group1', 1, -3}},
 		<<"(group1 = (testVar1 = 1, testVar2 = -3), testVar3 = -2)">>
 	),
 	do_test(
 		{'TestGroupInUnion',
-			{unionVar1, {'TestGroupInUnion.unionVar1', 7, 8}},
+			{unionVar1, {'TestGroupInUnion_unionVar1', 7, 8}},
 			{testVar1, 1}
 		},
 		<<"(unionVar1 = (testVar1 = 7, testVar2 = 8), union2 = (testVar1 = 1))">>
@@ -82,7 +82,7 @@ join([], _) -> "".
 
 do_test(Rec, Expected) ->
 	RecName = atom_to_list(element(1, Rec)),
-	capnp_compile:load_directly(fname(), capnp_test),
+	capnp_compile:load_directly(fname() ++ ".raw", capnp_test, ""),
 	EncodeFun = list_to_atom("envelope_" ++ RecName),
 	case re:run(RecName, ".*:(.*)", [{capture, all_but_first, list}]) of
 		{match, [FriendlyName]} ->
@@ -92,7 +92,7 @@ do_test(Rec, Expected) ->
 	end,
 	DataBin = capnp_test:EncodeFun(Rec),
 	Pipe = erlang:open_port(
-			{spawn, "capnp decode --short " ++ fname() ++ " " ++ FriendlyName}, [
+			{spawn, "capnp decode --short " ++ fname() ++ ".capnp " ++ FriendlyName}, [
 			use_stdio,
 			binary,
 			{line, 1000000}
