@@ -361,21 +361,21 @@ encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
                                                               testVar2 =
                                                                   VartestVar2},
                                   PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             DataLentestVar1 = length(VartestVar1),
             {FinalOffsettestVar1,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {17179869184,
                                     4,
-                                    ExtraLen,
+                                    ExtraLentestVar1,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_erlcapnp_TestMultipleIntegers(Element,
                                                                             Offset
                                                                             -
                                                                             4),
-                                   {ExtraLen + Offset - 4,
+                                   {ExtraLentestVar1 + Offset - 4,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -392,27 +392,45 @@ encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
                 PtrOffsetWordsFromEnd0 + 1 + DataLentestVar1 * 4
                 +
                 FinalOffsettestVar1;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (1 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        VartestVar2 =/= undefined ->
+    case VartestVar2 of
+        _ when is_list(VartestVar2) ->
             DataLentestVar2 = length(VartestVar2),
             {FinalOffsettestVar2,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLentestVar2,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_erlcapnp_TestLessBoringPointer(Element,
                                                                              Offset
                                                                              -
                                                                              3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLentestVar2 + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -429,7 +447,25 @@ encode_erlcapnp_TestCompositeList(#erlcapnp_TestCompositeList{testVar1 =
                 PtrOffsetWordsFromEnd1 + 1 + DataLentestVar2 * 3
                 +
                 FinalOffsettestVar2;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            PtrtestVar2 = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1testVar2,
+         MainLentestVar2,
+         ExtraLentestVar2,
+         Data2,
+         Extra2} ->
+            PtrtestVar2 =
+                PointerAsInt1testVar2
+                bor
+                (0 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLentestVar2
+                +
+                ExtraLentestVar2;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             PtrtestVar2 = 0,
@@ -498,8 +534,8 @@ encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
         end,
     PtrOffsetWordsFromEnd2 =
         PtrOffsetWordsFromEnd1 + MainLentestVar3 + ExtraLentestVar3,
-    if
-        VartestVar4 =/= undefined ->
+    case VartestVar4 of
+        _ when is_list(VartestVar4) ->
             Extra3 = <<>>,
             DataLentestVar4 = length(VartestVar4),
             Data3 =
@@ -516,7 +552,25 @@ encode_erlcapnp_TestDefaults(#erlcapnp_TestDefaults{testVar1 =
                 PtrOffsetWordsFromEnd2
                 +
                 (DataLentestVar4 * 64 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra3 = <<>>,
+            Data3 = [],
+            PtrtestVar4 = 0,
+            PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2;
+        {PointerAsInt1testVar4,
+         MainLentestVar4,
+         ExtraLentestVar4,
+         Data3,
+         Extra3} ->
+            PtrtestVar4 =
+                PointerAsInt1testVar4
+                bor
+                (0 + PtrOffsetWordsFromEnd2 bsl 2),
+            PtrOffsetWordsFromEnd3 =
+                PtrOffsetWordsFromEnd2 + MainLentestVar4
+                +
+                ExtraLentestVar4;
+        undefined ->
             Extra3 = <<>>,
             Data3 = [],
             PtrtestVar4 = 0,
@@ -576,8 +630,8 @@ encode_erlcapnp_TestEnum({ZeroOffsetPtrInt,
 encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
                                                         VartestVar1},
                              PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             Extra1 = <<>>,
             DataLentestVar1 = length(VartestVar1),
             Data1 =
@@ -601,7 +655,25 @@ encode_erlcapnp_TestEnumList(#erlcapnp_TestEnumList{testVar1 =
                 PtrOffsetWordsFromEnd0
                 +
                 (DataLentestVar1 * 16 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (0 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
@@ -754,8 +826,8 @@ encode_erlcapnp_TestGroupInUnion_union2({VarDiscriminant,Var},
                0:64/integer>>,
              []};
         testVar2 ->
-            if
-                Var =/= undefined ->
+            case Var of
+                _ when is_list(Var) ->
                     Extra1 = <<>>,
                     DataLen = length(Var),
                     Data1 =
@@ -774,7 +846,19 @@ encode_erlcapnp_TestGroupInUnion_union2({VarDiscriminant,Var},
                         PtrOffsetWordsFromEnd0
                         +
                         (DataLen * 32 + 63 bsr 6);
-                true ->
+                {0,0,0,_,_} ->
+                    Extra1 = <<>>,
+                    Data1 = [],
+                    Ptr = 0,
+                    PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                    Ptr =
+                        PointerAsInt1
+                        bor
+                        (0 + PtrOffsetWordsFromEnd0 bsl 2),
+                    PtrOffsetWordsFromEnd1 =
+                        PtrOffsetWordsFromEnd0 + MainLen + ExtraLen;
+                undefined ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
@@ -953,21 +1037,21 @@ encode_erlcapnp_TestMultipleIntegers({ZeroOffsetPtrInt,
 encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
                                                               VartestVar1},
                                 PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             DataLentestVar1 = length(VartestVar1),
             {FinalOffsettestVar1,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281474976710656,
                                     1,
-                                    ExtraLen,
+                                    ExtraLentestVar1,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_erlcapnp_TestBoringPointer(Element,
                                                                          Offset
                                                                          -
                                                                          1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLentestVar1 + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -984,7 +1068,25 @@ encode_erlcapnp_TestPointerList(#erlcapnp_TestPointerList{testVar1 =
                 PtrOffsetWordsFromEnd0 + 1 + DataLentestVar1 * 1
                 +
                 FinalOffsettestVar1;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (0 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
@@ -1020,8 +1122,8 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                                                               testVar5 =
                                                                   VartestVar5},
                                   PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             Extra1 = <<>>,
             DataLentestVar1 = length(VartestVar1),
             DataFixedtestVar1 =
@@ -1046,14 +1148,32 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                 (DataLentestVar1 bsl 35),
             PtrOffsetWordsFromEnd1 =
                 PtrOffsetWordsFromEnd0 + (DataLentestVar1 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (4 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        VartestVar2 =/= undefined ->
+    case VartestVar2 of
+        _ when is_list(VartestVar2) ->
             Extra2 = <<>>,
             DataLentestVar2 = length(VartestVar2),
             Data2 =
@@ -1070,14 +1190,32 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                 PtrOffsetWordsFromEnd1
                 +
                 (DataLentestVar2 * 8 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            PtrtestVar2 = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1testVar2,
+         MainLentestVar2,
+         ExtraLentestVar2,
+         Data2,
+         Extra2} ->
+            PtrtestVar2 =
+                PointerAsInt1testVar2
+                bor
+                (3 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLentestVar2
+                +
+                ExtraLentestVar2;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             PtrtestVar2 = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    if
-        VartestVar3 =/= undefined ->
+    case VartestVar3 of
+        _ when is_list(VartestVar3) ->
             Extra3 = <<>>,
             DataLentestVar3 = length(VartestVar3),
             Data3 =
@@ -1094,14 +1232,32 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                 PtrOffsetWordsFromEnd2
                 +
                 (DataLentestVar3 * 16 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra3 = <<>>,
+            Data3 = [],
+            PtrtestVar3 = 0,
+            PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2;
+        {PointerAsInt1testVar3,
+         MainLentestVar3,
+         ExtraLentestVar3,
+         Data3,
+         Extra3} ->
+            PtrtestVar3 =
+                PointerAsInt1testVar3
+                bor
+                (2 + PtrOffsetWordsFromEnd2 bsl 2),
+            PtrOffsetWordsFromEnd3 =
+                PtrOffsetWordsFromEnd2 + MainLentestVar3
+                +
+                ExtraLentestVar3;
+        undefined ->
             Extra3 = <<>>,
             Data3 = [],
             PtrtestVar3 = 0,
             PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2
     end,
-    if
-        VartestVar4 =/= undefined ->
+    case VartestVar4 of
+        _ when is_list(VartestVar4) ->
             Extra4 = <<>>,
             DataLentestVar4 = length(VartestVar4),
             Data4 =
@@ -1118,14 +1274,32 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                 PtrOffsetWordsFromEnd3
                 +
                 (DataLentestVar4 * 32 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra4 = <<>>,
+            Data4 = [],
+            PtrtestVar4 = 0,
+            PtrOffsetWordsFromEnd4 = PtrOffsetWordsFromEnd3;
+        {PointerAsInt1testVar4,
+         MainLentestVar4,
+         ExtraLentestVar4,
+         Data4,
+         Extra4} ->
+            PtrtestVar4 =
+                PointerAsInt1testVar4
+                bor
+                (1 + PtrOffsetWordsFromEnd3 bsl 2),
+            PtrOffsetWordsFromEnd4 =
+                PtrOffsetWordsFromEnd3 + MainLentestVar4
+                +
+                ExtraLentestVar4;
+        undefined ->
             Extra4 = <<>>,
             Data4 = [],
             PtrtestVar4 = 0,
             PtrOffsetWordsFromEnd4 = PtrOffsetWordsFromEnd3
     end,
-    if
-        VartestVar5 =/= undefined ->
+    case VartestVar5 of
+        _ when is_list(VartestVar5) ->
             Extra5 = <<>>,
             DataLentestVar5 = length(VartestVar5),
             Data5 =
@@ -1142,7 +1316,25 @@ encode_erlcapnp_TestPrimitiveList(#erlcapnp_TestPrimitiveList{testVar1 =
                 PtrOffsetWordsFromEnd4
                 +
                 (DataLentestVar5 * 64 + 63 bsr 6);
-        true ->
+        {0,0,0,_,_} ->
+            Extra5 = <<>>,
+            Data5 = [],
+            PtrtestVar5 = 0,
+            PtrOffsetWordsFromEnd5 = PtrOffsetWordsFromEnd4;
+        {PointerAsInt1testVar5,
+         MainLentestVar5,
+         ExtraLentestVar5,
+         Data5,
+         Extra5} ->
+            PtrtestVar5 =
+                PointerAsInt1testVar5
+                bor
+                (0 + PtrOffsetWordsFromEnd4 bsl 2),
+            PtrOffsetWordsFromEnd5 =
+                PtrOffsetWordsFromEnd4 + MainLentestVar5
+                +
+                ExtraLentestVar5;
+        undefined ->
             Extra5 = <<>>,
             Data5 = [],
             PtrtestVar5 = 0,
@@ -1176,21 +1368,21 @@ encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
                                                       testVar2 =
                                                           VartestVar2},
                               PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             DataLentestVar1 = length(VartestVar1),
             {FinalOffsettestVar1,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {4294967296,
                                     1,
-                                    ExtraLen,
+                                    ExtraLentestVar1,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_erlcapnp_TestBoringInteger(Element,
                                                                          Offset
                                                                          -
                                                                          1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLentestVar1 + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1207,27 +1399,45 @@ encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
                 PtrOffsetWordsFromEnd0 + 1 + DataLentestVar1 * 1
                 +
                 FinalOffsettestVar1;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (1 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        VartestVar2 =/= undefined ->
+    case VartestVar2 of
+        _ when is_list(VartestVar2) ->
             DataLentestVar2 = length(VartestVar2),
             {FinalOffsettestVar2,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {4294967296,
                                     1,
-                                    ExtraLen,
+                                    ExtraLentestVar2,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_erlcapnp_SimpleShortStruct(Element,
                                                                          Offset
                                                                          -
                                                                          1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLentestVar2 + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1244,7 +1454,25 @@ encode_erlcapnp_TestShortList(#erlcapnp_TestShortList{testVar1 =
                 PtrOffsetWordsFromEnd1 + 1 + DataLentestVar2 * 1
                 +
                 FinalOffsettestVar2;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            PtrtestVar2 = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1testVar2,
+         MainLentestVar2,
+         ExtraLentestVar2,
+         Data2,
+         Extra2} ->
+            PtrtestVar2 =
+                PointerAsInt1testVar2
+                bor
+                (0 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLentestVar2
+                +
+                ExtraLentestVar2;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             PtrtestVar2 = 0,
@@ -1273,18 +1501,18 @@ encode_erlcapnp_TestShortList({ZeroOffsetPtrInt,
 encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
                                                         VartestVar1},
                              PtrOffsetWordsFromEnd0) ->
-    if
-        VartestVar1 =/= undefined ->
+    case VartestVar1 of
+        _ when is_list(VartestVar1) ->
             DataLentestVar1 = length(VartestVar1),
             {FinalOffsettestVar1,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281474976710656,
                                     1,
-                                    ExtraLen,
+                                    ExtraLentestVar1,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_text(Element, Offset - 1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLentestVar1 + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1301,7 +1529,25 @@ encode_erlcapnp_TestTextList(#erlcapnp_TestTextList{testVar1 =
                 PtrOffsetWordsFromEnd0 + 1 + DataLentestVar1 * 1
                 +
                 FinalOffsettestVar1;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            PtrtestVar1 = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1testVar1,
+         MainLentestVar1,
+         ExtraLentestVar1,
+         Data1,
+         Extra1} ->
+            PtrtestVar1 =
+                PointerAsInt1testVar1
+                bor
+                (0 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLentestVar1
+                +
+                ExtraLentestVar1;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             PtrtestVar1 = 0,
@@ -1446,8 +1692,8 @@ encode_erlcapnp_TestUnion({ZeroOffsetPtrInt,
                0:64/integer>>,
              []};
         union3 ->
-            if
-                Var =/= undefined ->
+            case Var of
+                _ when is_list(Var) ->
                     Extra1 = <<>>,
                     DataLen = length(Var),
                     Data1 =
@@ -1466,7 +1712,19 @@ encode_erlcapnp_TestUnion({ZeroOffsetPtrInt,
                         PtrOffsetWordsFromEnd0
                         +
                         (DataLen * 8 + 63 bsr 6);
-                true ->
+                {0,0,0,_,_} ->
+                    Extra1 = <<>>,
+                    Data1 = [],
+                    Ptr = 0,
+                    PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                    Ptr =
+                        PointerAsInt1
+                        bor
+                        (0 + PtrOffsetWordsFromEnd0 bsl 2),
+                    PtrOffsetWordsFromEnd1 =
+                        PtrOffsetWordsFromEnd0 + MainLen + ExtraLen;
+                undefined ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
@@ -1927,7 +2185,9 @@ internal_decode_erlcapnp_SimpleShortStruct(<<VartestVar1:8/little-signed-integer
                                            _MessageRef) ->
     #erlcapnp_SimpleShortStruct{testVar1 = VartestVar1,
                                 testVar2 = VartestVar2};
-internal_decode_erlcapnp_SimpleShortStruct(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_SimpleShortStruct(Data,
+                                           Pointers,
+                                           MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -1954,7 +2214,9 @@ internal_decode_erlcapnp_TestBoringInteger(<<VartestVar1:64/little-unsigned-inte
                                            <<>>,
                                            _MessageRef) ->
     #erlcapnp_TestBoringInteger{testVar1 = VartestVar1};
-internal_decode_erlcapnp_TestBoringInteger(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestBoringInteger(Data,
+                                           Pointers,
+                                           MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -1987,7 +2249,9 @@ internal_decode_erlcapnp_TestBoringPointer(<<>>,
                                                                                      MessageRef#message_ref.current_offset
                                                                                      +
                                                                                      0})};
-internal_decode_erlcapnp_TestBoringPointer(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestBoringPointer(Data,
+                                           Pointers,
+                                           MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2028,7 +2292,9 @@ internal_decode_erlcapnp_TestCompositeList(<<>>,
                                                                                                  MessageRef#message_ref.current_offset
                                                                                                  +
                                                                                                  1})};
-internal_decode_erlcapnp_TestCompositeList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestCompositeList(Data,
+                                           Pointers,
+                                           MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2077,7 +2343,9 @@ internal_decode_erlcapnp_TestDefaults(<<VartestVar1:64/little-signed-integer>>,
                                                                                     MessageRef#message_ref.current_offset
                                                                                     +
                                                                                     2})};
-internal_decode_erlcapnp_TestDefaults(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestDefaults(Data,
+                                      Pointers,
+                                      MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2107,7 +2375,9 @@ internal_decode_erlcapnp_TestEnum(<<VartestVar1:16/little-unsigned-integer,
     #erlcapnp_TestEnum{testVar1 =
                            element(VartestVar1 + 1,
                                    {testEnum1,testEnum2,testEnum3})};
-internal_decode_erlcapnp_TestEnum(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestEnum(Data,
+                                  Pointers,
+                                  MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2139,7 +2409,9 @@ internal_decode_erlcapnp_TestEnumList(<<>>,
                                                                                         MessageRef#message_ref.current_offset
                                                                                         +
                                                                                         0})};
-internal_decode_erlcapnp_TestEnumList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestEnumList(Data,
+                                      Pointers,
+                                      MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2173,7 +2445,9 @@ internal_decode_erlcapnp_TestGroup(Data =
                             internal_decode_erlcapnp_TestGroup_group1(Data,
                                                                       Pointers,
                                                                       MessageRef)};
-internal_decode_erlcapnp_TestGroup(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestGroup(Data,
+                                   Pointers,
+                                   MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2207,7 +2481,9 @@ internal_decode_erlcapnp_TestGroupInUnion(Data = <<_:192/integer>>,
                                    internal_decode_erlcapnp_TestGroupInUnion_union2(Data,
                                                                                     Pointers,
                                                                                     MessageRef)};
-internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestGroupInUnion(Data,
+                                          Pointers,
+                                          MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2249,7 +2525,9 @@ internal_decode_erlcapnp_TestGroupInUnion(Data, Pointers, MessageRef) ->
             <<_:64,Var:64/little-signed-integer,_/bitstring>> = Data,
             {unionVar3,Var}
     end;
-'internal_decode_erlcapnp_TestGroupInUnion.'(Data, Pointers, MessageRef) ->
+'internal_decode_erlcapnp_TestGroupInUnion.'(Data,
+                                             Pointers,
+                                             MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2294,7 +2572,8 @@ internal_decode_erlcapnp_TestGroupInUnion_union2(Data =
     end;
 internal_decode_erlcapnp_TestGroupInUnion_union2(Data,
                                                  Pointers,
-                                                 MessageRef) ->
+                                                 MessageRef =
+                                                     #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2327,7 +2606,8 @@ internal_decode_erlcapnp_TestGroupInUnion_unionVar1(<<VartestVar1:32/little-sign
                                          testVar2 = VartestVar2};
 internal_decode_erlcapnp_TestGroupInUnion_unionVar1(Data,
                                                     Pointers,
-                                                    MessageRef) ->
+                                                    MessageRef =
+                                                        #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2357,7 +2637,9 @@ internal_decode_erlcapnp_TestGroup_group1(<<VartestVar1:32/little-signed-integer
                                           _MessageRef) ->
     #erlcapnp_TestGroup_group1{testVar1 = VartestVar1,
                                testVar2 = VartestVar2};
-internal_decode_erlcapnp_TestGroup_group1(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestGroup_group1(Data,
+                                          Pointers,
+                                          MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2402,7 +2684,8 @@ internal_decode_erlcapnp_TestLessBoringPointer(<<VartestVar2:16/little-signed-in
                                                                                          1})};
 internal_decode_erlcapnp_TestLessBoringPointer(Data,
                                                Pointers,
-                                               MessageRef) ->
+                                               MessageRef =
+                                                   #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2444,7 +2727,8 @@ internal_decode_erlcapnp_TestMultipleIntegers(<<VartestVar1:64/little-unsigned-i
                                    testVar7 = VartestVar7};
 internal_decode_erlcapnp_TestMultipleIntegers(Data,
                                               Pointers,
-                                              MessageRef) ->
+                                              MessageRef =
+                                                  #message_ref{}) ->
     DataPadLength = 256 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2477,7 +2761,9 @@ internal_decode_erlcapnp_TestPointerList(<<>>,
                                                                                                MessageRef#message_ref.current_offset
                                                                                                +
                                                                                                0})};
-internal_decode_erlcapnp_TestPointerList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestPointerList(Data,
+                                         Pointers,
+                                         MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2537,7 +2823,9 @@ internal_decode_erlcapnp_TestPrimitiveList(<<>>,
                                                                                          MessageRef#message_ref.current_offset
                                                                                          +
                                                                                          4})};
-internal_decode_erlcapnp_TestPrimitiveList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestPrimitiveList(Data,
+                                           Pointers,
+                                           MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2578,7 +2866,9 @@ internal_decode_erlcapnp_TestShortList(<<>>,
                                                                                              MessageRef#message_ref.current_offset
                                                                                              +
                                                                                              1})};
-internal_decode_erlcapnp_TestShortList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestShortList(Data,
+                                       Pointers,
+                                       MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2611,7 +2901,9 @@ internal_decode_erlcapnp_TestTextList(<<>>,
                                                                                             MessageRef#message_ref.current_offset
                                                                                             +
                                                                                             0})};
-internal_decode_erlcapnp_TestTextList(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestTextList(Data,
+                                      Pointers,
+                                      MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2650,7 +2942,9 @@ internal_decode_erlcapnp_TestTextType(<<>>,
                                                                               MessageRef#message_ref.current_offset
                                                                               +
                                                                               1})};
-internal_decode_erlcapnp_TestTextType(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestTextType(Data,
+                                      Pointers,
+                                      MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2683,7 +2977,9 @@ internal_decode_erlcapnp_TestUnion(Data =
                             'internal_decode_erlcapnp_TestUnion.'(Data,
                                                                   Pointers,
                                                                   MessageRef)};
-internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
+internal_decode_erlcapnp_TestUnion(Data,
+                                   Pointers,
+                                   MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
@@ -2731,7 +3027,9 @@ internal_decode_erlcapnp_TestUnion(Data, Pointers, MessageRef) ->
         3 ->
             {union4,undefined}
     end;
-'internal_decode_erlcapnp_TestUnion.'(Data, Pointers, MessageRef) ->
+'internal_decode_erlcapnp_TestUnion.'(Data,
+                                      Pointers,
+                                      MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
         DataPadLength > 0 ->
