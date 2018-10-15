@@ -15,6 +15,7 @@
                                testVar2 :: any(),
                                testVar3 :: any(),
                                testVar4 ::
+                                   capnp:capnp_preformat() |
                                    undefined |
                                    [-9223372036854775808..
                                     9223372036854775807]}).
@@ -22,6 +23,7 @@
 -record(erlcapnp_TestEnum,{testVar1 :: testEnum1 | testEnum2 | testEnum3}).
 
 -record(erlcapnp_TestEnumList,{testVar1 ::
+                                   capnp:capnp_preformat() |
                                    undefined |
                                    [testEnum1 | testEnum2 | testEnum3]}).
 
@@ -39,6 +41,7 @@
                                        {testVar1,
                                         -2147483648..2147483647} |
                                        {testVar2,
+                                        capnp:capnp_preformat() |
                                         undefined |
                                         [-2147483648..2147483647]}}).
 
@@ -71,14 +74,20 @@
 -record(erlcapnp_TestPointerList,{testVar1 :: any()}).
 
 -record(erlcapnp_TestPrimitiveList,{testVar1 ::
+                                        capnp:capnp_preformat() |
                                         undefined | [true | false],
-                                    testVar2 :: undefined | [-128..127],
+                                    testVar2 ::
+                                        capnp:capnp_preformat() |
+                                        undefined | [-128..127],
                                     testVar3 ::
+                                        capnp:capnp_preformat() |
                                         undefined | [-32768..32767],
                                     testVar4 ::
+                                        capnp:capnp_preformat() |
                                         undefined |
                                         [-2147483648..2147483647],
                                     testVar5 ::
+                                        capnp:capnp_preformat() |
                                         undefined |
                                         [-9223372036854775808..
                                          9223372036854775807]}).
@@ -86,6 +95,7 @@
 -record(erlcapnp_TestShortList,{testVar1 :: any(),testVar2 :: any()}).
 
 -record(erlcapnp_TestTextList,{testVar1 ::
+                                   capnp:capnp_preformat() |
                                    undefined | [undefined | iodata()]}).
 
 -record(erlcapnp_TestTextType,{testVar1 :: undefined | iodata(),
@@ -97,7 +107,9 @@
                                 {union2,
                                  -9223372036854775808..
                                  9223372036854775807} |
-                                {union3, undefined | [-128..127]} |
+                                {union3,
+                                 capnp:capnp_preformat() |
+                                 undefined | [-128..127]} |
                                 {union4, undefined}}).
 
 -record(message_ref,{current_offset,current_segment,segments}).
