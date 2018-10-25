@@ -256,7 +256,7 @@ message_ref(#field_info{type=#native_type{}}) ->
 	undefined;
 message_ref(#field_info{type=#ptr_type{}, offset=Offset}) ->
 	WordOffset = {integer, 0, (Offset bsr 6)},
-	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + {'$uberpt_quote', WordOffset}}).
+	ast(MessageRef#message_ref{current_offset=MessageRef#message_ref.current_offset + quote(WordOffset)}).
 
 generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Schema) ->
 	% Should be decode_<Name>(PrimitiveData, PointerData, CompleteMessage) -> #<Name>{}
@@ -278,8 +278,8 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 					DataMatcher = DataMatcher1,
 					PointerMatcher = PointerMatcher1;
 				_ ->
-					DataMatcher = ast(Data = {'$uberpt_quote', DataMatcher1}),
-					PointerMatcher = ast(Pointers = {'$uberpt_quote', PointerMatcher1})
+					DataMatcher = ast(Data = quote(DataMatcher1)),
+					PointerMatcher = ast(Pointers = quote(PointerMatcher1))
 			end,
 			case Groups ++ SortedPtrFields of
 				[] ->
@@ -301,19 +301,19 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 			#field_info{offset=Offset} = discriminant_field(TypeId, Schema),
 			DiscriminantSkip = {integer, Line, Offset},
 			DataRest = {integer, Line, DWords * 64 - Offset - 16},
-			DataMatcher1 = ast(<<_:({'$uberpt_quote', DiscriminantSkip}), Discriminant:16/little-unsigned-integer, _:({'$uberpt_quote', DataRest})>>),
-			PointerMatcher1 = ast(<<_:({'$uberpt_quote', PBits})>>),
+			DataMatcher1 = ast(<<_:(quote(DiscriminantSkip)), Discriminant:16/little-unsigned-integer, _:(quote(DataRest))>>),
+			PointerMatcher1 = ast(<<_:(quote(PBits))>>),
 
 			case lists:any(fun capnp_schema_wrangle:is_group_type/1, UnionFields) orelse lists:any(fun capnp_schema_wrangle:is_nonvoid_native_type/1, UnionFields) of
 				true ->
-					DataMatcher = ast(Data = {'$uberpt_quote', DataMatcher1});
+					DataMatcher = ast(Data = quote(DataMatcher1));
 				false ->
 					DataMatcher = DataMatcher1
 			end,
 			case lists:any(fun capnp_schema_wrangle:is_group_type/1, UnionFields) orelse lists:any(fun capnp_schema_wrangle:is_pointer_type/1, UnionFields) of
 				true ->
 					MessageRefVar = ast(MessageRef),
-					PointerMatcher = ast(Pointers = {'$uberpt_quote', PointerMatcher1});
+					PointerMatcher = ast(Pointers = quote(PointerMatcher1));
 				false ->
 					MessageRefVar = ast(_MessageRef),
 					PointerMatcher = PointerMatcher1
@@ -323,37 +323,37 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 	end,
 	Name = decoder_name(TypeId, Schema),
 	ast_function(
-		{'$uberpt_quote', Name},
+		quote(Name),
 		fun
-			({'$uberpt_quote', DataMatcher}, {'$uberpt_quote', PointerMatcher}, {'$uberpt_quote', MessageRefVar}) ->
+			(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
 				{'$uberpt_quote', Decoder};
 			(Data, Pointers, MessageRef=#message_ref{}) ->
-				DataPadLength = {'$uberpt_quote', {integer, Line, DWords * 64}} - bit_size(Data),
+				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
 				if
 					DataPadLength > 0 ->
 						PaddedData = <<Data/binary, 0:DataPadLength>>;
 					DataPadLength =:= 0 ->
 						PaddedData = Data;
 					DataPadLength < 0 ->
-						<<PaddedData:({'$uberpt_quote', DBits})/bitstring, _/bitstring>> = Data
+						<<PaddedData:(quote(DBits))/bitstring, _/bitstring>> = Data
 				end,
-				PointerPadLength = {'$uberpt_quote', {integer, Line, PWords * 64}} - bit_size(Pointers),
+				PointerPadLength = quote({integer, Line, PWords * 64}) - bit_size(Pointers),
 				if
 					PointerPadLength > 0 ->
 						PaddedPointers = <<Pointers/binary, 0:PointerPadLength>>;
 					PointerPadLength =:= 0 ->
 						PaddedPointers = Pointers;
 					PointerPadLength < 0 ->
-						<<PaddedPointers:({'$uberpt_quote', PBits})/bitstring, _/bitstring>> = Pointers
+						<<PaddedPointers:(quote(PBits))/bitstring, _/bitstring>> = Pointers
 				end,
-				({'$uberpt_quote', {atom, Line, Name}})(PaddedData, PaddedPointers, MessageRef)
+				(quote({atom, Line, Name}))(PaddedData, PaddedPointers, MessageRef)
 		end
 	).
 
 generate_union_decoder(Line, #field_info{name=Name, default=undefined, type=#group_type{type_id=TypeId}}, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
 	[
-		ast({quote(make_atom(Line, Name)), ({'$uberpt_quote', Decoder})(Data, Pointers, MessageRef)})
+		ast({quote(make_atom(Line, Name)), (quote(Decoder))(Data, Pointers, MessageRef)})
 	];
 generate_union_decoder(Line, #field_info{name=Name, type=#native_type{width=0}}, _Schema) ->
 	% A bit ugly, but prevents unused Var warnings.
@@ -371,10 +371,10 @@ generate_union_matcher(Line, #field_info{offset=Offset, type=#native_type{width=
 	Skip = {integer, Line, Offset},
 	Junk = junkterm(Line, decode),
 	Matcher = {bin, Line, [{bin_element, Line, Junk, Skip, default}, {bin_element, Line, ast(Var), {integer, Line, Width}, BinaryOptions}, {bin_element, Line, Junk, default, [bitstring]}]},
-	ast({'$uberpt_quote', Matcher} = Data);
+	ast(quote(Matcher) = Data);
 generate_union_matcher(Line, #field_info{offset=Offset, type=#ptr_type{}}, _Schema) ->
 	Skip = {integer, Line, Offset},
-	ast(<<_:({'$uberpt_quote', Skip}), Var:64/little-unsigned-integer, _/bitstring>> = Pointers).
+	ast(<<_:(quote(Skip)), Var:64/little-unsigned-integer, _/bitstring>> = Pointers).
 
 generate_full_decoder_fun(Line, TypeId, Schema) ->
 	% Should be function decode_<Name>(<<>>, StartOffset, CompleteMessage) -> #<Name>{}
@@ -384,7 +384,7 @@ generate_full_decoder_fun(Line, TypeId, Schema) ->
 		quote(full_decoder_name(TypeId, Schema)),
 		fun (Data) ->
 			{MessageRef, Ptr, Dregs} = decode_envelope(Data),
-			Decoded = follow_struct_pointer({'$uberpt_quote', Decoder}, Ptr, MessageRef),
+			Decoded = follow_struct_pointer(quote(Decoder), Ptr, MessageRef),
 			{Decoded, Dregs}
 		end
 	).
@@ -399,10 +399,10 @@ generate_decode_text_fun(TextType) ->
 			Follow = ast(follow_data_pointer)
 	end,
 	FunDef = ast_function(
-		{'$uberpt_quote', Name},
+		quote(Name),
 		fun
 			(_, <<Var:64/little-unsigned-integer, _/binary>>, MessageRef) ->
-				({'$uberpt_quote', Follow})(Var, MessageRef);
+				(quote(Follow))(Var, MessageRef);
 			(_, <<>>, _MessageRef) ->
 				undefined
 		end
@@ -571,7 +571,7 @@ generate_follow_struct_list_pointer() ->
 
 generate_follow_primitive_list_pointer(_Line, #native_type{type=void}) ->
 	FunDef = ast_function(
-		{'$uberpt_quote', follow_void_list_pointer},
+		quote(follow_void_list_pointer),
 		fun
 			(0, _MessageRef) ->
 				undefined;
@@ -583,7 +583,7 @@ generate_follow_primitive_list_pointer(_Line, #native_type{type=void}) ->
 	{ [], [FunDef], [] };
 generate_follow_primitive_list_pointer(_Line, #native_type{type=boolean}) ->
 	FunDef = ast_function(
-		{'$uberpt_quote', follow_bool_list_pointer},
+		quote(follow_bool_list_pointer),
 		fun
 			(0, _MessageRef) ->
 				undefined;
@@ -610,14 +610,14 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 			ast(X);
 		enum ->
 			Tuple = {tuple, Line, [ make_atom(Line, X) || X <- Extra ]},
-			ast(element(X+1, {'$uberpt_quote', Tuple}))
+			ast(element(X+1, quote(Tuple)))
 	end,
 	FunDef = ast_function(
 		quote(to_atom(append(follow_, append(Name, "_list_pointer")))),
 		fun
 			(0, _MessageRef) ->
 				undefined;
-			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= {'$uberpt_quote', {integer, Line, Tag}} ->
+			(PointerInt, MessageRef) when PointerInt band 3 =:= 1 andalso (PointerInt bsr 32) band 7 =:= quote({integer, Line, Tag}) ->
 				PointerOffset = case PointerInt band (1 bsl 31) of
 					0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
 					_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
@@ -625,9 +625,9 @@ generate_follow_primitive_list_pointer(Line, #native_type{type=Type, name=Name, 
 				Offset = MessageRef#message_ref.current_offset + PointerOffset,
 				SkipBits = Offset * 64,
 				Length = PointerInt bsr 35,
-				MessageBits = Length * {'$uberpt_quote', {integer, Line, Width}},
+				MessageBits = Length * quote({integer, Line, Width}),
 				<<_:SkipBits, ListData:MessageBits/bitstring, _/bitstring>> = MessageRef#message_ref.current_segment,
-				[ {'$uberpt_quote', Decode} || {'$uberpt_quote', Match} ]
+				[ quote(Decode) || quote(Match) ]
 		end
 	),
 	{ [], [FunDef], [] }.
@@ -694,12 +694,12 @@ generate_text(TextType) ->
 	Func = ast_function(quote(to_atom(append(encode_, TextType))),
 		fun
 			(undefined, _Offset) ->
-				{{'$uberpt_quote', FakePointerInt}, 1, 0, [<<0:64>>], []};
+				{quote(FakePointerInt), 1, 0, [<<0:64>>], []};
 			(List, Offset) ->
-				DataLen = {'$uberpt_quote', DataLenAst},
-				Data = {'$uberpt_quote', DataAst},
+				DataLen = quote(DataLenAst),
+				Data = quote(DataAst),
 				Ptr = 1 bor (Offset bsl 2) bor (2 bsl 32) bor (DataLen bsl 35),
-				{{'$uberpt_quote', FakePointerInt}, 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}
+				{quote(FakePointerInt), 1, DataLen + 7 bsr 3, <<Ptr:64/unsigned-little-integer>>, Data}
 		end),
 	{[], [DecodeFunc], []} = generate_decode_text_fun(TextType),
 	{[], [Func, DecodeFunc], []}.
@@ -875,7 +875,7 @@ generate_envelope_fun(Line, TypeId, Schema) ->
 		quote(envelope_fun_name(TypeId, Schema)),
 		fun
 			(Input) ->
-				{ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} = ({'$uberpt_quote', EncodeFun})(Input, 0),
+				{ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} = (quote(EncodeFun))(Input, 0),
 				list_to_binary([
 						<<
 							% Segment envelope
@@ -1222,17 +1222,17 @@ junkterm(Line, encode) ->
 
 % The code we generate to construct data to put into a binary.
 encoder(#native_type{type=void}, undefined, Var, _Line) ->
-	ast(case {'$uberpt_quote', Var} of undefined -> 0 end);
+	ast(case quote(Var) of undefined -> 0 end);
 encoder(#native_type{type=integer}, 0, Var, _Line) ->
 	Var;
 encoder(#native_type{type=integer}, Default, Var, Line) ->
-	ast({'$uberpt_quote', Var} bxor {'$uberpt_quote', {integer, Line, Default}});
+	ast(quote(Var) bxor quote({integer, Line, Default}));
 encoder(#native_type{type=float}, 0.0, Var, _Line) ->
 	Var;
 encoder(#native_type{type=boolean}, false, Var, _Line) ->
-	ast(case {'$uberpt_quote', Var} of false -> 0; true -> 1 end);
+	ast(case quote(Var) of false -> 0; true -> 1 end);
 encoder(#native_type{type=boolean}, true, Var, _Line) ->
-	ast(case {'$uberpt_quote', Var} of false -> 1; true -> 0 end);
+	ast(case quote(Var) of false -> 1; true -> 0 end);
 encoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line) ->
 	{Numbered, _Len} = lists:mapfoldl(fun (Elt, N) -> {{N bxor Default, Elt}, N+1} end, 0, Enumerants),
 	% case Var of V1 -> 0; ... end
@@ -1247,40 +1247,40 @@ decoder(#native_type{type=integer}, 0, Var, _Line, _MessageRef, _Schema) ->
 	% Special case for neater code.
 	Var;
 decoder(#native_type{type=integer}, Default, Var, Line, _MessageRef, _Schema) ->
-	ast({'$uberpt_quote', Var} bxor {'$uberpt_quote', {integer, Line, Default}});
+	ast(quote(Var) bxor quote({integer, Line, Default}));
 decoder(#native_type{type=float}, 0.0, Var, _Line, _MessageRef, _Schema) ->
 	% TODO nonzero defaults. They are ugly!
 	Var;
 decoder(#native_type{type=boolean}, Default, Var, Line, _MessageRef, _Schema) ->
 	ZeroValue = {atom, Line, Default},
 	OneValue = {atom, Line, not Default},
-	ast(case {'$uberpt_quote', Var} of 0 -> {'$uberpt_quote', ZeroValue}; 1 -> {'$uberpt_quote', OneValue} end);
+	ast(case quote(Var) of 0 -> quote(ZeroValue); 1 -> quote(OneValue) end);
 decoder(#native_type{type=enum, extra=Enumerants}, 0, Var, Line, _MessageRef, _Schema) ->
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
-	ast(element({'$uberpt_quote', Var} + 1, {'$uberpt_quote', Tuple}));
+	ast(element(quote(Var) + 1, quote(Tuple)));
 decoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line, _MessageRef, _Schema) ->
 	Tuple = {tuple, Line, [{atom, Line, Name} || Name <- Enumerants ]},
-	ast(element(({'$uberpt_quote', Var} bxor {'$uberpt_quote', {integer, Line, Default}}) + 1, {'$uberpt_quote', Tuple}));
+	ast(element((quote(Var) bxor quote({integer, Line, Default})) + 1, quote(Tuple)));
 decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
-	ast(follow_struct_pointer({'$uberpt_quote', Decoder}, {'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
-	ast(follow_tagged_struct_list_pointer({'$uberpt_quote', Decoder}, {'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
-	ast(({'$uberpt_quote', Decoder})({'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra={text, TextType}}, undefined, Var, Line, MessageRef, _Schema) ->
 	DecoderName = to_atom(append("internal_decode_", TextType)),
 	Decoder = {'fun', Line, {function, DecoderName, 3}},
-	ast(follow_tagged_struct_list_pointer({'$uberpt_quote', Decoder}, {'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=text}, undefined, Var, _Line, MessageRef, _Schema) ->
-	ast(follow_text_pointer({'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=data}, undefined, Var, _Line, MessageRef, _Schema) ->
-	ast(follow_data_pointer({'$uberpt_quote', Var}, {'$uberpt_quote', MessageRef}));
+	ast(follow_data_pointer(quote(Var), quote(MessageRef)));
 decoder(#group_type{type_id=TypeId}, undefined, _Var, Line, MessageRef, Schema) ->
 	Decoder = make_atom(Line, decoder_name(TypeId, Schema)),
-	ast(({'$uberpt_quote', Decoder})(Data, Pointers, {'$uberpt_quote', MessageRef}));
+	ast((quote(Decoder))(Data, Pointers, quote(MessageRef)));
 decoder(#ptr_type{}, _Default, _Var, _Line, _MessageRef, _Schema) ->
 	ast(undefined). % not implemented
 
