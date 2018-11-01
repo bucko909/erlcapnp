@@ -325,7 +325,7 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 	ast_function(
 		quote(Name),
 		fun
-			(quote(DataMatcher), quote(PointerMatcher), quote(MessageRefVar)) ->
+			({'$uberpt_quote', DataMatcher}, {'$uberpt_quote', PointerMatcher}, {'$uberpt_quote', MessageRefVar}) ->
 				quote(Decoder);
 			(Data, Pointers, MessageRef=#message_ref{}) ->
 				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
@@ -666,7 +666,7 @@ generate_encode_fun(Line, TypeId, Schema) ->
 	ast_function(
 		quote(encoder_name(TypeId, Schema)),
 		fun
-			(quote(Matcher), PtrOffsetWordsFromEnd0) ->
+			({'$uberpt_quote', Matcher}, PtrOffsetWordsFromEnd0) ->
 				quote_block(EncodeBody);
 			(undefined, _PtrOffsetWordsFromEnd0) ->
 				{0, 0, 0, [], []};
@@ -739,7 +739,7 @@ generate_union_encode_fun(Line, TypeId, UnionFields, Schema) ->
 
 	ast_function(
 		quote(encoder_name(TypeId, Schema)),
-		fun ({VarDiscriminant, Var}, quote(PtrOffsetWordsFromEnd0Var)) -> quote_block(EncodeBody) end
+		fun ({VarDiscriminant, Var}, {'$uberpt_quote', PtrOffsetWordsFromEnd0Var}) -> quote_block(EncodeBody) end
 	).
 
 union_encode_function_body(Line, TypeId, UnionFields, Schema) ->
@@ -1003,7 +1003,7 @@ ast_encode_text_(
 
 -ast_fragment2([]).
 ast_encode_unknown_(
-		{in, [OldOffsetFromEnd, OffsetToEnd, ValueToEncode]},
+		{in, [OldOffsetFromEnd, _OffsetToEnd, ValueToEncode]},
 		{out, [NewOffsetFromEnd, PointerAsInt, MainData, ExtraData]},
 		{temp, []}
 	) ->
@@ -1293,7 +1293,7 @@ matcher(TypeId, Prefix, Line, Schema) ->
 			|| Field=#field_info{name=FieldName} <- SortedDataFields ++ SortedPtrFields ++ Groups ]
 	}.
 
-field_matcher(Field=#field_info{type=#group_type{type_id=TypeId}, name=FieldName}, Prefix, Line, Schema) ->
+field_matcher(#field_info{type=#group_type{type_id=TypeId}, name=FieldName}, Prefix, Line, Schema) ->
 	case is_union(TypeId, Schema) of
 		true ->
 			var_p(Line, Prefix, FieldName);
