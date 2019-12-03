@@ -221,30 +221,9 @@ type_info(anyPointer, {unconstrained, undefined}, _Schema) ->
 type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 	#ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}};
-type_info(list, Type={enum, #'Type_enum'{}}, Schema) ->
-	% List of enums.
+type_info(list, Type={_ListDataType, _ListDataTypeInfo}, Schema) ->
 	TypeInfo = type_info(Type, Schema),
 	#ptr_type{type=list, extra=TypeInfo};
-type_info(list, {TextType, undefined}, Schema) when TextType =:= text; TextType =:= data ->
-	% List of text types; this is a list-of-lists.
-	Info = type_info({TextType, undefined}, Schema),
-	#ptr_type{type=list, extra=Info};
-type_info(list, {PtrType, LTypeDescription}, _Schema) when PtrType =:= list ->
-	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
-	erlang:error({not_implemented, list, list, LTypeDescription}); % TODO
-type_info(list, {PrimitiveType, undefined}, _Schema) ->
-	% List of any normal primitive type.
-	#ptr_type{type=list, extra=builtin_info(PrimitiveType)};
-type_info(list, InnerType={struct, _}, Schema) ->
-	% List of structs.
-	% These will be encoded in-line.
-	TypeInfo = type_info(InnerType, Schema),
-	#ptr_type{type=list, extra=TypeInfo};
-type_info(list, {anyPointer, undefined}, _Schema) ->
-	erlang:error({not_implemented, list, anyPointer}); % TODO
-type_info(list, {interface,_LTypeId}, _Schema) ->
-	erlang:error({not_implemented, list, interface}); % TODO
-% TODO decoders for pointers.
 % Data types
 type_info(enum, #'Type_enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	EnumerantNames = enumerant_names(TypeId, Schema),
