@@ -241,7 +241,7 @@ generate_basic(TypeId, Schema) ->
 	ExtraTextList = lists:append([ [{generate_text, TextType}, {generate_follow_text_pointer, TextType}] || #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=text_or_data, extra=TextType}}} <- find_fields(TypeId, Schema) ]),
 	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_fields(TypeId, Schema) ],
-	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_fields(TypeId, Schema) ],
+	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=struct}}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowNativeLists = [ {generate_follow_primitive_list_pointer, N} || #field_info{type=#ptr_type{type=list, extra=N=#native_type{}}} <- find_fields(TypeId, Schema) ],
 
 	Jobs = EncodersNeeded ++ EnvelopesNeeded ++ ExtraStructs ++ ExtraStructsInLists ++ ExtraGroups ++ ExtraTextList ++ ExtraText ++ ExtraFollowStruct ++ ExtraFollowStructList ++ ExtraFollowNativeLists,
@@ -947,7 +947,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra=Type=#native_type{}}, VarN
 	end,
 	EncodedX = {bc, Line, {bin, Line, [{bin_element, Line, encoder(Type, Default, {var, Line, 'X'}, Line), WidthInt, BinType}]}, [{generate,199,{var,Line,'X'}, MatchVar}]},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_primitive_list_/3, [WidthInt, WidthTypeInt, EncodedX], VarName, Line);
-ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}}, VarName, Line) ->
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra=#ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}}, VarName, Line) ->
 	EncodeFun = make_atom(Line, append("encode_", TypeName)),
 	StructSizePreformatted = {integer, Line, struct_pointer_header(DataLen, PtrLen)},
 	StructLen = {integer, Line, DataLen + PtrLen},
@@ -1264,7 +1264,7 @@ decoder(#native_type{type=enum, extra=Enumerants}, Default, Var, Line, _MessageR
 decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}, undefined, Var, Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=list, extra=#ptr_type{type=struct, extra={TypeName, _, _}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra=#native_type{name=Name}}, undefined, Var, Line, MessageRef, _Schema) ->

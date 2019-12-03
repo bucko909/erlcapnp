@@ -88,7 +88,7 @@ field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]}));
 field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=list, extra=#ptr_type{type=text_or_data}}}}, _Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]})]}));
-field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
+field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!
 	{type, Line, any, []};
 	%or_undefined(Line, {type, Line, list, [{type, Line, record, [make_atom(Line, TypeName)]}]});

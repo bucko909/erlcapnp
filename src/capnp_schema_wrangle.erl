@@ -239,7 +239,7 @@ type_info(list, InnerType={struct, _}, Schema) ->
 	% List of structs.
 	% These will be encoded in-line.
 	TypeInfo = type_info(InnerType, Schema),
-	#ptr_type{type=list, extra={struct, TypeInfo}};
+	#ptr_type{type=list, extra=TypeInfo};
 type_info(list, {anyPointer, undefined}, _Schema) ->
 	erlang:error({not_implemented, list, anyPointer}); % TODO
 type_info(list, {interface,_LTypeId}, _Schema) ->
