@@ -8,6 +8,7 @@
 		field_info/2,
 
 		schema_lookup/2,
+		name_to_type_id/2,
 		find_record_fields/2,
 		find_fields/2,
 		find_notag_fields/2,
@@ -150,10 +151,16 @@ find_fields(TypeId, Schema) ->
 	% Start by finding the bit offsets of each field, so that we can order them.
 	[ field_info(Field, Schema) || Field <- Fields ].
 
+name_to_type_id(Name, Schema) when is_binary(Name) ->
+	case binary:last(Name) of
+		$o ->
+			{Rest, <<$o>>} = erlang:split_binary(Name, erlang:byte_size(Name) - 1),
+			{anonunion, name_to_type_id(Rest, Schema)};
+		_ ->
+			dict:fetch(Name, Schema#capnp_context.name_to_id)
+	end.
+
 schema_lookup({anonunion, TypeId}, Schema) ->
-	schema_lookup(TypeId, Schema);
-schema_lookup(Name, Schema) when is_binary(Name) ->
-	TypeId = dict:fetch(Name, Schema#capnp_context.name_to_id),
 	schema_lookup(TypeId, Schema);
 schema_lookup(TypeId, Schema) when is_integer(TypeId) ->
 	dict:fetch(TypeId, Schema#capnp_context.by_id).
