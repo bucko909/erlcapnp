@@ -64,7 +64,7 @@ field_type(Line, _RecordTypeId, #field_info{type=#native_type{type=void}}, _Sche
 	{atom, Line, undefined};
 field_type(Line, _RecordTypeId, #field_info{type=#native_type{type=enum, extra=EnumerantNames}}, _Schema) ->
 	{type, Line, union, [ {atom, Line, to_atom(Name)} || Name <- EnumerantNames ] };
-field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=text_or_data, extra=_TextType}}, _Schema) ->
+field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=text_or_data}}, _Schema) ->
 	or_undefined(Line, {type, Line, union, [{type, Line, iodata, []}]});
 field_type(Line, RecordTypeId, #field_info{type=#ptr_type{type=struct, extra={TypeName, _DataLen, _PtrLen}}}, Schema) ->
 	case capnp_schema_wrangle:name_to_type_id(TypeName, Schema) of
@@ -84,9 +84,9 @@ field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={pri
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]}));
 field_type(Line, RecordTypeId, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [field_type(Line, RecordTypeId, #field_info{type=Inner}, Schema)]}));
-field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={text_or_data, _TextType}}}, _Schema) ->
+field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=text_or_data}}}, _Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]}));
-field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={list, {text_or_data, _TextType}}}}, _Schema) ->
+field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=list, extra=#ptr_type{type=text_or_data}}}}, _Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]})]}));
 field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={_TypeName, _DataLen, _PtrLen}}}}}, _Schema) ->
 	% Recursive call is or_undefined, which is not allowed here!

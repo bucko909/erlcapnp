@@ -238,7 +238,7 @@ generate_basic(TypeId, Schema) ->
 	ExtraStructs = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=struct, extra={TypeName, _, _}}} <- find_fields(TypeId, Schema) ],
 	ExtraStructsInLists = [ {generate_name, TypeName} || #field_info{type=#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeName, _, _}}}}} <- find_fields(TypeId, Schema) ],
 	ExtraGroups = [ {generate, GroupTypeId} || #field_info{type=#group_type{type_id=GroupTypeId}} <- find_fields(TypeId, Schema) ],
-	ExtraTextList = lists:append([ [{generate_text, TextType}, {generate_follow_text_pointer, TextType}] || #field_info{type=#ptr_type{type=list, extra={text_or_data, TextType}}} <- find_fields(TypeId, Schema) ]),
+	ExtraTextList = lists:append([ [{generate_text, TextType}, {generate_follow_text_pointer, TextType}] || #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=text_or_data, extra=TextType}}} <- find_fields(TypeId, Schema) ]),
 	ExtraText = [ {generate_follow_text_pointer, Type} || #field_info{type=#ptr_type{type=text_or_data, extra=Type}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowStruct = [ generate_follow_struct_pointer || #field_info{type=#ptr_type{type=struct}} <- find_fields(TypeId, Schema) ],
 	ExtraFollowStructList = [ generate_follow_struct_list_pointer || #field_info{type=#ptr_type{type=list, extra={struct, _}}} <- find_fields(TypeId, Schema) ],
@@ -952,7 +952,7 @@ ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={struct, #ptr_type{type=st
 	StructSizePreformatted = {integer, Line, struct_pointer_header(DataLen, PtrLen)},
 	StructLen = {integer, Line, DataLen + PtrLen},
 	ast_encode_ptr_common(N, PtrLen0, fun ast_encode_struct_list_/3, [EncodeFun, StructSizePreformatted, StructLen], VarName, Line);
-ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra={text_or_data, TextType}}, VarName, Line) ->
+ast_encode_ptr(N, PtrLen0, #ptr_type{type=list, extra=#ptr_type{type=text_or_data, extra=TextType}}, VarName, Line) ->
 	% This is a bit of a hack; we encode a list of text fields as a list of structs which have the first field being text.
 	% They should really be anyPointer, I think, which doesn't need a header tag word.
 	EncodeFun = make_atom(Line, append("encode_", TextType)),
@@ -1270,7 +1270,7 @@ decoder(#ptr_type{type=list, extra={struct, #ptr_type{type=struct, extra={TypeNa
 decoder(#ptr_type{type=list, extra={primitive, #native_type{name=Name}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
-decoder(#ptr_type{type=list, extra={text_or_data, TextType}}, undefined, Var, Line, MessageRef, _Schema) ->
+decoder(#ptr_type{type=list, extra=#ptr_type{type=text_or_data, extra=TextType}}, undefined, Var, Line, MessageRef, _Schema) ->
 	DecoderName = to_atom(append("internal_decode_", TextType)),
 	Decoder = {'fun', Line, {function, DecoderName, 3}},
 	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
