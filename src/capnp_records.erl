@@ -80,9 +80,9 @@ field_type(Line, RecordTypeId, #field_info{type=#ptr_type{type=struct, extra={Ty
 					%or_undefined(Line, {type, Line, record, [make_atom(Line, TypeName)]})
 			end
 	end;
-field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra={primitive, #native_type{type=boolean}}}}, _Schema) ->
+field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#native_type{type=boolean}}}, _Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [{type, Line, union, [{atom, Line, true}, {atom, Line, false}]}]}));
-field_type(Line, RecordTypeId, #field_info{type=#ptr_type{type=list, extra={primitive, Inner}}}, Schema) ->
+field_type(Line, RecordTypeId, #field_info{type=#ptr_type{type=list, extra=Inner=#native_type{}}}, Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [field_type(Line, RecordTypeId, #field_info{type=Inner}, Schema)]}));
 field_type(Line, _RecordTypeId, #field_info{type=#ptr_type{type=list, extra=#ptr_type{type=text_or_data}}}, _Schema) ->
 	or_preformat(Line, or_undefined(Line, {type, Line, list, [or_undefined(Line, {type, Line, iodata, []})]}));

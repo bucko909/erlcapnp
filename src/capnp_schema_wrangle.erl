@@ -224,7 +224,7 @@ type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId)
 type_info(list, Type={enum, #'Type_enum'{}}, Schema) ->
 	% List of enums.
 	TypeInfo = type_info(Type, Schema),
-	#ptr_type{type=list, extra={primitive, TypeInfo}};
+	#ptr_type{type=list, extra=TypeInfo};
 type_info(list, {TextType, undefined}, Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	Info = type_info({TextType, undefined}, Schema),
@@ -234,7 +234,7 @@ type_info(list, {PtrType, LTypeDescription}, _Schema) when PtrType =:= list ->
 	erlang:error({not_implemented, list, list, LTypeDescription}); % TODO
 type_info(list, {PrimitiveType, undefined}, _Schema) ->
 	% List of any normal primitive type.
-	#ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}};
+	#ptr_type{type=list, extra=builtin_info(PrimitiveType)};
 type_info(list, InnerType={struct, _}, Schema) ->
 	% List of structs.
 	% These will be encoded in-line.
