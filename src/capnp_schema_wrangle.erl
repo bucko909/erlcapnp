@@ -219,10 +219,10 @@ type_info(anyPointer, {unconstrained, undefined}, _Schema) ->
 type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
 	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
-type_info(list, {enum, #'Type_enum'{typeId=TypeId}}, Schema) ->
+type_info(list, Type={enum, #'Type_enum'{}}, Schema) ->
 	% List of enums.
-	EnumerantNames = enumerant_names(TypeId, Schema),
-	{64, #ptr_type{type=list, extra={primitive, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}}}};
+	{16, TypeInfo} = type_info(Type, Schema),
+	{64, #ptr_type{type=list, extra={primitive, TypeInfo}}};
 type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	{64, #ptr_type{type=list, extra={text, TextType}}};
