@@ -408,19 +408,19 @@ encode_Annotation({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
     {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
 
 encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
-    if
-        Varscopes =/= undefined ->
+    case Varscopes of
+        _ when is_list(Varscopes) ->
             DataLenscopes = length(Varscopes),
             {FinalOffsetscopes,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281483566645248,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenscopes,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Brand_Scope(Element,
                                                           Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenscopes + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -437,7 +437,19 @@ encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
                 PtrOffsetWordsFromEnd0 + 1 + DataLenscopes * 3
                 +
                 FinalOffsetscopes;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            Ptrscopes = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1scopes,MainLenscopes,ExtraLenscopes,Data1,Extra1} ->
+            Ptrscopes =
+                PointerAsInt1scopes
+                bor
+                (0 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLenscopes + ExtraLenscopes;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrscopes = 0,
@@ -522,8 +534,8 @@ encode_Brand_Scope({ZeroOffsetPtrInt,
 'encode_Brand_Scope.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         bind ->
-            if
-                Var =/= undefined ->
+            case Var of
+                _ when is_list(Var) ->
                     DataLen = length(Var),
                     {FinalOffset,Data1,Extra1} =
                         lists:foldl(fun(Element,
@@ -556,7 +568,19 @@ encode_Brand_Scope({ZeroOffsetPtrInt,
                         PtrOffsetWordsFromEnd0 + 1 + DataLen * 2
                         +
                         FinalOffset;
-                true ->
+                {0,0,0,_,_} ->
+                    Extra1 = <<>>,
+                    Data1 = [],
+                    Ptr = 0,
+                    PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                    Ptr =
+                        PointerAsInt1
+                        bor
+                        (0 + PtrOffsetWordsFromEnd0 bsl 2),
+                    PtrOffsetWordsFromEnd1 =
+                        PtrOffsetWordsFromEnd0 + MainLen + ExtraLen;
+                undefined ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
@@ -589,18 +613,18 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
                                                     requestedFiles =
                                                         VarrequestedFiles},
                             PtrOffsetWordsFromEnd0) ->
-    if
-        Varnodes =/= undefined ->
+    case Varnodes of
+        _ when is_list(Varnodes) ->
             DataLennodes = length(Varnodes),
             {FinalOffsetnodes,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {1688871335100416,
                                     11,
-                                    ExtraLen,
+                                    ExtraLennodes,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Node(Element, Offset - 11),
-                                   {ExtraLen + Offset - 11,
+                                   {ExtraLennodes + Offset - 11,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -617,27 +641,39 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
                 PtrOffsetWordsFromEnd0 + 1 + DataLennodes * 11
                 +
                 FinalOffsetnodes;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            Ptrnodes = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1nodes,MainLennodes,ExtraLennodes,Data1,Extra1} ->
+            Ptrnodes =
+                PointerAsInt1nodes
+                bor
+                (1 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLennodes + ExtraLennodes;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrnodes = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        VarrequestedFiles =/= undefined ->
+    case VarrequestedFiles of
+        _ when is_list(VarrequestedFiles) ->
             DataLenrequestedFiles = length(VarrequestedFiles),
             {FinalOffsetrequestedFiles,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenrequestedFiles,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_CodeGeneratorRequest_RequestedFile(Element,
                                                                                  Offset
                                                                                  -
                                                                                  3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenrequestedFiles + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -656,7 +692,25 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenrequestedFiles * 3
                 +
                 FinalOffsetrequestedFiles;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            PtrrequestedFiles = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1requestedFiles,
+         MainLenrequestedFiles,
+         ExtraLenrequestedFiles,
+         Data2,
+         Extra2} ->
+            PtrrequestedFiles =
+                PointerAsInt1requestedFiles
+                bor
+                (0 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLenrequestedFiles
+                +
+                ExtraLenrequestedFiles;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             PtrrequestedFiles = 0,
@@ -709,21 +763,21 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
             Ptrfilename = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        Varimports =/= undefined ->
+    case Varimports of
+        _ when is_list(Varimports) ->
             DataLenimports = length(Varimports),
             {FinalOffsetimports,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281479271677952,
                                     2,
-                                    ExtraLen,
+                                    ExtraLenimports,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_CodeGeneratorRequest_RequestedFile_Import(Element,
                                                                                         Offset
                                                                                         -
                                                                                         2),
-                                   {ExtraLen + Offset - 2,
+                                   {ExtraLenimports + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -740,7 +794,25 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
                 PtrOffsetWordsFromEnd1 + 1 + DataLenimports * 2
                 +
                 FinalOffsetimports;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            Ptrimports = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1imports,
+         MainLenimports,
+         ExtraLenimports,
+         Data2,
+         Extra2} ->
+            Ptrimports =
+                PointerAsInt1imports
+                bor
+                (0 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLenimports
+                +
+                ExtraLenimports;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrimports = 0,
@@ -838,19 +910,19 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        Varannotations =/= undefined ->
+    case Varannotations of
+        _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
             {FinalOffsetannotations,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenannotations,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenannotations + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -869,7 +941,25 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            Ptrannotations = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1annotations,
+         MainLenannotations,
+         ExtraLenannotations,
+         Data2,
+         Extra2} ->
+            Ptrannotations =
+                PointerAsInt1annotations
+                bor
+                (0 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLenannotations
+                +
+                ExtraLenannotations;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
@@ -920,19 +1010,19 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        Varannotations =/= undefined ->
+    case Varannotations of
+        _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
             {FinalOffsetannotations,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenannotations,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenannotations + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -951,7 +1041,25 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            Ptrannotations = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1annotations,
+         MainLenannotations,
+         ExtraLenannotations,
+         Data2,
+         Extra2} ->
+            Ptrannotations =
+                PointerAsInt1annotations
+                bor
+                (2 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLenannotations
+                +
+                ExtraLenannotations;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
@@ -1164,19 +1272,19 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        Varannotations =/= undefined ->
+    case Varannotations of
+        _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
             {FinalOffsetannotations,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenannotations,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenannotations + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1195,7 +1303,25 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            Ptrannotations = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1annotations,
+         MainLenannotations,
+         ExtraLenannotations,
+         Data2,
+         Extra2} ->
+            Ptrannotations =
+                PointerAsInt1annotations
+                bor
+                (3 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLenannotations
+                +
+                ExtraLenannotations;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
@@ -1237,19 +1363,21 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
         PtrOffsetWordsFromEnd3 + MainLenresultBrand
         +
         ExtraLenresultBrand,
-    if
-        VarimplicitParameters =/= undefined ->
+    case VarimplicitParameters of
+        _ when is_list(VarimplicitParameters) ->
             DataLenimplicitParameters = length(VarimplicitParameters),
             {FinalOffsetimplicitParameters,Data5,Extra5} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281474976710656,
                                     1,
-                                    ExtraLen,
+                                    ExtraLenimplicitParameters,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Node_Parameter(Element,
                                                              Offset - 1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLenimplicitParameters + Offset
+                                    -
+                                    1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1271,7 +1399,25 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
                 DataLenimplicitParameters * 1
                 +
                 FinalOffsetimplicitParameters;
-        true ->
+        {0,0,0,_,_} ->
+            Extra5 = <<>>,
+            Data5 = [],
+            PtrimplicitParameters = 0,
+            PtrOffsetWordsFromEnd5 = PtrOffsetWordsFromEnd4;
+        {PointerAsInt1implicitParameters,
+         MainLenimplicitParameters,
+         ExtraLenimplicitParameters,
+         Data5,
+         Extra5} ->
+            PtrimplicitParameters =
+                PointerAsInt1implicitParameters
+                bor
+                (0 + PtrOffsetWordsFromEnd4 bsl 2),
+            PtrOffsetWordsFromEnd5 =
+                PtrOffsetWordsFromEnd4 + MainLenimplicitParameters
+                +
+                ExtraLenimplicitParameters;
+        undefined ->
             Extra5 = <<>>,
             Data5 = [],
             PtrimplicitParameters = 0,
@@ -1329,19 +1475,19 @@ encode_Node(#'Node'{id = Varid,
             PtrdisplayName = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        VarnestedNodes =/= undefined ->
+    case VarnestedNodes of
+        _ when is_list(VarnestedNodes) ->
             DataLennestedNodes = length(VarnestedNodes),
             {FinalOffsetnestedNodes,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281479271677952,
                                     2,
-                                    ExtraLen,
+                                    ExtraLennestedNodes,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Node_NestedNode(Element,
                                                               Offset - 2),
-                                   {ExtraLen + Offset - 2,
+                                   {ExtraLennestedNodes + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1360,25 +1506,43 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd1 + 1 + DataLennestedNodes * 2
                 +
                 FinalOffsetnestedNodes;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            PtrnestedNodes = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1nestedNodes,
+         MainLennestedNodes,
+         ExtraLennestedNodes,
+         Data2,
+         Extra2} ->
+            PtrnestedNodes =
+                PointerAsInt1nestedNodes
+                bor
+                (4 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLennestedNodes
+                +
+                ExtraLennestedNodes;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             PtrnestedNodes = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    if
-        Varannotations =/= undefined ->
+    case Varannotations of
+        _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
             {FinalOffsetannotations,Data3,Extra3} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenannotations,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenannotations + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1397,25 +1561,43 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd2 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        true ->
+        {0,0,0,_,_} ->
+            Extra3 = <<>>,
+            Data3 = [],
+            Ptrannotations = 0,
+            PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2;
+        {PointerAsInt1annotations,
+         MainLenannotations,
+         ExtraLenannotations,
+         Data3,
+         Extra3} ->
+            Ptrannotations =
+                PointerAsInt1annotations
+                bor
+                (3 + PtrOffsetWordsFromEnd2 bsl 2),
+            PtrOffsetWordsFromEnd3 =
+                PtrOffsetWordsFromEnd2 + MainLenannotations
+                +
+                ExtraLenannotations;
+        undefined ->
             Extra3 = <<>>,
             Data3 = [],
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2
     end,
-    if
-        Varparameters =/= undefined ->
+    case Varparameters of
+        _ when is_list(Varparameters) ->
             DataLenparameters = length(Varparameters),
             {FinalOffsetparameters,Data4,Extra4} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281474976710656,
                                     1,
-                                    ExtraLen,
+                                    ExtraLenparameters,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Node_Parameter(Element,
                                                              Offset - 1),
-                                   {ExtraLen + Offset - 1,
+                                   {ExtraLenparameters + Offset - 1,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1434,7 +1616,25 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd3 + 1 + DataLenparameters * 1
                 +
                 FinalOffsetparameters;
-        true ->
+        {0,0,0,_,_} ->
+            Extra4 = <<>>,
+            Data4 = [],
+            Ptrparameters = 0,
+            PtrOffsetWordsFromEnd4 = PtrOffsetWordsFromEnd3;
+        {PointerAsInt1parameters,
+         MainLenparameters,
+         ExtraLenparameters,
+         Data4,
+         Extra4} ->
+            Ptrparameters =
+                PointerAsInt1parameters
+                bor
+                (0 + PtrOffsetWordsFromEnd3 bsl 2),
+            PtrOffsetWordsFromEnd4 =
+                PtrOffsetWordsFromEnd3 + MainLenparameters
+                +
+                ExtraLenparameters;
+        undefined ->
             Extra4 = <<>>,
             Data4 = [],
             Ptrparameters = 0,
@@ -1504,8 +1704,8 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
              <<(DataInt bor (1 bsl 96)):704/little-unsigned-integer>>,
              ExtraData};
         enum ->
-            if
-                Var =/= undefined ->
+            case Var of
+                _ when is_list(Var) ->
                     DataLen = length(Var),
                     {FinalOffset,Data1,Extra1} =
                         lists:foldl(fun(Element,
@@ -1538,7 +1738,19 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
                         PtrOffsetWordsFromEnd0 + 1 + DataLen * 3
                         +
                         FinalOffset;
-                true ->
+                {0,0,0,_,_} ->
+                    Extra1 = <<>>,
+                    Data1 = [],
+                    Ptr = 0,
+                    PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                    Ptr =
+                        PointerAsInt1
+                        bor
+                        (2 + PtrOffsetWordsFromEnd0 bsl 2),
+                    PtrOffsetWordsFromEnd1 =
+                        PtrOffsetWordsFromEnd0 + MainLen + ExtraLen;
+                undefined ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
@@ -1846,19 +2058,19 @@ encode_Node_const({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
 
 encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
                  PtrOffsetWordsFromEnd0) ->
-    if
-        Varenumerants =/= undefined ->
+    case Varenumerants of
+        _ when is_list(Varenumerants) ->
             DataLenenumerants = length(Varenumerants),
             {FinalOffsetenumerants,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {562954248388608,
                                     3,
-                                    ExtraLen,
+                                    ExtraLenenumerants,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Enumerant(Element,
                                                         Offset - 3),
-                                   {ExtraLen + Offset - 3,
+                                   {ExtraLenenumerants + Offset - 3,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1877,7 +2089,25 @@ encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
                 PtrOffsetWordsFromEnd0 + 1 + DataLenenumerants * 3
                 +
                 FinalOffsetenumerants;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            Ptrenumerants = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1enumerants,
+         MainLenenumerants,
+         ExtraLenenumerants,
+         Data1,
+         Extra1} ->
+            Ptrenumerants =
+                PointerAsInt1enumerants
+                bor
+                (2 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLenenumerants
+                +
+                ExtraLenenumerants;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrenumerants = 0,
@@ -1904,19 +2134,19 @@ encode_Node_enum({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
 encode_Node_interface(#'Node_interface'{methods = Varmethods,
                                         superclasses = Varsuperclasses},
                       PtrOffsetWordsFromEnd0) ->
-    if
-        Varmethods =/= undefined ->
+    case Varmethods of
+        _ when is_list(Varmethods) ->
             DataLenmethods = length(Varmethods),
             {FinalOffsetmethods,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {1407387768455168,
                                     8,
-                                    ExtraLen,
+                                    ExtraLenmethods,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Method(Element,
                                                      Offset - 8),
-                                   {ExtraLen + Offset - 8,
+                                   {ExtraLenmethods + Offset - 8,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1933,25 +2163,43 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
                 PtrOffsetWordsFromEnd0 + 1 + DataLenmethods * 8
                 +
                 FinalOffsetmethods;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            Ptrmethods = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1methods,
+         MainLenmethods,
+         ExtraLenmethods,
+         Data1,
+         Extra1} ->
+            Ptrmethods =
+                PointerAsInt1methods
+                bor
+                (2 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLenmethods
+                +
+                ExtraLenmethods;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrmethods = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    if
-        Varsuperclasses =/= undefined ->
+    case Varsuperclasses of
+        _ when is_list(Varsuperclasses) ->
             DataLensuperclasses = length(Varsuperclasses),
             {FinalOffsetsuperclasses,Data2,Extra2} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {281479271677952,
                                     2,
-                                    ExtraLen,
+                                    ExtraLensuperclasses,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Superclass(Element,
                                                          Offset - 2),
-                                   {ExtraLen + Offset - 2,
+                                   {ExtraLensuperclasses + Offset - 2,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -1970,7 +2218,25 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
                 PtrOffsetWordsFromEnd1 + 1 + DataLensuperclasses * 2
                 +
                 FinalOffsetsuperclasses;
-        true ->
+        {0,0,0,_,_} ->
+            Extra2 = <<>>,
+            Data2 = [],
+            Ptrsuperclasses = 0,
+            PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
+        {PointerAsInt1superclasses,
+         MainLensuperclasses,
+         ExtraLensuperclasses,
+         Data2,
+         Extra2} ->
+            Ptrsuperclasses =
+                PointerAsInt1superclasses
+                bor
+                (1 + PtrOffsetWordsFromEnd1 bsl 2),
+            PtrOffsetWordsFromEnd2 =
+                PtrOffsetWordsFromEnd1 + MainLensuperclasses
+                +
+                ExtraLensuperclasses;
+        undefined ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrsuperclasses = 0,
@@ -2010,18 +2276,18 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
                                       VardiscriminantOffset,
                                   fields = Varfields},
                    PtrOffsetWordsFromEnd0) ->
-    if
-        Varfields =/= undefined ->
+    case Varfields of
+        _ when is_list(Varfields) ->
             DataLenfields = length(Varfields),
             {FinalOffsetfields,Data1,Extra1} =
                 lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
                                    {1125912791744512,
                                     7,
-                                    ExtraLen,
+                                    ExtraLenfields,
                                     ThisBody,
                                     ThisExtra} =
                                        encode_Field(Element, Offset - 7),
-                                   {ExtraLen + Offset - 7,
+                                   {ExtraLenfields + Offset - 7,
                                     [DataAcc,ThisBody],
                                     [ExtraAcc|ThisExtra]}
                             end,
@@ -2038,7 +2304,19 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
                 PtrOffsetWordsFromEnd0 + 1 + DataLenfields * 7
                 +
                 FinalOffsetfields;
-        true ->
+        {0,0,0,_,_} ->
+            Extra1 = <<>>,
+            Data1 = [],
+            Ptrfields = 0,
+            PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
+        {PointerAsInt1fields,MainLenfields,ExtraLenfields,Data1,Extra1} ->
+            Ptrfields =
+                PointerAsInt1fields
+                bor
+                (2 + PtrOffsetWordsFromEnd0 bsl 2),
+            PtrOffsetWordsFromEnd1 =
+                PtrOffsetWordsFromEnd0 + MainLenfields + ExtraLenfields;
+        undefined ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrfields = 0,
