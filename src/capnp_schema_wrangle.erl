@@ -177,13 +177,15 @@ field_info(#'Field'{
 			}
 		}
 	}, Schema) ->
-	{Size, Info} = type_info(Type, Schema),
-	Offset = case Size of
-		1 ->
+	Info = type_info(Type, Schema),
+	Offset = case Info of
+		#native_type{width=1} ->
 			% Correct for erlang's endianness
 			(N band -8) + (7 - (N band 7));
-		_ ->
-			Size * N
+		#native_type{width=Size} ->
+			Size * N;
+		#ptr_type{} ->
+			64 * N
 	end,
 	#field_info{offset=Offset, type=Info, name=Name, discriminant=if DiscriminantValue =:= 65535 -> undefined; true -> DiscriminantValue end, default=case DefaultValue of not_implemented -> undefined; _ -> DefaultValue end};
 field_info(#'Field'{
@@ -213,33 +215,33 @@ type_info({TypeClass, TypeDescription}, Schema) ->
 
 % Pointer types (composite/list)
 type_info(TextType, undefined, _Schema) when TextType =:= text; TextType =:= data ->
-	{64, #ptr_type{type=text_or_data, extra=TextType}};
+	#ptr_type{type=text_or_data, extra=TextType};
 type_info(anyPointer, {unconstrained, undefined}, _Schema) ->
-	{64, #ptr_type{type=unknown}}; % Not really possible
+	#ptr_type{type=unknown}; % Not really possible
 type_info(struct, #'Type_struct'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	{TypeName, DataLen, PtrLen} = node_name(TypeId, Schema),
-	{64, #ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}}};
+	#ptr_type{type=struct, extra={TypeName, DataLen, PtrLen}};
 type_info(list, Type={enum, #'Type_enum'{}}, Schema) ->
 	% List of enums.
-	{16, TypeInfo} = type_info(Type, Schema),
-	{64, #ptr_type{type=list, extra={primitive, TypeInfo}}};
+	TypeInfo = type_info(Type, Schema),
+	#ptr_type{type=list, extra={primitive, TypeInfo}};
 type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
-	{64, #ptr_type{type=list, extra={text_or_data, TextType}}};
+	#ptr_type{type=list, extra={text_or_data, TextType}};
 type_info(list, {list, {TextType, undefined}}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
-	{64, #ptr_type{type=list, extra={list, {text_or_data, TextType}}}};
+	#ptr_type{type=list, extra={list, {text_or_data, TextType}}};
 type_info(list, {PtrType, LTypeDescription}, _Schema) when PtrType =:= list ->
 	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 	erlang:error({not_implemented, list, list, LTypeDescription}); % TODO
 type_info(list, {PrimitiveType, undefined}, _Schema) ->
 	% List of any normal primitive type.
-	{64, #ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}}};
+	#ptr_type{type=list, extra={primitive, builtin_info(PrimitiveType)}};
 type_info(list, InnerType={struct, _}, Schema) ->
 	% List of structs.
 	% These will be encoded in-line.
-	{64, TypeInfo} = type_info(InnerType, Schema),
-	{64, #ptr_type{type=list, extra={struct, TypeInfo}}};
+	TypeInfo = type_info(InnerType, Schema),
+	#ptr_type{type=list, extra={struct, TypeInfo}};
 type_info(list, {anyPointer, undefined}, _Schema) ->
 	erlang:error({not_implemented, list, anyPointer}); % TODO
 type_info(list, {interface,_LTypeId}, _Schema) ->
@@ -248,14 +250,13 @@ type_info(list, {interface,_LTypeId}, _Schema) ->
 % Data types
 type_info(enum, #'Type_enum'{typeId=TypeId}, Schema) when is_integer(TypeId) ->
 	EnumerantNames = enumerant_names(TypeId, Schema),
-	{16, #native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3}};
+	#native_type{type=enum, extra=EnumerantNames, width=16, binary_options=[little,unsigned,integer], list_tag=3};
 type_info(TypeClass, undefined, _Schema) ->
-	Info1 = #native_type{width=Size1} = builtin_info(TypeClass),
-	{Size1, Info1};
+	builtin_info(TypeClass);
 % Catchall
 type_info(TypeClass, TypeDescription, _Schema) ->
 	io:format("Unknown: ~p~n", [{TypeClass, TypeDescription}]),
-	{64, #ptr_type{type=unknown}}.
+	#ptr_type{type=unknown}.
 
 
 enumerant_names(TypeId, Schema) ->
