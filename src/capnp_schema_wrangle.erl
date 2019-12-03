@@ -228,9 +228,6 @@ type_info(list, Type={enum, #'Type_enum'{}}, Schema) ->
 type_info(list, {TextType, undefined}, _Schema) when TextType =:= text; TextType =:= data ->
 	% List of text types; this is a list-of-lists.
 	#ptr_type{type=list, extra={text_or_data, TextType}};
-type_info(list, {list, {TextType, undefined}}, _Schema) when TextType =:= text; TextType =:= data ->
-	% List of text types; this is a list-of-lists.
-	#ptr_type{type=list, extra={list, {text_or_data, TextType}}};
 type_info(list, {PtrType, LTypeDescription}, _Schema) when PtrType =:= list ->
 	% List of list, or list-of-(text or data) -- all three are lists of lists of lists.
 	erlang:error({not_implemented, list, list, LTypeDescription}); % TODO
