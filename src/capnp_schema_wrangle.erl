@@ -153,8 +153,8 @@ find_fields(TypeId, Schema) ->
 
 name_to_type_id(Name, Schema) when is_binary(Name) ->
 	case binary:last(Name) of
-		$o ->
-			{Rest, <<$o>>} = erlang:split_binary(Name, erlang:byte_size(Name) - 1),
+		$. ->
+			{Rest, <<$.>>} = erlang:split_binary(Name, erlang:byte_size(Name) - 1),
 			{anonunion, name_to_type_id(Rest, Schema)};
 		_ ->
 			dict:fetch(Name, Schema#capnp_context.name_to_id)
