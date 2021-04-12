@@ -3178,6 +3178,38 @@ envelope_Value(Input) ->
 follow_data_pointer(PointerInt, MessageRef) ->
     follow_text_or_data_pointer(PointerInt, MessageRef, 0).
 
+follow_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
+    undefined;
+follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
+    when PointerInt band 3 == 1 ->
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
+    NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
+    SkipBits = NewOffset bsl 6,
+    <<_:SkipBits,Tag:64/little-unsigned-integer,_/binary>> =
+        MessageRef#message_ref.current_segment,
+    Length = (Tag bsr 2) band (1 bsl 30 - 1),
+    DWords = (Tag bsr 32) band (1 bsl 16 - 1),
+    PWords = (Tag bsr 48) band (1 bsl 16 - 1),
+    decode_struct_list(DecodeFun,
+                       Length,
+                       DWords,
+                       PWords,
+                       MessageRef#message_ref{current_offset =
+                                                  NewOffset + 1});
+follow_struct_list_pointer(DecodeFun,
+                           PointerInt,
+                           MessageRef = #message_ref{})
+    when PointerInt band 3 == 2 ->
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
+    follow_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+
 follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
     undefined;
 follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
@@ -3207,40 +3239,6 @@ follow_struct_pointer(DecodeFun,
     {NewPointerInt,NewMessageRef} =
         decode_far_pointer(PointerInt, MessageRef),
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
-
-follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
-    undefined;
-follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
-    when PointerInt band 3 == 1 ->
-    PointerOffset =
-        case PointerInt band (1 bsl 31) of
-            0 ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
-            _ ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
-        end,
-    NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-    SkipBits = NewOffset bsl 6,
-    <<_:SkipBits,Tag:64/little-unsigned-integer,_/binary>> =
-        MessageRef#message_ref.current_segment,
-    Length = (Tag bsr 2) band (1 bsl 30 - 1),
-    DWords = (Tag bsr 32) band (1 bsl 16 - 1),
-    PWords = (Tag bsr 48) band (1 bsl 16 - 1),
-    decode_struct_list(DecodeFun,
-                       Length,
-                       DWords,
-                       PWords,
-                       MessageRef#message_ref{current_offset =
-                                                  NewOffset + 1});
-follow_tagged_struct_list_pointer(DecodeFun,
-                                  PointerInt,
-                                  MessageRef = #message_ref{})
-    when PointerInt band 3 == 2 ->
-    {NewPointerInt,NewMessageRef} =
-        decode_far_pointer(PointerInt, MessageRef),
-    follow_tagged_struct_list_pointer(DecodeFun,
-                                      NewPointerInt,
-                                      NewMessageRef).
 
 follow_text_or_data_pointer(0, _MessageRef, _Trail) ->
     undefined;
@@ -3318,12 +3316,12 @@ internal_decode_Brand(<<>>,
                       <<Varscopes:64/little-unsigned-integer>>,
                       MessageRef) ->
     #'Brand'{scopes =
-                 follow_tagged_struct_list_pointer(fun internal_decode_Brand_Scope/3,
-                                                   Varscopes,
-                                                   MessageRef#message_ref{current_offset =
-                                                                              MessageRef#message_ref.current_offset
-                                                                              +
-                                                                              0})};
+                 follow_struct_list_pointer(fun internal_decode_Brand_Scope/3,
+                                            Varscopes,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       0})};
 internal_decode_Brand(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
@@ -3430,12 +3428,12 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef = #message_ref{}) ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {bind,
-             follow_tagged_struct_list_pointer(fun internal_decode_Brand_Binding/3,
-                                               Var,
-                                               MessageRef#message_ref{current_offset =
-                                                                          MessageRef#message_ref.current_offset
-                                                                          +
-                                                                          0})};
+             follow_struct_list_pointer(fun internal_decode_Brand_Binding/3,
+                                        Var,
+                                        MessageRef#message_ref{current_offset =
+                                                                   MessageRef#message_ref.current_offset
+                                                                   +
+                                                                   0})};
         1 ->
             {inherit,undefined}
     end;
@@ -3469,19 +3467,19 @@ internal_decode_CodeGeneratorRequest(<<>>,
                                        VarrequestedFiles:64/little-unsigned-integer>>,
                                      MessageRef) ->
     #'CodeGeneratorRequest'{nodes =
-                                follow_tagged_struct_list_pointer(fun internal_decode_Node/3,
-                                                                  Varnodes,
-                                                                  MessageRef#message_ref{current_offset =
-                                                                                             MessageRef#message_ref.current_offset
-                                                                                             +
-                                                                                             0}),
+                                follow_struct_list_pointer(fun internal_decode_Node/3,
+                                                           Varnodes,
+                                                           MessageRef#message_ref{current_offset =
+                                                                                      MessageRef#message_ref.current_offset
+                                                                                      +
+                                                                                      0}),
                             requestedFiles =
-                                follow_tagged_struct_list_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile/3,
-                                                                  VarrequestedFiles,
-                                                                  MessageRef#message_ref{current_offset =
-                                                                                             MessageRef#message_ref.current_offset
-                                                                                             +
-                                                                                             1})};
+                                follow_struct_list_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile/3,
+                                                           VarrequestedFiles,
+                                                           MessageRef#message_ref{current_offset =
+                                                                                      MessageRef#message_ref.current_offset
+                                                                                      +
+                                                                                      1})};
 internal_decode_CodeGeneratorRequest(Data,
                                      Pointers,
                                      MessageRef = #message_ref{}) ->
@@ -3519,12 +3517,12 @@ internal_decode_CodeGeneratorRequest_RequestedFile(<<Varid:64/little-unsigned-in
                                                                                              +
                                                                                              0}),
                                           imports =
-                                              follow_tagged_struct_list_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile_Import/3,
-                                                                                Varimports,
-                                                                                MessageRef#message_ref{current_offset =
-                                                                                                           MessageRef#message_ref.current_offset
-                                                                                                           +
-                                                                                                           1})};
+                                              follow_struct_list_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile_Import/3,
+                                                                         Varimports,
+                                                                         MessageRef#message_ref{current_offset =
+                                                                                                    MessageRef#message_ref.current_offset
+                                                                                                    +
+                                                                                                    1})};
 internal_decode_CodeGeneratorRequest_RequestedFile(Data,
                                                    Pointers,
                                                    MessageRef =
@@ -3600,12 +3598,12 @@ internal_decode_Enumerant(<<VarcodeOrder:16/little-unsigned-integer,
                                                                     +
                                                                     0}),
                  annotations =
-                     follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
-                                                       Varannotations,
-                                                       MessageRef#message_ref{current_offset =
-                                                                                  MessageRef#message_ref.current_offset
-                                                                                  +
-                                                                                  1})};
+                     follow_struct_list_pointer(fun internal_decode_Annotation/3,
+                                                Varannotations,
+                                                MessageRef#message_ref{current_offset =
+                                                                           MessageRef#message_ref.current_offset
+                                                                           +
+                                                                           1})};
 internal_decode_Enumerant(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
@@ -3645,12 +3643,12 @@ internal_decode_Field(Data =
                                                                 +
                                                                 0}),
              annotations =
-                 follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
-                                                   Varannotations,
-                                                   MessageRef#message_ref{current_offset =
-                                                                              MessageRef#message_ref.current_offset
-                                                                              +
-                                                                              1}),
+                 follow_struct_list_pointer(fun internal_decode_Annotation/3,
+                                            Varannotations,
+                                            MessageRef#message_ref{current_offset =
+                                                                       MessageRef#message_ref.current_offset
+                                                                       +
+                                                                       1}),
              '' = 'internal_decode_Field.'(Data, Pointers, MessageRef),
              ordinal =
                  internal_decode_Field_ordinal(Data,
@@ -3848,12 +3846,12 @@ internal_decode_Method(<<VarcodeOrder:16/little-unsigned-integer,
                                                                  +
                                                                  0}),
               annotations =
-                  follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
-                                                    Varannotations,
-                                                    MessageRef#message_ref{current_offset =
-                                                                               MessageRef#message_ref.current_offset
-                                                                               +
-                                                                               1}),
+                  follow_struct_list_pointer(fun internal_decode_Annotation/3,
+                                             Varannotations,
+                                             MessageRef#message_ref{current_offset =
+                                                                        MessageRef#message_ref.current_offset
+                                                                        +
+                                                                        1}),
               paramBrand =
                   follow_struct_pointer(fun internal_decode_Brand/3,
                                         VarparamBrand,
@@ -3869,12 +3867,12 @@ internal_decode_Method(<<VarcodeOrder:16/little-unsigned-integer,
                                                                    +
                                                                    3}),
               implicitParameters =
-                  follow_tagged_struct_list_pointer(fun internal_decode_Node_Parameter/3,
-                                                    VarimplicitParameters,
-                                                    MessageRef#message_ref{current_offset =
-                                                                               MessageRef#message_ref.current_offset
-                                                                               +
-                                                                               4})};
+                  follow_struct_list_pointer(fun internal_decode_Node_Parameter/3,
+                                             VarimplicitParameters,
+                                             MessageRef#message_ref{current_offset =
+                                                                        MessageRef#message_ref.current_offset
+                                                                        +
+                                                                        4})};
 internal_decode_Method(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
@@ -3928,26 +3926,26 @@ internal_decode_Node(Data =
                                                                +
                                                                0}),
             nestedNodes =
-                follow_tagged_struct_list_pointer(fun internal_decode_Node_NestedNode/3,
-                                                  VarnestedNodes,
-                                                  MessageRef#message_ref{current_offset =
-                                                                             MessageRef#message_ref.current_offset
-                                                                             +
-                                                                             1}),
+                follow_struct_list_pointer(fun internal_decode_Node_NestedNode/3,
+                                           VarnestedNodes,
+                                           MessageRef#message_ref{current_offset =
+                                                                      MessageRef#message_ref.current_offset
+                                                                      +
+                                                                      1}),
             annotations =
-                follow_tagged_struct_list_pointer(fun internal_decode_Annotation/3,
-                                                  Varannotations,
-                                                  MessageRef#message_ref{current_offset =
-                                                                             MessageRef#message_ref.current_offset
-                                                                             +
-                                                                             2}),
+                follow_struct_list_pointer(fun internal_decode_Annotation/3,
+                                           Varannotations,
+                                           MessageRef#message_ref{current_offset =
+                                                                      MessageRef#message_ref.current_offset
+                                                                      +
+                                                                      2}),
             parameters =
-                follow_tagged_struct_list_pointer(fun internal_decode_Node_Parameter/3,
-                                                  Varparameters,
-                                                  MessageRef#message_ref{current_offset =
-                                                                             MessageRef#message_ref.current_offset
-                                                                             +
-                                                                             5}),
+                follow_struct_list_pointer(fun internal_decode_Node_Parameter/3,
+                                           Varparameters,
+                                           MessageRef#message_ref{current_offset =
+                                                                      MessageRef#message_ref.current_offset
+                                                                      +
+                                                                      5}),
             '' = 'internal_decode_Node.'(Data, Pointers, MessageRef)};
 internal_decode_Node(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
@@ -3986,12 +3984,12 @@ internal_decode_Node(Data, Pointers, MessageRef = #message_ref{}) ->
             <<_:192,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
             {enum,
-             follow_tagged_struct_list_pointer(fun internal_decode_Enumerant/3,
-                                               Var,
-                                               MessageRef#message_ref{current_offset =
-                                                                          MessageRef#message_ref.current_offset
-                                                                          +
-                                                                          3})};
+             follow_struct_list_pointer(fun internal_decode_Enumerant/3,
+                                        Var,
+                                        MessageRef#message_ref{current_offset =
+                                                                   MessageRef#message_ref.current_offset
+                                                                   +
+                                                                   3})};
         3 ->
             {interface,
              internal_decode_Node_interface(Data, Pointers, MessageRef)};
@@ -4274,12 +4272,12 @@ internal_decode_Node_enum(<<_:320/integer>>,
                             _:128/integer>>,
                           MessageRef) ->
     #'Node_enum'{enumerants =
-                     follow_tagged_struct_list_pointer(fun internal_decode_Enumerant/3,
-                                                       Varenumerants,
-                                                       MessageRef#message_ref{current_offset =
-                                                                                  MessageRef#message_ref.current_offset
-                                                                                  +
-                                                                                  3})};
+                     follow_struct_list_pointer(fun internal_decode_Enumerant/3,
+                                                Varenumerants,
+                                                MessageRef#message_ref{current_offset =
+                                                                           MessageRef#message_ref.current_offset
+                                                                           +
+                                                                           3})};
 internal_decode_Node_enum(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
@@ -4308,19 +4306,19 @@ internal_decode_Node_interface(<<_:320/integer>>,
                                  _:64/integer>>,
                                MessageRef) ->
     #'Node_interface'{methods =
-                          follow_tagged_struct_list_pointer(fun internal_decode_Method/3,
-                                                            Varmethods,
-                                                            MessageRef#message_ref{current_offset =
-                                                                                       MessageRef#message_ref.current_offset
-                                                                                       +
-                                                                                       3}),
+                          follow_struct_list_pointer(fun internal_decode_Method/3,
+                                                     Varmethods,
+                                                     MessageRef#message_ref{current_offset =
+                                                                                MessageRef#message_ref.current_offset
+                                                                                +
+                                                                                3}),
                       superclasses =
-                          follow_tagged_struct_list_pointer(fun internal_decode_Superclass/3,
-                                                            Varsuperclasses,
-                                                            MessageRef#message_ref{current_offset =
-                                                                                       MessageRef#message_ref.current_offset
-                                                                                       +
-                                                                                       4})};
+                          follow_struct_list_pointer(fun internal_decode_Superclass/3,
+                                                     Varsuperclasses,
+                                                     MessageRef#message_ref{current_offset =
+                                                                                MessageRef#message_ref.current_offset
+                                                                                +
+                                                                                4})};
 internal_decode_Node_interface(Data,
                                Pointers,
                                MessageRef = #message_ref{}) ->
@@ -4383,12 +4381,12 @@ internal_decode_Node_struct(<<_:112/integer,
                    discriminantCount = VardiscriminantCount,
                    discriminantOffset = VardiscriminantOffset,
                    fields =
-                       follow_tagged_struct_list_pointer(fun internal_decode_Field/3,
-                                                         Varfields,
-                                                         MessageRef#message_ref{current_offset =
-                                                                                    MessageRef#message_ref.current_offset
-                                                                                    +
-                                                                                    3})};
+                       follow_struct_list_pointer(fun internal_decode_Field/3,
+                                                  Varfields,
+                                                  MessageRef#message_ref{current_offset =
+                                                                             MessageRef#message_ref.current_offset
+                                                                             +
+                                                                             3})};
 internal_decode_Node_struct(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if

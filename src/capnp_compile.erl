@@ -531,9 +531,9 @@ generate_follow_struct_list_pointer() ->
 	{ [], ast_follow_struct_list_pointer(), [generate_decode_far_pointer] }.
 
 -ast_forms_function(#{name => ast_follow_struct_list_pointer}).
-	follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
+	follow_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
 		undefined;
-	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
+	follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
 		PointerOffset = case PointerInt band (1 bsl 31) of
 			0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
 			_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
@@ -545,9 +545,9 @@ generate_follow_struct_list_pointer() ->
 		DWords = (Tag bsr 32) band (1 bsl 16 - 1),
 		PWords = (Tag bsr 48) band (1 bsl 16 - 1),
 		decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
-	follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{}) when PointerInt band 3 == 2 ->
+	follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{}) when PointerInt band 3 == 2 ->
 		{NewPointerInt, NewMessageRef} = decode_far_pointer(PointerInt, MessageRef),
-		follow_tagged_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+		follow_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
 	decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
 		Offset = MessageRef#message_ref.current_offset,
@@ -1266,14 +1266,14 @@ decoder(#ptr_type{type=struct, extra={TypeName, _, _}}, undefined, Var, Line, Me
 	ast(follow_struct_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra=#ptr_type{type=struct, extra={TypeName, _, _}}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = {'fun', Line, {function, to_atom(append("internal_decode_", TypeName)), 3}},
-	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
+	ast(follow_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra=#native_type{name=Name}}, undefined, Var, Line, MessageRef, _Schema) ->
 	Decoder = make_atom(Line, append("follow_", append(Name, "_list_pointer"))),
 	ast((quote(Decoder))(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=list, extra=#ptr_type{type=text_or_data, extra=TextType}}, undefined, Var, Line, MessageRef, _Schema) ->
 	DecoderName = to_atom(append("internal_decode_", TextType)),
 	Decoder = {'fun', Line, {function, DecoderName, 3}},
-	ast(follow_tagged_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
+	ast(follow_struct_list_pointer(quote(Decoder), quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=text}, undefined, Var, _Line, MessageRef, _Schema) ->
 	ast(follow_text_pointer(quote(Var), quote(MessageRef)));
 decoder(#ptr_type{type=text_or_data, extra=data}, undefined, Var, _Line, MessageRef, _Schema) ->
