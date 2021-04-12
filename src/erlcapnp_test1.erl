@@ -3078,11 +3078,11 @@ internal_decode_erlcapnp_TestUnion(Data,
                                           PaddedPointers,
                                           MessageRef).
 
-internal_decode_text(_,
-                     <<Var:64/little-unsigned-integer,_/binary>>,
+internal_decode_text(_DataPart,
+                     <<FirstPointer:64/little-unsigned-integer,_/binary>>,
                      MessageRef) ->
-    follow_text_pointer(Var, MessageRef);
-internal_decode_text(_, <<>>, _MessageRef) ->
+    follow_text_pointer(FirstPointer, MessageRef);
+internal_decode_text(_DataPart, <<>>, _MessageRef) ->
     undefined.
 
 massage_bool_list(List) ->

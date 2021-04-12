@@ -401,9 +401,9 @@ generate_decode_text_fun(TextType) ->
 	FunDef = ast_function(
 		quote(Name),
 		fun
-			(_, <<Var:64/little-unsigned-integer, _/binary>>, MessageRef) ->
-				(quote(Follow))(Var, MessageRef);
-			(_, <<>>, _MessageRef) ->
+			(_DataPart, <<FirstPointer:64/little-unsigned-integer, _/binary>>, MessageRef) ->
+				(quote(Follow))(FirstPointer, MessageRef);
+			(_DataPart, <<>>, _MessageRef) ->
 				undefined
 		end
 	),
