@@ -2056,6 +2056,66 @@ follow_int8_list_pointer(PointerInt, MessageRef)
          <<X:8/little-signed-integer>> <= ListData
     ].
 
+follow_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
+    undefined;
+follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
+    when
+        PointerInt band 3 == 1
+        andalso
+        (PointerInt bsr 32) band 7 >= 5 ->
+    PointerOffset =
+        case PointerInt band (1 bsl 31) of
+            0 ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
+            _ ->
+                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
+        end,
+    LengthFromPointer = (PointerInt bsr 35) band (1 bsl 29 - 1),
+    NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
+    case (PointerInt bsr 32) band 7 of
+        5 ->
+            Length = LengthFromPointer,
+            DWords = 1,
+            PWords = 0,
+            ListStartOffset = NewOffset;
+        6 ->
+            Length = LengthFromPointer,
+            DWords = 0,
+            PWords = 1,
+            ListStartOffset = NewOffset;
+        7 ->
+            SkipBits = NewOffset bsl 6,
+            <<_:SkipBits,Tag:64/little-unsigned-integer,_/binary>> =
+                MessageRef#message_ref.current_segment,
+            0 = Tag band 3,
+            Length = (Tag bsr 2) band (1 bsl 30 - 1),
+            DWords = (Tag bsr 32) band (1 bsl 16 - 1),
+            PWords = (Tag bsr 48) band (1 bsl 16 - 1),
+            LengthFromPointer = Length * (DWords + PWords),
+            ListStartOffset = NewOffset + 1
+    end,
+    decode_struct_list(DecodeFun,
+                       Length,
+                       DWords,
+                       PWords,
+                       MessageRef#message_ref{current_offset =
+                                                  ListStartOffset});
+follow_struct_list_pointer(_DecodeFun, PointerInt, _MessageRef)
+    when
+        PointerInt band 3 == 1
+        andalso
+        (PointerInt bsr 32) band 7 < 5 ->
+    error({not_supported,
+           "cannot currently decode List(struct {}) which is stored as "
+           "a list of subword values"});
+follow_struct_list_pointer(DecodeFun,
+                           PointerInt,
+                           MessageRef = #message_ref{})
+    when PointerInt band 3 == 2 ->
+    {NewPointerInt,NewMessageRef} =
+        decode_far_pointer(PointerInt, MessageRef),
+    follow_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
+
 follow_struct_pointer(_DecodeFun, 0, _MessageRef) ->
     undefined;
 follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
@@ -2085,40 +2145,6 @@ follow_struct_pointer(DecodeFun,
     {NewPointerInt,NewMessageRef} =
         decode_far_pointer(PointerInt, MessageRef),
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
-
-follow_tagged_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
-    undefined;
-follow_tagged_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
-    when PointerInt band 3 == 1 ->
-    PointerOffset =
-        case PointerInt band (1 bsl 31) of
-            0 ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) + 1;
-            _ ->
-                (PointerInt bsr 2) band (1 bsl 30 - 1) - (1 bsl 30) + 1
-        end,
-    NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-    SkipBits = NewOffset bsl 6,
-    <<_:SkipBits,Tag:64/little-unsigned-integer,_/binary>> =
-        MessageRef#message_ref.current_segment,
-    Length = (Tag bsr 2) band (1 bsl 30 - 1),
-    DWords = (Tag bsr 32) band (1 bsl 16 - 1),
-    PWords = (Tag bsr 48) band (1 bsl 16 - 1),
-    decode_struct_list(DecodeFun,
-                       Length,
-                       DWords,
-                       PWords,
-                       MessageRef#message_ref{current_offset =
-                                                  NewOffset + 1});
-follow_tagged_struct_list_pointer(DecodeFun,
-                                  PointerInt,
-                                  MessageRef = #message_ref{})
-    when PointerInt band 3 == 2 ->
-    {NewPointerInt,NewMessageRef} =
-        decode_far_pointer(PointerInt, MessageRef),
-    follow_tagged_struct_list_pointer(DecodeFun,
-                                      NewPointerInt,
-                                      NewMessageRef).
 
 follow_text_or_data_pointer(0, _MessageRef, _Trail) ->
     undefined;
@@ -2279,19 +2305,19 @@ internal_decode_erlcapnp_TestCompositeList(<<>>,
                                              VartestVar2:64/little-unsigned-integer>>,
                                            MessageRef) ->
     #erlcapnp_TestCompositeList{testVar1 =
-                                    follow_tagged_struct_list_pointer(fun internal_decode_erlcapnp_TestMultipleIntegers/3,
-                                                                      VartestVar1,
-                                                                      MessageRef#message_ref{current_offset =
-                                                                                                 MessageRef#message_ref.current_offset
-                                                                                                 +
-                                                                                                 0}),
+                                    follow_struct_list_pointer(fun internal_decode_erlcapnp_TestMultipleIntegers/3,
+                                                               VartestVar1,
+                                                               MessageRef#message_ref{current_offset =
+                                                                                          MessageRef#message_ref.current_offset
+                                                                                          +
+                                                                                          0}),
                                 testVar2 =
-                                    follow_tagged_struct_list_pointer(fun internal_decode_erlcapnp_TestLessBoringPointer/3,
-                                                                      VartestVar2,
-                                                                      MessageRef#message_ref{current_offset =
-                                                                                                 MessageRef#message_ref.current_offset
-                                                                                                 +
-                                                                                                 1})};
+                                    follow_struct_list_pointer(fun internal_decode_erlcapnp_TestLessBoringPointer/3,
+                                                               VartestVar2,
+                                                               MessageRef#message_ref{current_offset =
+                                                                                          MessageRef#message_ref.current_offset
+                                                                                          +
+                                                                                          1})};
 internal_decode_erlcapnp_TestCompositeList(Data,
                                            Pointers,
                                            MessageRef = #message_ref{}) ->
@@ -2755,12 +2781,12 @@ internal_decode_erlcapnp_TestPointerList(<<>>,
                                          <<VartestVar1:64/little-unsigned-integer>>,
                                          MessageRef) ->
     #erlcapnp_TestPointerList{testVar1 =
-                                  follow_tagged_struct_list_pointer(fun internal_decode_erlcapnp_TestBoringPointer/3,
-                                                                    VartestVar1,
-                                                                    MessageRef#message_ref{current_offset =
-                                                                                               MessageRef#message_ref.current_offset
-                                                                                               +
-                                                                                               0})};
+                                  follow_struct_list_pointer(fun internal_decode_erlcapnp_TestBoringPointer/3,
+                                                             VartestVar1,
+                                                             MessageRef#message_ref{current_offset =
+                                                                                        MessageRef#message_ref.current_offset
+                                                                                        +
+                                                                                        0})};
 internal_decode_erlcapnp_TestPointerList(Data,
                                          Pointers,
                                          MessageRef = #message_ref{}) ->
@@ -2853,19 +2879,19 @@ internal_decode_erlcapnp_TestShortList(<<>>,
                                          VartestVar2:64/little-unsigned-integer>>,
                                        MessageRef) ->
     #erlcapnp_TestShortList{testVar1 =
-                                follow_tagged_struct_list_pointer(fun internal_decode_erlcapnp_TestBoringInteger/3,
-                                                                  VartestVar1,
-                                                                  MessageRef#message_ref{current_offset =
-                                                                                             MessageRef#message_ref.current_offset
-                                                                                             +
-                                                                                             0}),
+                                follow_struct_list_pointer(fun internal_decode_erlcapnp_TestBoringInteger/3,
+                                                           VartestVar1,
+                                                           MessageRef#message_ref{current_offset =
+                                                                                      MessageRef#message_ref.current_offset
+                                                                                      +
+                                                                                      0}),
                             testVar2 =
-                                follow_tagged_struct_list_pointer(fun internal_decode_erlcapnp_SimpleShortStruct/3,
-                                                                  VartestVar2,
-                                                                  MessageRef#message_ref{current_offset =
-                                                                                             MessageRef#message_ref.current_offset
-                                                                                             +
-                                                                                             1})};
+                                follow_struct_list_pointer(fun internal_decode_erlcapnp_SimpleShortStruct/3,
+                                                           VartestVar2,
+                                                           MessageRef#message_ref{current_offset =
+                                                                                      MessageRef#message_ref.current_offset
+                                                                                      +
+                                                                                      1})};
 internal_decode_erlcapnp_TestShortList(Data,
                                        Pointers,
                                        MessageRef = #message_ref{}) ->
@@ -2895,12 +2921,12 @@ internal_decode_erlcapnp_TestTextList(<<>>,
                                       <<VartestVar1:64/little-unsigned-integer>>,
                                       MessageRef) ->
     #erlcapnp_TestTextList{testVar1 =
-                               follow_tagged_struct_list_pointer(fun internal_decode_text/3,
-                                                                 VartestVar1,
-                                                                 MessageRef#message_ref{current_offset =
-                                                                                            MessageRef#message_ref.current_offset
-                                                                                            +
-                                                                                            0})};
+                               follow_struct_list_pointer(fun internal_decode_text/3,
+                                                          VartestVar1,
+                                                          MessageRef#message_ref{current_offset =
+                                                                                     MessageRef#message_ref.current_offset
+                                                                                     +
+                                                                                     0})};
 internal_decode_erlcapnp_TestTextList(Data,
                                       Pointers,
                                       MessageRef = #message_ref{}) ->
