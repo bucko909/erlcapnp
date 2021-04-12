@@ -533,18 +533,44 @@ generate_follow_struct_list_pointer() ->
 -ast_forms_function(#{name => ast_follow_struct_list_pointer}).
 	follow_struct_list_pointer(_DecodeFun, 0, _MessageRef) ->
 		undefined;
-	follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef) when PointerInt band 3 == 1 ->
+	follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
+			when PointerInt band 3 == 1 andalso (PointerInt bsr 32) band 7 >= 5 ->
 		PointerOffset = case PointerInt band (1 bsl 31) of
 			0 -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) + 1;
 			_ -> ((PointerInt bsr 2) band (1 bsl 30 - 1)) - (1 bsl 30) + 1
 		end,
+		LengthFromPointer = (PointerInt bsr 35) band (1 bsl 29 - 1),
 		NewOffset = MessageRef#message_ref.current_offset + PointerOffset,
-		SkipBits = NewOffset bsl 6,
-		<<_:SkipBits, Tag:64/little-unsigned-integer, _/binary>> = MessageRef#message_ref.current_segment,
-		Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
-		DWords = (Tag bsr 32) band (1 bsl 16 - 1),
-		PWords = (Tag bsr 48) band (1 bsl 16 - 1),
-		decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=NewOffset+1});
+		case (PointerInt bsr 32) band 7 of
+			5 ->
+				% Pointer to a list of primitive words. Treat like a list of
+				% structs with a single data word.
+				Length = LengthFromPointer,
+				DWords = 1,
+				PWords = 0,
+				ListStartOffset = NewOffset;
+			6 ->
+				% Pointer to a list of pointers. Treat like a list of structs
+				% with a single pointer word.
+				Length = LengthFromPointer,
+				DWords = 0,
+				PWords = 1,
+				ListStartOffset = NewOffset;
+			7 ->
+				% Tagged struct list. Decode the tag.
+				SkipBits = NewOffset bsl 6,
+				<<_:SkipBits, Tag:64/little-unsigned-integer, _/binary>> = MessageRef#message_ref.current_segment,
+				0 = (Tag band 3), % Sanity check.
+				Length = ((Tag bsr 2) band (1 bsl 30 - 1)),
+				DWords = (Tag bsr 32) band (1 bsl 16 - 1),
+				PWords = (Tag bsr 48) band (1 bsl 16 - 1),
+				LengthFromPointer = Length * (DWords + PWords), % Sanity check
+				ListStartOffset = NewOffset + 1
+		end,
+		decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef#message_ref{current_offset=ListStartOffset});
+	follow_struct_list_pointer(_DecodeFun, PointerInt, _MessageRef)
+			when PointerInt band 3 == 1 andalso (PointerInt bsr 32) band 7 < 5 ->
+		erlang:error({not_supported, "cannot currently decode List(struct {}) which is stored as a list of subword values"});
 	follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef=#message_ref{}) when PointerInt band 3 == 2 ->
 		{NewPointerInt, NewMessageRef} = decode_far_pointer(PointerInt, MessageRef),
 		follow_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
