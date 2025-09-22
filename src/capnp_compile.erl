@@ -1257,8 +1257,10 @@ encoder(#native_type{type=integer}, 0, Var, _Line) ->
 	Var;
 encoder(#native_type{type=integer}, Default, Var, Line) ->
 	ast(quote(Var) bxor quote({integer, Line, Default}));
-encoder(#native_type{type=float}, 0.0, Var, _Line) ->
-	Var;
+encoder(#native_type{type=float, width=32}, _Default=+0.0, Var, _Line) ->
+	ast(<<(quote(Var)):32/little-float>>);
+encoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line) ->
+	ast(<<(quote(Var)):64/little-float>>);
 encoder(#native_type{type=boolean}, false, Var, _Line) ->
 	ast(case quote(Var) of false -> 0; true -> 1 end);
 encoder(#native_type{type=boolean}, true, Var, _Line) ->
@@ -1278,9 +1280,14 @@ decoder(#native_type{type=integer}, 0, Var, _Line, _MessageRef, _Schema) ->
 	Var;
 decoder(#native_type{type=integer}, Default, Var, Line, _MessageRef, _Schema) ->
 	ast(quote(Var) bxor quote({integer, Line, Default}));
-decoder(#native_type{type=float}, 0.0, Var, _Line, _MessageRef, _Schema) ->
-	% TODO nonzero defaults. They are ugly!
-	Var;
+decoder(#native_type{type=float, width=32}, _Default=+0.0, Var, _Line, _MessageRef, _Schema) ->
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:32/little-float>>) -> Tmp end)(quote(Var)));
+decoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line, _MessageRef, _Schema) ->
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:64/little-float>>) -> Tmp end)(quote(Var)));
 decoder(#native_type{type=boolean}, Default, Var, Line, _MessageRef, _Schema) ->
 	ZeroValue = {atom, Line, Default},
 	OneValue = {atom, Line, not Default},

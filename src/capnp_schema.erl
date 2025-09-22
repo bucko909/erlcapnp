@@ -2613,7 +2613,7 @@ encode_Value({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
             {281483566645248, 3, 0,
              <<10:16/little-unsigned-integer,
                0:16/integer,
-               Var:32/little-float,
+               <<Var:32/little-float>>:32/bitstring,
                0:64/integer,
                0:64/integer>>,
              []};
@@ -2621,7 +2621,7 @@ encode_Value({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
             {281483566645248, 3, 0,
              <<11:16/little-unsigned-integer,
                0:48/integer,
-               Var:64/little-float,
+               <<Var:64/little-float>>:64/bitstring,
                0:64/integer>>,
              []};
         text ->
@@ -4521,11 +4521,17 @@ internal_decode_Value(Data =
             <<_:64,Var:64/little-unsigned-integer,_/bitstring>> = Data,
             {uint64, Var};
         10 ->
-            <<_:32,Var:32/little-float,_/bitstring>> = Data,
-            {float32, Var};
+            <<_:32,Var:32/bitstring,_/bitstring>> = Data,
+            {float32,
+             fun(<<Tmp:32/little-float>>) ->
+                    Tmp
+             end(Var)};
         11 ->
-            <<_:64,Var:64/little-float,_/bitstring>> = Data,
-            {float64, Var};
+            <<_:64,Var:64/bitstring,_/bitstring>> = Data,
+            {float64,
+             fun(<<Tmp:64/little-float>>) ->
+                    Tmp
+             end(Var)};
         12 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
