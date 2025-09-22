@@ -327,7 +327,11 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 		fun
 			({'$uberpt_quote', DataMatcher}, {'$uberpt_quote', PointerMatcher}, {'$uberpt_quote', MessageRefVar}) ->
 				quote(Decoder);
-			(Data, Pointers, MessageRef=#message_ref{}) ->
+			% It's important to check lengths here as if a mistake in the
+			% matches results in input data that falls through, the code will
+			% infinite loop. This clause _must_ only trigger on messages of
+			% unexpected pointer/data size.
+			(Data, Pointers, MessageRef=#message_ref{}) when byte_size(Data) /= quote({integer, Line, DWords * 8}); byte_size(Pointers) /= quote({integer, Line, PWords * 8}) ->
 				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
 				if
 					DataPadLength > 0 ->
