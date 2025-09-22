@@ -7,276 +7,242 @@
 -compile([export_all]).
 
 decode_Annotation(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Annotation/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Brand(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Brand/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Brand_Binding(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Brand_Binding/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Brand_Scope(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Brand_Scope/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 'decode_Brand_Scope.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun 'internal_decode_Brand_Scope.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_CodeGeneratorRequest(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_CodeGeneratorRequest/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_CodeGeneratorRequest_RequestedFile(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_CodeGeneratorRequest_RequestedFile_Import(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_CodeGeneratorRequest_RequestedFile_Import/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Enumerant(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Enumerant/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Field(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Field/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 'decode_Field.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun 'internal_decode_Field.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Field_group(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Field_group/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Field_ordinal(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Field_ordinal/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Field_slot(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Field_slot/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Method(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Method/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 'decode_Node.'(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun 'internal_decode_Node.'/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_NestedNode(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_NestedNode/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_Parameter(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_Parameter/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_annotation(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_annotation/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_const(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_const/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_enum(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_enum/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_interface(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_interface/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Node_struct(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Node_struct/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Superclass(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Superclass/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_anyPointer(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_anyPointer/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_anyPointer_implicitMethodParameter(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_anyPointer_implicitMethodParameter/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_anyPointer_parameter(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_anyPointer_parameter/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_enum(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_enum/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_interface(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_interface/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_list(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_list/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Type_struct(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Type_struct/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_Value(Data) ->
-    {MessageRef,Ptr,Dregs} = decode_envelope(Data),
+    {MessageRef, Ptr, Dregs} = decode_envelope(Data),
     Decoded =
         follow_struct_pointer(fun internal_decode_Value/3,
-                              Ptr,
-                              MessageRef),
-    {Decoded,Dregs}.
+                              Ptr, MessageRef),
+    {Decoded, Dregs}.
 
 decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
     SegLengthLength = RawSegCount + 1 bsr 1 bsl 1 + 1 bsl 2,
@@ -287,20 +253,19 @@ decode_envelope(<<RawSegCount:32/little-unsigned-integer,Rest/binary>>) ->
              <<X:32/little-unsigned-integer>> <= SegLengthData,
              X > 0
         ],
-    {SegsR,Dregs} =
-        lists:foldl(fun(Length, {SplitSegs,Data}) ->
+    {SegsR, Dregs} =
+        lists:foldl(fun(Length, {SplitSegs, Data}) ->
                            <<Seg:Length/binary,Remain/binary>> = Data,
-                           {[Seg|SplitSegs],Remain}
+                           {[Seg | SplitSegs], Remain}
                     end,
-                    {[],SegData},
+                    {[], SegData},
                     SegLengths),
     Segs = lists:reverse(SegsR),
     <<Ptr:64/little-unsigned-integer,_/binary>> = hd(Segs),
     {#message_ref{current_offset = 0,
                   current_segment = hd(Segs),
                   segments = list_to_tuple(Segs)},
-     Ptr,
-     Dregs}.
+     Ptr, Dregs}.
 
 decode_far_pointer(PointerInt,
                    MessageRef = #message_ref{segments = Segments})
@@ -332,7 +297,7 @@ decode_far_pointer(PointerInt,
                                        current_offset =
                                            SecondPointerOffset - 1}
     end,
-    {NewPointerInt,NewMessageRef}.
+    {NewPointerInt, NewMessageRef}.
 
 decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     Offset = MessageRef#message_ref.current_offset,
@@ -341,15 +306,14 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
     Words = DWords + PWords,
     DBits = DWords * 64,
     PBits = PWords * 64,
-    {_,ListR} =
-        lists:foldl(fun(N, {OldRest,Acc}) ->
+    {_, ListR} =
+        lists:foldl(fun(N, {OldRest, Acc}) ->
                            <<ThisData:DBits/bitstring,
                              ThisPointers:PBits/bitstring,
                              NewRest/binary>> =
                                OldRest,
                            New =
-                               DecodeFun(ThisData,
-                                         ThisPointers,
+                               DecodeFun(ThisData, ThisPointers,
                                          MessageRef#message_ref{current_offset =
                                                                     Offset
                                                                     +
@@ -358,9 +322,9 @@ decode_struct_list(DecodeFun, Length, DWords, PWords, MessageRef) ->
                                                                     Words
                                                                     *
                                                                     N}),
-                           {NewRest,[New|Acc]}
+                           {NewRest, [New | Acc]}
                     end,
-                    {Rest,[]},
+                    {Rest, []},
                     lists:seq(0, Length - 1)),
     lists:reverse(ListR).
 
@@ -368,7 +332,7 @@ encode_Annotation(#'Annotation'{id = Varid,
                                 value = Varvalue,
                                 brand = Varbrand},
                   PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntvalue,MainLenvalue,ExtraLenvalue,Data1,Extra1} =
+    {ZeroOffsetPtrIntvalue, MainLenvalue, ExtraLenvalue, Data1, Extra1} =
         encode_Value(Varvalue, 0),
     Ptrvalue =
         case ZeroOffsetPtrIntvalue of
@@ -379,7 +343,7 @@ encode_Annotation(#'Annotation'{id = Varid,
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenvalue + ExtraLenvalue,
-    {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data2,Extra2} =
+    {ZeroOffsetPtrIntbrand, MainLenbrand, ExtraLenbrand, Data2, Extra2} =
         encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
@@ -390,39 +354,36 @@ encode_Annotation(#'Annotation'{id = Varid,
         end,
     PtrOffsetWordsFromEnd2 =
         PtrOffsetWordsFromEnd1 + MainLenbrand + ExtraLenbrand,
-    {562954248388608,
-     3,
+    {562954248388608, 3,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<Varid:64/little-unsigned-integer,
        Ptrvalue:64/little-unsigned-integer,
        Ptrbrand:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_Annotation(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Annotation({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Annotation({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                   ExtraData},
                   0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
     case Varscopes of
         _ when is_list(Varscopes) ->
             DataLenscopes = length(Varscopes),
-            {FinalOffsetscopes,Data1,Extra1} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281483566645248,
-                                    3,
-                                    ExtraLenscopes,
-                                    ThisBody,
-                                    ThisExtra} =
+            {FinalOffsetscopes, Data1, Extra1} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281483566645248, 3, ExtraLenscopes,
+                                    ThisBody, ThisExtra} =
                                        encode_Brand_Scope(Element,
                                                           Offset - 3),
                                    {ExtraLenscopes + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenscopes * 3,
                              [<<(DataLenscopes bsl 2 + 281483566645248):64/unsigned-little-integer>>],
@@ -437,12 +398,13 @@ encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
                 PtrOffsetWordsFromEnd0 + 1 + DataLenscopes * 3
                 +
                 FinalOffsetscopes;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrscopes = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-        {PointerAsInt1scopes,MainLenscopes,ExtraLenscopes,Data1,Extra1} ->
+        {PointerAsInt1scopes, MainLenscopes, ExtraLenscopes, Data1,
+         Extra1} ->
             Ptrscopes =
                 PointerAsInt1scopes
                 bor
@@ -455,30 +417,28 @@ encode_Brand(#'Brand'{scopes = Varscopes}, PtrOffsetWordsFromEnd0) ->
             Ptrscopes = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {281474976710656,
-     1,
+    {281474976710656, 1,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Ptrscopes:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Brand(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Brand({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    {0, 0, 0, [], []};
+encode_Brand({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData},
+             0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Brand_Binding({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+encode_Brand_Binding({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         unbound ->
-            {281479271677952,
-             2,
-             0,
+            {281479271677952, 2, 0,
              <<0:16/little-unsigned-integer,0:48/integer,0:64/integer>>,
              []};
         type ->
-            {ZeroOffsetPtrInt,MainLen,ExtraLen,Data1,Extra1} =
+            {ZeroOffsetPtrInt, MainLen, ExtraLen, Data1, Extra1} =
                 encode_Type(Var, 0),
             Ptr =
                 case ZeroOffsetPtrInt of
@@ -491,67 +451,60 @@ encode_Brand_Binding({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                 end,
             PtrOffsetWordsFromEnd1 =
                 PtrOffsetWordsFromEnd0 + MainLen + ExtraLen,
-            {281479271677952,
-             2,
+            {281479271677952, 2,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<1:16/little-unsigned-integer,
                0:48/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]}
+             [Data1, Extra1]}
     end.
 
-encode_Brand_Scope(#'Brand_Scope'{scopeId = VarscopeId,'' = Var},
+encode_Brand_Scope(#'Brand_Scope'{scopeId = VarscopeId, '' = Var},
                    PtrOffsetWordsFromEnd0) ->
     <<NoGroupBodyDataAsInt:192/integer>> =
         <<VarscopeId:64/little-unsigned-integer,
           0:64/integer,
           0:64/integer>>,
-    {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
+    {_ZeroOffsetPtrInt, _NewBodyLen, ExtraDataLen, BodyData, ExtraData} =
         'encode_Brand_Scope.'(Var,
                               PtrOffsetWordsFromEnd0
                               -
                               PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:192/integer>> = BodyData,
-    {281483566645248,
-     3,
+    {281483566645248, 3,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0 + ExtraDataLen,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):192/integer>>,
-     [[]|ExtraData]};
+     [[] | ExtraData]};
 encode_Brand_Scope(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Brand_Scope({ZeroOffsetPtrInt,
-                    MainLen,
-                    ExtraLen,
-                    MainData,
+    {0, 0, 0, [], []};
+encode_Brand_Scope({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                     ExtraData},
                    0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-'encode_Brand_Scope.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+'encode_Brand_Scope.'({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         bind ->
             case Var of
                 _ when is_list(Var) ->
                     DataLen = length(Var),
-                    {FinalOffset,Data1,Extra1} =
+                    {FinalOffset, Data1, Extra1} =
                         lists:foldl(fun(Element,
-                                        {Offset,DataAcc,ExtraAcc}) ->
-                                           {281479271677952,
-                                            2,
-                                            ExtraLen,
-                                            ThisBody,
+                                        {Offset, DataAcc, ExtraAcc}) ->
+                                           {281479271677952, 2,
+                                            ExtraLen, ThisBody,
                                             ThisExtra} =
                                                encode_Brand_Binding(Element,
                                                                     Offset
                                                                     -
                                                                     2),
                                            {ExtraLen + Offset - 2,
-                                            [DataAcc,ThisBody],
-                                            [ExtraAcc|ThisExtra]}
+                                            [DataAcc, ThisBody],
+                                            [ExtraAcc | ThisExtra]}
                                     end,
                                     {DataLen * 2,
                                      [<<(DataLen bsl 2 + 281479271677952):64/unsigned-little-integer>>],
@@ -568,12 +521,12 @@ encode_Brand_Scope({ZeroOffsetPtrInt,
                         PtrOffsetWordsFromEnd0 + 1 + DataLen * 2
                         +
                         FinalOffset;
-                {0,0,0,_,_} ->
+                {0, 0, 0, _, _} ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                {PointerAsInt1, MainLen, ExtraLen, Data1, Extra1} ->
                     Ptr =
                         PointerAsInt1
                         bor
@@ -586,18 +539,15 @@ encode_Brand_Scope({ZeroOffsetPtrInt,
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<0:64/integer,
                0:16/little-unsigned-integer,
                0:48/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         inherit ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<case Var of
                    undefined ->
                        0
@@ -616,17 +566,14 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
     case Varnodes of
         _ when is_list(Varnodes) ->
             DataLennodes = length(Varnodes),
-            {FinalOffsetnodes,Data1,Extra1} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {1688871335100416,
-                                    11,
-                                    ExtraLennodes,
-                                    ThisBody,
-                                    ThisExtra} =
+            {FinalOffsetnodes, Data1, Extra1} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {1688871335100416, 11, ExtraLennodes,
+                                    ThisBody, ThisExtra} =
                                        encode_Node(Element, Offset - 11),
                                    {ExtraLennodes + Offset - 11,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLennodes * 11,
                              [<<(DataLennodes bsl 2 + 1688871335100416):64/unsigned-little-integer>>],
@@ -641,12 +588,12 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
                 PtrOffsetWordsFromEnd0 + 1 + DataLennodes * 11
                 +
                 FinalOffsetnodes;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrnodes = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-        {PointerAsInt1nodes,MainLennodes,ExtraLennodes,Data1,Extra1} ->
+        {PointerAsInt1nodes, MainLennodes, ExtraLennodes, Data1, Extra1} ->
             Ptrnodes =
                 PointerAsInt1nodes
                 bor
@@ -662,20 +609,18 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
     case VarrequestedFiles of
         _ when is_list(VarrequestedFiles) ->
             DataLenrequestedFiles = length(VarrequestedFiles),
-            {FinalOffsetrequestedFiles,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenrequestedFiles,
-                                    ThisBody,
+            {FinalOffsetrequestedFiles, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenrequestedFiles, ThisBody,
                                     ThisExtra} =
                                        encode_CodeGeneratorRequest_RequestedFile(Element,
                                                                                  Offset
                                                                                  -
                                                                                  3),
                                    {ExtraLenrequestedFiles + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenrequestedFiles * 3,
                              [<<(DataLenrequestedFiles bsl 2
@@ -692,16 +637,13 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenrequestedFiles * 3
                 +
                 FinalOffsetrequestedFiles;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             PtrrequestedFiles = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1requestedFiles,
-         MainLenrequestedFiles,
-         ExtraLenrequestedFiles,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1requestedFiles, MainLenrequestedFiles,
+         ExtraLenrequestedFiles, Data2, Extra2} ->
             PtrrequestedFiles =
                 PointerAsInt1requestedFiles
                 bor
@@ -716,25 +658,21 @@ encode_CodeGeneratorRequest(#'CodeGeneratorRequest'{nodes = Varnodes,
             PtrrequestedFiles = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    {562949953421312,
-     2,
+    {562949953421312, 2,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<Ptrnodes:64/little-unsigned-integer,
        PtrrequestedFiles:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_CodeGeneratorRequest(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_CodeGeneratorRequest({ZeroOffsetPtrInt,
-                             MainLen,
-                             ExtraLen,
-                             MainData,
-                             ExtraData},
+    {0, 0, 0, [], []};
+encode_CodeGeneratorRequest({ZeroOffsetPtrInt, MainLen, ExtraLen,
+                             MainData, ExtraData},
                             0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{id =
                                                                                     Varid,
@@ -750,7 +688,7 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
             Data1 =
                 [Varfilename,
                  <<0:8,
-                   0:(- DataLenfilename band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenfilename band 7 * 8)/unsigned-little-integer>>],
             Ptrfilename =
                 1 bor (PtrOffsetWordsFromEnd0 + 1 bsl 2) bor (2 bsl 32)
                 bor
@@ -766,20 +704,17 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
     case Varimports of
         _ when is_list(Varimports) ->
             DataLenimports = length(Varimports),
-            {FinalOffsetimports,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281479271677952,
-                                    2,
-                                    ExtraLenimports,
-                                    ThisBody,
-                                    ThisExtra} =
+            {FinalOffsetimports, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281479271677952, 2, ExtraLenimports,
+                                    ThisBody, ThisExtra} =
                                        encode_CodeGeneratorRequest_RequestedFile_Import(Element,
                                                                                         Offset
                                                                                         -
                                                                                         2),
                                    {ExtraLenimports + Offset - 2,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenimports * 2,
                              [<<(DataLenimports bsl 2 + 281479271677952):64/unsigned-little-integer>>],
@@ -794,15 +729,12 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
                 PtrOffsetWordsFromEnd1 + 1 + DataLenimports * 2
                 +
                 FinalOffsetimports;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrimports = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1imports,
-         MainLenimports,
-         ExtraLenimports,
-         Data2,
+        {PointerAsInt1imports, MainLenimports, ExtraLenimports, Data2,
          Extra2} ->
             Ptrimports =
                 PointerAsInt1imports
@@ -818,27 +750,24 @@ encode_CodeGeneratorRequest_RequestedFile(#'CodeGeneratorRequest_RequestedFile'{
             Ptrimports = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    {562954248388608,
-     3,
+    {562954248388608, 3,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<Varid:64/little-unsigned-integer,
        Ptrfilename:64/little-unsigned-integer,
        Ptrimports:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_CodeGeneratorRequest_RequestedFile(undefined,
                                           _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_CodeGeneratorRequest_RequestedFile({ZeroOffsetPtrInt,
-                                           MainLen,
-                                           ExtraLen,
-                                           MainData,
+    {0, 0, 0, [], []};
+encode_CodeGeneratorRequest_RequestedFile({ZeroOffsetPtrInt, MainLen,
+                                           ExtraLen, MainData,
                                            ExtraData},
                                           0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_CodeGeneratorRequest_RequestedFile_Import(#'CodeGeneratorRequest_RequestedFile_Import'{id =
                                                                                                   Varid,
@@ -852,7 +781,7 @@ encode_CodeGeneratorRequest_RequestedFile_Import(#'CodeGeneratorRequest_Requeste
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 0 bsl 2) bor (2 bsl 32)
                 bor
@@ -865,26 +794,23 @@ encode_CodeGeneratorRequest_RequestedFile_Import(#'CodeGeneratorRequest_Requeste
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {281479271677952,
-     2,
+    {281479271677952, 2,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Varid:64/little-unsigned-integer,
        Ptrname:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_CodeGeneratorRequest_RequestedFile_Import(undefined,
                                                  _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
+    {0, 0, 0, [], []};
 encode_CodeGeneratorRequest_RequestedFile_Import({ZeroOffsetPtrInt,
-                                                  MainLen,
-                                                  ExtraLen,
-                                                  MainData,
-                                                  ExtraData},
+                                                  MainLen, ExtraLen,
+                                                  MainData, ExtraData},
                                                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
                               name = Varname,
@@ -897,7 +823,7 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 1 bsl 2) bor (2 bsl 32)
                 bor
@@ -913,18 +839,16 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
     case Varannotations of
         _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
-            {FinalOffsetannotations,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenannotations,
-                                    ThisBody,
+            {FinalOffsetannotations, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenannotations, ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
                                    {ExtraLenannotations + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenannotations * 3,
                              [<<(DataLenannotations bsl 2
@@ -941,16 +865,13 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1annotations,
-         MainLenannotations,
-         ExtraLenannotations,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1annotations, MainLenannotations,
+         ExtraLenannotations, Data2, Extra2} ->
             Ptrannotations =
                 PointerAsInt1annotations
                 bor
@@ -965,23 +886,23 @@ encode_Enumerant(#'Enumerant'{codeOrder = VarcodeOrder,
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    {562954248388608,
-     3,
+    {562954248388608, 3,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<VarcodeOrder:16/little-unsigned-integer,
        0:48/integer,
        Ptrname:64/little-unsigned-integer,
        Ptrannotations:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_Enumerant(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Enumerant({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Enumerant({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                  ExtraData},
                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Field(#'Field'{codeOrder = VarcodeOrder,
                       discriminantValue = VardiscriminantValue,
@@ -997,7 +918,7 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 3 bsl 2) bor (2 bsl 32)
                 bor
@@ -1013,18 +934,16 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
     case Varannotations of
         _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
-            {FinalOffsetannotations,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenannotations,
-                                    ThisBody,
+            {FinalOffsetannotations, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenannotations, ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
                                    {ExtraLenannotations + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenannotations * 3,
                              [<<(DataLenannotations bsl 2
@@ -1041,16 +960,13 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1annotations,
-         MainLenannotations,
-         ExtraLenannotations,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1annotations, MainLenannotations,
+         ExtraLenannotations, Data2, Extra2} ->
             Ptrannotations =
                 PointerAsInt1annotations
                 bor
@@ -1072,15 +988,12 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
           Ptrname:64/little-unsigned-integer,
           Ptrannotations:64/little-unsigned-integer,
           0:128/integer>>,
-    {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
+    {_ZeroOffsetPtrInt, _NewBodyLen, ExtraDataLen, BodyData, ExtraData} =
         'encode_Field.'(Var,
                         PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:448/integer>> = BodyData,
-    {_ZeroOffsetPtrIntordinal,
-     _NewBodyLenordinal,
-     ExtraDataLenordinal,
-     BodyDataordinal,
-     ExtraDataordinal} =
+    {_ZeroOffsetPtrIntordinal, _NewBodyLenordinal, ExtraDataLenordinal,
+     BodyDataordinal, ExtraDataordinal} =
         encode_Field_ordinal(Varordinal,
                              PtrOffsetWordsFromEnd2
                              -
@@ -1088,42 +1001,36 @@ encode_Field(#'Field'{codeOrder = VarcodeOrder,
                              +
                              ExtraDataLen),
     <<BodyDataAsIntFromordinal:448/integer>> = BodyDataordinal,
-    {1125912791744512,
-     7,
+    {1125912791744512, 7,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0 + ExtraDataLen
      +
      ExtraDataLenordinal,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom
         bor
         BodyDataAsIntFromordinal):448/integer>>,
-     [[[Data1,Extra1,Data2,Extra2]|ExtraData]|ExtraDataordinal]};
+     [[[Data1, Extra1, Data2, Extra2] | ExtraData] | ExtraDataordinal]};
 encode_Field(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Field({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    {0, 0, 0, [], []};
+encode_Field({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData},
+             0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-'encode_Field.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+'encode_Field.'({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         slot ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:448/little-unsigned-integer>>,
              ExtraData} =
                 encode_Field_slot(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (0 bsl 64)):448/little-unsigned-integer>>,
              ExtraData};
         group ->
-            {1125912791744512,
-             7,
-             0,
+            {1125912791744512, 7, 0,
              <<0:64/integer,
                1:16/little-unsigned-integer,
                0:48/integer,
@@ -1134,31 +1041,25 @@ encode_Field({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
 
 encode_Field_group(#'Field_group'{typeId = VartypeId},
                    PtrOffsetWordsFromEnd0) ->
-    {1125912791744512,
-     7,
+    {1125912791744512, 7,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
      <<0:128/integer,VartypeId:64/little-unsigned-integer,0:256/integer>>,
      []};
 encode_Field_group(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Field_group({ZeroOffsetPtrInt,
-                    MainLen,
-                    ExtraLen,
-                    MainData,
+    {0, 0, 0, [], []};
+encode_Field_group({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                     ExtraData},
                    0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Field_ordinal({VarDiscriminant,Var}, _PtrOffsetWordsFromEnd0) ->
+encode_Field_ordinal({VarDiscriminant, Var}, _PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         implicit ->
-            {1125912791744512,
-             7,
-             0,
+            {1125912791744512, 7, 0,
              <<case Var of
                    undefined ->
                        0
@@ -1169,9 +1070,7 @@ encode_Field_ordinal({VarDiscriminant,Var}, _PtrOffsetWordsFromEnd0) ->
                0:256/integer>>,
              []};
         explicit ->
-            {1125912791744512,
-             7,
-             0,
+            {1125912791744512, 7, 0,
              <<0:80/integer,
                1:16/little-unsigned-integer,
                Var:16/little-unsigned-integer,
@@ -1186,7 +1085,7 @@ encode_Field_slot(#'Field_slot'{offset = Varoffset,
                                 type = Vartype,
                                 defaultValue = VardefaultValue},
                   PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
+    {ZeroOffsetPtrInttype, MainLentype, ExtraLentype, Data1, Extra1} =
         encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
@@ -1197,11 +1096,8 @@ encode_Field_slot(#'Field_slot'{offset = Varoffset,
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLentype + ExtraLentype,
-    {ZeroOffsetPtrIntdefaultValue,
-     MainLendefaultValue,
-     ExtraLendefaultValue,
-     Data2,
-     Extra2} =
+    {ZeroOffsetPtrIntdefaultValue, MainLendefaultValue,
+     ExtraLendefaultValue, Data2, Extra2} =
         encode_Value(VardefaultValue, 0),
     PtrdefaultValue =
         case ZeroOffsetPtrIntdefaultValue of
@@ -1216,8 +1112,7 @@ encode_Field_slot(#'Field_slot'{offset = Varoffset,
         PtrOffsetWordsFromEnd1 + MainLendefaultValue
         +
         ExtraLendefaultValue,
-    {1125912791744512,
-     7,
+    {1125912791744512, 7,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<0:32/integer,
        Varoffset:32/little-unsigned-integer,
@@ -1232,16 +1127,17 @@ encode_Field_slot(#'Field_slot'{offset = Varoffset,
        0:128/integer,
        Ptrtype:64/little-unsigned-integer,
        PtrdefaultValue:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_Field_slot(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Field_slot({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Field_slot({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                   ExtraData},
                   0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Method(#'Method'{codeOrder = VarcodeOrder,
                         paramStructType = VarparamStructType,
@@ -1259,7 +1155,7 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 4 bsl 2) bor (2 bsl 32)
                 bor
@@ -1275,18 +1171,16 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
     case Varannotations of
         _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
-            {FinalOffsetannotations,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenannotations,
-                                    ThisBody,
+            {FinalOffsetannotations, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenannotations, ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
                                    {ExtraLenannotations + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenannotations * 3,
                              [<<(DataLenannotations bsl 2
@@ -1303,16 +1197,13 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
                 PtrOffsetWordsFromEnd1 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1annotations,
-         MainLenannotations,
-         ExtraLenannotations,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1annotations, MainLenannotations,
+         ExtraLenannotations, Data2, Extra2} ->
             Ptrannotations =
                 PointerAsInt1annotations
                 bor
@@ -1327,11 +1218,8 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    {ZeroOffsetPtrIntparamBrand,
-     MainLenparamBrand,
-     ExtraLenparamBrand,
-     Data3,
-     Extra3} =
+    {ZeroOffsetPtrIntparamBrand, MainLenparamBrand, ExtraLenparamBrand,
+     Data3, Extra3} =
         encode_Brand(VarparamBrand, 0),
     PtrparamBrand =
         case ZeroOffsetPtrIntparamBrand of
@@ -1344,11 +1232,8 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
         end,
     PtrOffsetWordsFromEnd3 =
         PtrOffsetWordsFromEnd2 + MainLenparamBrand + ExtraLenparamBrand,
-    {ZeroOffsetPtrIntresultBrand,
-     MainLenresultBrand,
-     ExtraLenresultBrand,
-     Data4,
-     Extra4} =
+    {ZeroOffsetPtrIntresultBrand, MainLenresultBrand,
+     ExtraLenresultBrand, Data4, Extra4} =
         encode_Brand(VarresultBrand, 0),
     PtrresultBrand =
         case ZeroOffsetPtrIntresultBrand of
@@ -1366,20 +1251,18 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
     case VarimplicitParameters of
         _ when is_list(VarimplicitParameters) ->
             DataLenimplicitParameters = length(VarimplicitParameters),
-            {FinalOffsetimplicitParameters,Data5,Extra5} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281474976710656,
-                                    1,
+            {FinalOffsetimplicitParameters, Data5, Extra5} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281474976710656, 1,
                                     ExtraLenimplicitParameters,
-                                    ThisBody,
-                                    ThisExtra} =
+                                    ThisBody, ThisExtra} =
                                        encode_Node_Parameter(Element,
                                                              Offset - 1),
                                    {ExtraLenimplicitParameters + Offset
                                     -
                                     1,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenimplicitParameters * 1,
                              [<<(DataLenimplicitParameters bsl 2
@@ -1399,16 +1282,13 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
                 DataLenimplicitParameters * 1
                 +
                 FinalOffsetimplicitParameters;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra5 = <<>>,
             Data5 = [],
             PtrimplicitParameters = 0,
             PtrOffsetWordsFromEnd5 = PtrOffsetWordsFromEnd4;
-        {PointerAsInt1implicitParameters,
-         MainLenimplicitParameters,
-         ExtraLenimplicitParameters,
-         Data5,
-         Extra5} ->
+        {PointerAsInt1implicitParameters, MainLenimplicitParameters,
+         ExtraLenimplicitParameters, Data5, Extra5} ->
             PtrimplicitParameters =
                 PointerAsInt1implicitParameters
                 bor
@@ -1423,8 +1303,7 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
             PtrimplicitParameters = 0,
             PtrOffsetWordsFromEnd5 = PtrOffsetWordsFromEnd4
     end,
-    {1407387768455168,
-     8,
+    {1407387768455168, 8,
      PtrOffsetWordsFromEnd5 - PtrOffsetWordsFromEnd0,
      <<VarcodeOrder:16/little-unsigned-integer,
        0:48/integer,
@@ -1435,15 +1314,17 @@ encode_Method(#'Method'{codeOrder = VarcodeOrder,
        PtrparamBrand:64/little-unsigned-integer,
        PtrresultBrand:64/little-unsigned-integer,
        PtrimplicitParameters:64/little-unsigned-integer>>,
-     [Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4,Data5,Extra5]};
+     [Data1, Extra1, Data2, Extra2, Data3, Extra3, Data4, Extra4, Data5,
+      Extra5]};
 encode_Method(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Method({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    {0, 0, 0, [], []};
+encode_Method({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData},
+              0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node(#'Node'{id = Varid,
                     displayNamePrefixLength = VardisplayNamePrefixLength,
@@ -1462,7 +1343,7 @@ encode_Node(#'Node'{id = Varid,
             Data1 =
                 [VardisplayName,
                  <<0:8,
-                   0:(- DataLendisplayName band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLendisplayName band 7 * 8)/unsigned-little-integer>>],
             PtrdisplayName =
                 1 bor (PtrOffsetWordsFromEnd0 + 5 bsl 2) bor (2 bsl 32)
                 bor
@@ -1478,18 +1359,16 @@ encode_Node(#'Node'{id = Varid,
     case VarnestedNodes of
         _ when is_list(VarnestedNodes) ->
             DataLennestedNodes = length(VarnestedNodes),
-            {FinalOffsetnestedNodes,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281479271677952,
-                                    2,
-                                    ExtraLennestedNodes,
-                                    ThisBody,
+            {FinalOffsetnestedNodes, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281479271677952, 2,
+                                    ExtraLennestedNodes, ThisBody,
                                     ThisExtra} =
                                        encode_Node_NestedNode(Element,
                                                               Offset - 2),
                                    {ExtraLennestedNodes + Offset - 2,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLennestedNodes * 2,
                              [<<(DataLennestedNodes bsl 2
@@ -1506,16 +1385,13 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd1 + 1 + DataLennestedNodes * 2
                 +
                 FinalOffsetnestedNodes;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             PtrnestedNodes = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1nestedNodes,
-         MainLennestedNodes,
-         ExtraLennestedNodes,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1nestedNodes, MainLennestedNodes,
+         ExtraLennestedNodes, Data2, Extra2} ->
             PtrnestedNodes =
                 PointerAsInt1nestedNodes
                 bor
@@ -1533,18 +1409,16 @@ encode_Node(#'Node'{id = Varid,
     case Varannotations of
         _ when is_list(Varannotations) ->
             DataLenannotations = length(Varannotations),
-            {FinalOffsetannotations,Data3,Extra3} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenannotations,
-                                    ThisBody,
+            {FinalOffsetannotations, Data3, Extra3} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenannotations, ThisBody,
                                     ThisExtra} =
                                        encode_Annotation(Element,
                                                          Offset - 3),
                                    {ExtraLenannotations + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenannotations * 3,
                              [<<(DataLenannotations bsl 2
@@ -1561,16 +1435,13 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd2 + 1 + DataLenannotations * 3
                 +
                 FinalOffsetannotations;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra3 = <<>>,
             Data3 = [],
             Ptrannotations = 0,
             PtrOffsetWordsFromEnd3 = PtrOffsetWordsFromEnd2;
-        {PointerAsInt1annotations,
-         MainLenannotations,
-         ExtraLenannotations,
-         Data3,
-         Extra3} ->
+        {PointerAsInt1annotations, MainLenannotations,
+         ExtraLenannotations, Data3, Extra3} ->
             Ptrannotations =
                 PointerAsInt1annotations
                 bor
@@ -1588,18 +1459,16 @@ encode_Node(#'Node'{id = Varid,
     case Varparameters of
         _ when is_list(Varparameters) ->
             DataLenparameters = length(Varparameters),
-            {FinalOffsetparameters,Data4,Extra4} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281474976710656,
-                                    1,
-                                    ExtraLenparameters,
-                                    ThisBody,
+            {FinalOffsetparameters, Data4, Extra4} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281474976710656, 1,
+                                    ExtraLenparameters, ThisBody,
                                     ThisExtra} =
                                        encode_Node_Parameter(Element,
                                                              Offset - 1),
                                    {ExtraLenparameters + Offset - 1,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenparameters * 1,
                              [<<(DataLenparameters bsl 2
@@ -1616,16 +1485,13 @@ encode_Node(#'Node'{id = Varid,
                 PtrOffsetWordsFromEnd3 + 1 + DataLenparameters * 1
                 +
                 FinalOffsetparameters;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra4 = <<>>,
             Data4 = [],
             Ptrparameters = 0,
             PtrOffsetWordsFromEnd4 = PtrOffsetWordsFromEnd3;
-        {PointerAsInt1parameters,
-         MainLenparameters,
-         ExtraLenparameters,
-         Data4,
-         Extra4} ->
+        {PointerAsInt1parameters, MainLenparameters, ExtraLenparameters,
+         Data4, Extra4} ->
             Ptrparameters =
                 PointerAsInt1parameters
                 bor
@@ -1658,30 +1524,29 @@ encode_Node(#'Node'{id = Varid,
           Ptrannotations:64/little-unsigned-integer,
           0:128/integer,
           Ptrparameters:64/little-unsigned-integer>>,
-    {_ZeroOffsetPtrInt,_NewBodyLen,ExtraDataLen,BodyData,ExtraData} =
+    {_ZeroOffsetPtrInt, _NewBodyLen, ExtraDataLen, BodyData, ExtraData} =
         'encode_Node.'(Var,
                        PtrOffsetWordsFromEnd4 - PtrOffsetWordsFromEnd0),
     <<BodyDataAsIntFrom:704/integer>> = BodyData,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd4 - PtrOffsetWordsFromEnd0 + ExtraDataLen,
      <<(NoGroupBodyDataAsInt bor BodyDataAsIntFrom):704/integer>>,
-     [[Data1,Extra1,Data2,Extra2,Data3,Extra3,Data4,Extra4]|ExtraData]};
+     [[Data1, Extra1, Data2, Extra2, Data3, Extra3, Data4, Extra4] |
+      ExtraData]};
 encode_Node(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
+    {0, 0, 0, [], []};
+encode_Node({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData},
+            0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-'encode_Node.'({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+'encode_Node.'({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         file ->
-            {1688871335100416,
-             11,
-             0,
+            {1688871335100416, 11, 0,
              <<case Var of
                    undefined ->
                        0
@@ -1692,36 +1557,30 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
                0:384/integer>>,
              []};
         struct ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
                 encode_Node_struct(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (1 bsl 96)):704/little-unsigned-integer>>,
              ExtraData};
         enum ->
             case Var of
                 _ when is_list(Var) ->
                     DataLen = length(Var),
-                    {FinalOffset,Data1,Extra1} =
+                    {FinalOffset, Data1, Extra1} =
                         lists:foldl(fun(Element,
-                                        {Offset,DataAcc,ExtraAcc}) ->
-                                           {562954248388608,
-                                            3,
-                                            ExtraLen,
-                                            ThisBody,
+                                        {Offset, DataAcc, ExtraAcc}) ->
+                                           {562954248388608, 3,
+                                            ExtraLen, ThisBody,
                                             ThisExtra} =
                                                encode_Enumerant(Element,
                                                                 Offset
                                                                 -
                                                                 3),
                                            {ExtraLen + Offset - 3,
-                                            [DataAcc,ThisBody],
-                                            [ExtraAcc|ThisExtra]}
+                                            [DataAcc, ThisBody],
+                                            [ExtraAcc | ThisExtra]}
                                     end,
                                     {DataLen * 3,
                                      [<<(DataLen bsl 2 + 562954248388608):64/unsigned-little-integer>>],
@@ -1738,12 +1597,12 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
                         PtrOffsetWordsFromEnd0 + 1 + DataLen * 3
                         +
                         FinalOffset;
-                {0,0,0,_,_} ->
+                {0, 0, 0, _, _} ->
                     Extra1 = <<>>,
                     Data1 = [],
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-                {PointerAsInt1,MainLen,ExtraLen,Data1,Extra1} ->
+                {PointerAsInt1, MainLen, ExtraLen, Data1, Extra1} ->
                     Ptr =
                         PointerAsInt1
                         bor
@@ -1756,8 +1615,7 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {1688871335100416,
-             11,
+            {1688871335100416, 11,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<0:96/integer,
                2:16/little-unsigned-integer,
@@ -1765,46 +1623,34 @@ encode_Node({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}, 0)
                0:192/integer,
                Ptr:64/little-unsigned-integer,
                0:128/integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         interface ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
                 encode_Node_interface(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (3 bsl 96)):704/little-unsigned-integer>>,
              ExtraData};
         const ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
                 encode_Node_const(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (4 bsl 96)):704/little-unsigned-integer>>,
              ExtraData};
         annotation ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:704/little-unsigned-integer>>,
              ExtraData} =
                 encode_Node_annotation(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (5 bsl 96)):704/little-unsigned-integer>>,
              ExtraData}
     end.
 
-encode_Node_NestedNode(#'Node_NestedNode'{id = Varid,name = Varname},
+encode_Node_NestedNode(#'Node_NestedNode'{id = Varid, name = Varname},
                        PtrOffsetWordsFromEnd0) ->
     if
         is_list(Varname);is_binary(Varname) ->
@@ -1813,7 +1659,7 @@ encode_Node_NestedNode(#'Node_NestedNode'{id = Varid,name = Varname},
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 0 bsl 2) bor (2 bsl 32)
                 bor
@@ -1826,25 +1672,21 @@ encode_Node_NestedNode(#'Node_NestedNode'{id = Varid,name = Varname},
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {281479271677952,
-     2,
+    {281479271677952, 2,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Varid:64/little-unsigned-integer,
        Ptrname:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Node_NestedNode(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_NestedNode({ZeroOffsetPtrInt,
-                        MainLen,
-                        ExtraLen,
-                        MainData,
+    {0, 0, 0, [], []};
+encode_Node_NestedNode({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                         ExtraData},
                        0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node_Parameter(#'Node_Parameter'{name = Varname},
                       PtrOffsetWordsFromEnd0) ->
@@ -1855,7 +1697,7 @@ encode_Node_Parameter(#'Node_Parameter'{name = Varname},
             Data1 =
                 [Varname,
                  <<0:8,
-                   0:(- DataLenname band 7 * 8)/unsigned-little-integer>>],
+                   0:(-DataLenname band 7 * 8)/unsigned-little-integer>>],
             Ptrname =
                 1 bor (PtrOffsetWordsFromEnd0 + 0 bsl 2) bor (2 bsl 32)
                 bor
@@ -1868,24 +1710,20 @@ encode_Node_Parameter(#'Node_Parameter'{name = Varname},
             Ptrname = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {281474976710656,
-     1,
+    {281474976710656, 1,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Ptrname:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Node_Parameter(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_Parameter({ZeroOffsetPtrInt,
-                       MainLen,
-                       ExtraLen,
-                       MainData,
+    {0, 0, 0, [], []};
+encode_Node_Parameter({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                        ExtraData},
                       0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
                                           targetsUnion = VartargetsUnion,
@@ -1906,7 +1744,7 @@ encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
                                               VartargetsInterface,
                                           type = Vartype},
                        PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
+    {ZeroOffsetPtrInttype, MainLentype, ExtraLentype, Data1, Extra1} =
         encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
@@ -1917,8 +1755,7 @@ encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLentype + ExtraLentype,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:112/integer,
        case VartargetsGroup of
@@ -1998,24 +1835,21 @@ encode_Node_annotation(#'Node_annotation'{targetsGroup = VartargetsGroup,
        0:192/integer,
        Ptrtype:64/little-unsigned-integer,
        0:128/integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Node_annotation(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_annotation({ZeroOffsetPtrInt,
-                        MainLen,
-                        ExtraLen,
-                        MainData,
+    {0, 0, 0, [], []};
+encode_Node_annotation({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                         ExtraData},
                        0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Node_const(#'Node_const'{type = Vartype,value = Varvalue},
+encode_Node_const(#'Node_const'{type = Vartype, value = Varvalue},
                   PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrInttype,MainLentype,ExtraLentype,Data1,Extra1} =
+    {ZeroOffsetPtrInttype, MainLentype, ExtraLentype, Data1, Extra1} =
         encode_Type(Vartype, 0),
     Ptrtype =
         case ZeroOffsetPtrInttype of
@@ -2026,7 +1860,7 @@ encode_Node_const(#'Node_const'{type = Vartype,value = Varvalue},
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLentype + ExtraLentype,
-    {ZeroOffsetPtrIntvalue,MainLenvalue,ExtraLenvalue,Data2,Extra2} =
+    {ZeroOffsetPtrIntvalue, MainLenvalue, ExtraLenvalue, Data2, Extra2} =
         encode_Value(Varvalue, 0),
     Ptrvalue =
         case ZeroOffsetPtrIntvalue of
@@ -2037,42 +1871,40 @@ encode_Node_const(#'Node_const'{type = Vartype,value = Varvalue},
         end,
     PtrOffsetWordsFromEnd2 =
         PtrOffsetWordsFromEnd1 + MainLenvalue + ExtraLenvalue,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<0:320/integer,
        0:192/integer,
        Ptrtype:64/little-unsigned-integer,
        Ptrvalue:64/little-unsigned-integer,
        0:64/integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_Node_const(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_const({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Node_const({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                   ExtraData},
                   0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
                  PtrOffsetWordsFromEnd0) ->
     case Varenumerants of
         _ when is_list(Varenumerants) ->
             DataLenenumerants = length(Varenumerants),
-            {FinalOffsetenumerants,Data1,Extra1} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {562954248388608,
-                                    3,
-                                    ExtraLenenumerants,
-                                    ThisBody,
+            {FinalOffsetenumerants, Data1, Extra1} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {562954248388608, 3,
+                                    ExtraLenenumerants, ThisBody,
                                     ThisExtra} =
                                        encode_Enumerant(Element,
                                                         Offset - 3),
                                    {ExtraLenenumerants + Offset - 3,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenenumerants * 3,
                              [<<(DataLenenumerants bsl 2
@@ -2089,16 +1921,13 @@ encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
                 PtrOffsetWordsFromEnd0 + 1 + DataLenenumerants * 3
                 +
                 FinalOffsetenumerants;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrenumerants = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-        {PointerAsInt1enumerants,
-         MainLenenumerants,
-         ExtraLenenumerants,
-         Data1,
-         Extra1} ->
+        {PointerAsInt1enumerants, MainLenenumerants, ExtraLenenumerants,
+         Data1, Extra1} ->
             Ptrenumerants =
                 PointerAsInt1enumerants
                 bor
@@ -2113,23 +1942,23 @@ encode_Node_enum(#'Node_enum'{enumerants = Varenumerants},
             Ptrenumerants = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:320/integer,
        0:192/integer,
        Ptrenumerants:64/little-unsigned-integer,
        0:128/integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Node_enum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_enum({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Node_enum({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                  ExtraData},
                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node_interface(#'Node_interface'{methods = Varmethods,
                                         superclasses = Varsuperclasses},
@@ -2137,18 +1966,16 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
     case Varmethods of
         _ when is_list(Varmethods) ->
             DataLenmethods = length(Varmethods),
-            {FinalOffsetmethods,Data1,Extra1} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {1407387768455168,
-                                    8,
-                                    ExtraLenmethods,
-                                    ThisBody,
+            {FinalOffsetmethods, Data1, Extra1} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {1407387768455168, 8,
+                                    ExtraLenmethods, ThisBody,
                                     ThisExtra} =
                                        encode_Method(Element,
                                                      Offset - 8),
                                    {ExtraLenmethods + Offset - 8,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenmethods * 8,
                              [<<(DataLenmethods bsl 2 + 1407387768455168):64/unsigned-little-integer>>],
@@ -2163,15 +1990,12 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
                 PtrOffsetWordsFromEnd0 + 1 + DataLenmethods * 8
                 +
                 FinalOffsetmethods;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrmethods = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-        {PointerAsInt1methods,
-         MainLenmethods,
-         ExtraLenmethods,
-         Data1,
+        {PointerAsInt1methods, MainLenmethods, ExtraLenmethods, Data1,
          Extra1} ->
             Ptrmethods =
                 PointerAsInt1methods
@@ -2190,18 +2014,16 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
     case Varsuperclasses of
         _ when is_list(Varsuperclasses) ->
             DataLensuperclasses = length(Varsuperclasses),
-            {FinalOffsetsuperclasses,Data2,Extra2} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {281479271677952,
-                                    2,
-                                    ExtraLensuperclasses,
-                                    ThisBody,
+            {FinalOffsetsuperclasses, Data2, Extra2} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {281479271677952, 2,
+                                    ExtraLensuperclasses, ThisBody,
                                     ThisExtra} =
                                        encode_Superclass(Element,
                                                          Offset - 2),
                                    {ExtraLensuperclasses + Offset - 2,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLensuperclasses * 2,
                              [<<(DataLensuperclasses bsl 2
@@ -2218,16 +2040,13 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
                 PtrOffsetWordsFromEnd1 + 1 + DataLensuperclasses * 2
                 +
                 FinalOffsetsuperclasses;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra2 = <<>>,
             Data2 = [],
             Ptrsuperclasses = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1;
-        {PointerAsInt1superclasses,
-         MainLensuperclasses,
-         ExtraLensuperclasses,
-         Data2,
-         Extra2} ->
+        {PointerAsInt1superclasses, MainLensuperclasses,
+         ExtraLensuperclasses, Data2, Extra2} ->
             Ptrsuperclasses =
                 PointerAsInt1superclasses
                 bor
@@ -2242,28 +2061,24 @@ encode_Node_interface(#'Node_interface'{methods = Varmethods,
             Ptrsuperclasses = 0,
             PtrOffsetWordsFromEnd2 = PtrOffsetWordsFromEnd1
     end,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd2 - PtrOffsetWordsFromEnd0,
      <<0:320/integer,
        0:192/integer,
        Ptrmethods:64/little-unsigned-integer,
        Ptrsuperclasses:64/little-unsigned-integer,
        0:64/integer>>,
-     [Data1,Extra1,Data2,Extra2]};
+     [Data1, Extra1, Data2, Extra2]};
 encode_Node_interface(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_interface({ZeroOffsetPtrInt,
-                       MainLen,
-                       ExtraLen,
-                       MainData,
+    {0, 0, 0, [], []};
+encode_Node_interface({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                        ExtraData},
                       0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
                                   pointerCount = VarpointerCount,
@@ -2279,17 +2094,14 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
     case Varfields of
         _ when is_list(Varfields) ->
             DataLenfields = length(Varfields),
-            {FinalOffsetfields,Data1,Extra1} =
-                lists:foldl(fun(Element, {Offset,DataAcc,ExtraAcc}) ->
-                                   {1125912791744512,
-                                    7,
-                                    ExtraLenfields,
-                                    ThisBody,
-                                    ThisExtra} =
+            {FinalOffsetfields, Data1, Extra1} =
+                lists:foldl(fun(Element, {Offset, DataAcc, ExtraAcc}) ->
+                                   {1125912791744512, 7, ExtraLenfields,
+                                    ThisBody, ThisExtra} =
                                        encode_Field(Element, Offset - 7),
                                    {ExtraLenfields + Offset - 7,
-                                    [DataAcc,ThisBody],
-                                    [ExtraAcc|ThisExtra]}
+                                    [DataAcc, ThisBody],
+                                    [ExtraAcc | ThisExtra]}
                             end,
                             {DataLenfields * 7,
                              [<<(DataLenfields bsl 2 + 1125912791744512):64/unsigned-little-integer>>],
@@ -2304,12 +2116,13 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
                 PtrOffsetWordsFromEnd0 + 1 + DataLenfields * 7
                 +
                 FinalOffsetfields;
-        {0,0,0,_,_} ->
+        {0, 0, 0, _, _} ->
             Extra1 = <<>>,
             Data1 = [],
             Ptrfields = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0;
-        {PointerAsInt1fields,MainLenfields,ExtraLenfields,Data1,Extra1} ->
+        {PointerAsInt1fields, MainLenfields, ExtraLenfields, Data1,
+         Extra1} ->
             Ptrfields =
                 PointerAsInt1fields
                 bor
@@ -2322,8 +2135,7 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
             Ptrfields = 0,
             PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
     end,
-    {1688871335100416,
-     11,
+    {1688871335100416, 11,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:112/integer,
        VardataWordCount:16/little-unsigned-integer,
@@ -2361,24 +2173,21 @@ encode_Node_struct(#'Node_struct'{dataWordCount = VardataWordCount,
        0:192/integer,
        Ptrfields:64/little-unsigned-integer,
        0:128/integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Node_struct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Node_struct({ZeroOffsetPtrInt,
-                    MainLen,
-                    ExtraLen,
-                    MainData,
+    {0, 0, 0, [], []};
+encode_Node_struct({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                     ExtraData},
                    0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Superclass(#'Superclass'{id = Varid,brand = Varbrand},
+encode_Superclass(#'Superclass'{id = Varid, brand = Varbrand},
                   PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
+    {ZeroOffsetPtrIntbrand, MainLenbrand, ExtraLenbrand, Data1, Extra1} =
         encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
@@ -2389,110 +2198,82 @@ encode_Superclass(#'Superclass'{id = Varid,brand = Varbrand},
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenbrand + ExtraLenbrand,
-    {281479271677952,
-     2,
+    {281479271677952, 2,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<Varid:64/little-unsigned-integer,
        Ptrbrand:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Superclass(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Superclass({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Superclass({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                   ExtraData},
                   0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Type({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+encode_Type({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         void ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<0:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         bool ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<1:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         int8 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<2:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         int16 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<3:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         int32 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<4:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         int64 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<5:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         uint8 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<6:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         uint16 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<7:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         uint32 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<8:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         uint64 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<9:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         float32 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<10:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         float64 ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<11:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         text ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<12:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         data ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<13:16/little-unsigned-integer,0:176/integer,0:64/integer>>,
              []};
         list ->
-            {ZeroOffsetPtrInt,MainLen,ExtraLen,Data1,Extra1} =
+            {ZeroOffsetPtrInt, MainLen, ExtraLen, Data1, Extra1} =
                 encode_Type(Var, 0),
             Ptr =
                 case ZeroOffsetPtrInt of
@@ -2505,69 +2286,50 @@ encode_Type({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                 end,
             PtrOffsetWordsFromEnd1 =
                 PtrOffsetWordsFromEnd0 + MainLen + ExtraLen,
-            {281487861612544,
-             4,
+            {281487861612544, 4,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<14:16/little-unsigned-integer,
                0:176/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         enum ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
                 encode_Type_enum(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (15 bsl 0)):256/little-unsigned-integer>>,
              ExtraData};
         struct ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
                 encode_Type_struct(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (16 bsl 0)):256/little-unsigned-integer>>,
              ExtraData};
         interface ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
                 encode_Type_interface(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (17 bsl 0)):256/little-unsigned-integer>>,
              ExtraData};
         anyPointer ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
                 encode_Type_anyPointer(Var, PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (18 bsl 0)):256/little-unsigned-integer>>,
              ExtraData}
     end.
 
-encode_Type_anyPointer({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+encode_Type_anyPointer({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         unconstrained ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<case Var of
                    undefined ->
                        0
@@ -2578,22 +2340,16 @@ encode_Type_anyPointer({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                0:64/integer>>,
              []};
         parameter ->
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<DataInt:256/little-unsigned-integer>>,
              ExtraData} =
                 encode_Type_anyPointer_parameter(Var,
                                                  PtrOffsetWordsFromEnd0),
-            {ZeroOffsetPtrInt,
-             MainLen,
-             ExtraLen,
+            {ZeroOffsetPtrInt, MainLen, ExtraLen,
              <<(DataInt bor (1 bsl 64)):256/little-unsigned-integer>>,
              ExtraData};
         implicitMethodParameter ->
-            {281487861612544,
-             4,
-             0,
+            {281487861612544, 4, 0,
              <<0:64/integer,
                2:16/little-unsigned-integer,
                Var:16/little-unsigned-integer,
@@ -2605,8 +2361,7 @@ encode_Type_anyPointer({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
 encode_Type_anyPointer_implicitMethodParameter(#'Type_anyPointer_implicitMethodParameter'{parameterIndex =
                                                                                               VarparameterIndex},
                                                PtrOffsetWordsFromEnd0) ->
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
      <<0:80/integer,
        VarparameterIndex:16/little-unsigned-integer,
@@ -2615,26 +2370,23 @@ encode_Type_anyPointer_implicitMethodParameter(#'Type_anyPointer_implicitMethodP
      []};
 encode_Type_anyPointer_implicitMethodParameter(undefined,
                                                _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
+    {0, 0, 0, [], []};
 encode_Type_anyPointer_implicitMethodParameter({ZeroOffsetPtrInt,
-                                                MainLen,
-                                                ExtraLen,
-                                                MainData,
-                                                ExtraData},
+                                                MainLen, ExtraLen,
+                                                MainData, ExtraData},
                                                0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Type_anyPointer_parameter(#'Type_anyPointer_parameter'{parameterIndex =
                                                                   VarparameterIndex,
                                                               scopeId =
                                                                   VarscopeId},
                                  PtrOffsetWordsFromEnd0) ->
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd0 - PtrOffsetWordsFromEnd0,
      <<0:80/integer,
        VarparameterIndex:16/little-unsigned-integer,
@@ -2643,22 +2395,19 @@ encode_Type_anyPointer_parameter(#'Type_anyPointer_parameter'{parameterIndex =
        0:64/integer>>,
      []};
 encode_Type_anyPointer_parameter(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Type_anyPointer_parameter({ZeroOffsetPtrInt,
-                                  MainLen,
-                                  ExtraLen,
-                                  MainData,
-                                  ExtraData},
+    {0, 0, 0, [], []};
+encode_Type_anyPointer_parameter({ZeroOffsetPtrInt, MainLen, ExtraLen,
+                                  MainData, ExtraData},
                                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Type_enum(#'Type_enum'{typeId = VartypeId,brand = Varbrand},
+encode_Type_enum(#'Type_enum'{typeId = VartypeId, brand = Varbrand},
                  PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
+    {ZeroOffsetPtrIntbrand, MainLenbrand, ExtraLenbrand, Data1, Extra1} =
         encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
@@ -2669,28 +2418,28 @@ encode_Type_enum(#'Type_enum'{typeId = VartypeId,brand = Varbrand},
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenbrand + ExtraLenbrand,
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:64/integer,
        VartypeId:64/little-unsigned-integer,
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Type_enum(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Type_enum({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Type_enum({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                  ExtraData},
                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Type_interface(#'Type_interface'{typeId = VartypeId,
                                         brand = Varbrand},
                       PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
+    {ZeroOffsetPtrIntbrand, MainLenbrand, ExtraLenbrand, Data1, Extra1} =
         encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
@@ -2701,35 +2450,28 @@ encode_Type_interface(#'Type_interface'{typeId = VartypeId,
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenbrand + ExtraLenbrand,
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:64/integer,
        VartypeId:64/little-unsigned-integer,
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Type_interface(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Type_interface({ZeroOffsetPtrInt,
-                       MainLen,
-                       ExtraLen,
-                       MainData,
+    {0, 0, 0, [], []};
+encode_Type_interface({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                        ExtraData},
                       0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
 encode_Type_list(#'Type_list'{elementType = VarelementType},
                  PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntelementType,
-     MainLenelementType,
-     ExtraLenelementType,
-     Data1,
-     Extra1} =
+    {ZeroOffsetPtrIntelementType, MainLenelementType,
+     ExtraLenelementType, Data1, Extra1} =
         encode_Type(VarelementType, 0),
     PtrelementType =
         case ZeroOffsetPtrIntelementType of
@@ -2744,24 +2486,24 @@ encode_Type_list(#'Type_list'{elementType = VarelementType},
         PtrOffsetWordsFromEnd0 + MainLenelementType
         +
         ExtraLenelementType,
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:192/integer,PtrelementType:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Type_list(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Type_list({ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData},
+    {0, 0, 0, [], []};
+encode_Type_list({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
+                  ExtraData},
                  0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Type_struct(#'Type_struct'{typeId = VartypeId,brand = Varbrand},
+encode_Type_struct(#'Type_struct'{typeId = VartypeId, brand = Varbrand},
                    PtrOffsetWordsFromEnd0) ->
-    {ZeroOffsetPtrIntbrand,MainLenbrand,ExtraLenbrand,Data1,Extra1} =
+    {ZeroOffsetPtrIntbrand, MainLenbrand, ExtraLenbrand, Data1, Extra1} =
         encode_Brand(Varbrand, 0),
     Ptrbrand =
         case ZeroOffsetPtrIntbrand of
@@ -2772,40 +2514,32 @@ encode_Type_struct(#'Type_struct'{typeId = VartypeId,brand = Varbrand},
         end,
     PtrOffsetWordsFromEnd1 =
         PtrOffsetWordsFromEnd0 + MainLenbrand + ExtraLenbrand,
-    {281487861612544,
-     4,
+    {281487861612544, 4,
      PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
      <<0:64/integer,
        VartypeId:64/little-unsigned-integer,
        0:64/integer,
        Ptrbrand:64/little-unsigned-integer>>,
-     [Data1,Extra1]};
+     [Data1, Extra1]};
 encode_Type_struct(undefined, _PtrOffsetWordsFromEnd0) ->
-    {0,0,0,[],[]};
-encode_Type_struct({ZeroOffsetPtrInt,
-                    MainLen,
-                    ExtraLen,
-                    MainData,
+    {0, 0, 0, [], []};
+encode_Type_struct({ZeroOffsetPtrInt, MainLen, ExtraLen, MainData,
                     ExtraData},
                    0)
     when
         is_integer(ZeroOffsetPtrInt),
         is_integer(MainLen),
         is_integer(ExtraLen) ->
-    {ZeroOffsetPtrInt,MainLen,ExtraLen,MainData,ExtraData}.
+    {ZeroOffsetPtrInt, MainLen, ExtraLen, MainData, ExtraData}.
 
-encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
+encode_Value({VarDiscriminant, Var}, PtrOffsetWordsFromEnd0) ->
     case VarDiscriminant of
         void ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<0:16/little-unsigned-integer,0:112/integer,0:64/integer>>,
              []};
         bool ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<1:16/little-unsigned-integer,
                0:7/integer,
                case Var of
@@ -2818,27 +2552,21 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                0:64/integer>>,
              []};
         int8 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<2:16/little-unsigned-integer,
                Var:8/little-signed-integer,
                0:104/integer,
                0:64/integer>>,
              []};
         int16 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<3:16/little-unsigned-integer,
                Var:16/little-signed-integer,
                0:96/integer,
                0:64/integer>>,
              []};
         int32 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<4:16/little-unsigned-integer,
                0:16/integer,
                Var:32/little-signed-integer,
@@ -2846,36 +2574,28 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                0:64/integer>>,
              []};
         int64 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<5:16/little-unsigned-integer,
                0:48/integer,
                Var:64/little-signed-integer,
                0:64/integer>>,
              []};
         uint8 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<6:16/little-unsigned-integer,
                Var:8/little-unsigned-integer,
                0:104/integer,
                0:64/integer>>,
              []};
         uint16 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<7:16/little-unsigned-integer,
                Var:16/little-unsigned-integer,
                0:96/integer,
                0:64/integer>>,
              []};
         uint32 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<8:16/little-unsigned-integer,
                0:16/integer,
                Var:32/little-unsigned-integer,
@@ -2883,18 +2603,14 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                0:64/integer>>,
              []};
         uint64 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<9:16/little-unsigned-integer,
                0:48/integer,
                Var:64/little-unsigned-integer,
                0:64/integer>>,
              []};
         float32 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<10:16/little-unsigned-integer,
                0:16/integer,
                Var:32/little-float,
@@ -2902,9 +2618,7 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                0:64/integer>>,
              []};
         float64 ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<11:16/little-unsigned-integer,
                0:48/integer,
                Var:64/little-float,
@@ -2918,7 +2632,7 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Data1 =
                         [Var,
                          <<0:8,
-                           0:(- DataLen band 7 * 8)/unsigned-little-integer>>],
+                           0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
                     Ptr =
                         1 bor (PtrOffsetWordsFromEnd0 + 0 bsl 2)
                         bor
@@ -2933,13 +2647,12 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<12:16/little-unsigned-integer,
                0:112/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         data ->
             if
                 is_list(Var);is_binary(Var) ->
@@ -2947,7 +2660,7 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     DataLen = iolist_size(Var),
                     Data1 =
                         [Var,
-                         <<0:(- DataLen band 7 * 8)/unsigned-little-integer>>],
+                         <<0:(-DataLen band 7 * 8)/unsigned-little-integer>>],
                     Ptr =
                         1 bor (PtrOffsetWordsFromEnd0 + 0 bsl 2)
                         bor
@@ -2962,13 +2675,12 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<13:16/little-unsigned-integer,
                0:112/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         list ->
             if
                 Var =:= undefined ->
@@ -2977,17 +2689,14 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<14:16/little-unsigned-integer,
                0:112/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         enum ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<15:16/little-unsigned-integer,
                Var:16/little-unsigned-integer,
                0:96/integer,
@@ -3001,17 +2710,14 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<16:16/little-unsigned-integer,
                0:112/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]};
+             [Data1, Extra1]};
         interface ->
-            {281483566645248,
-             3,
-             0,
+            {281483566645248, 3, 0,
              <<17:16/little-unsigned-integer,0:112/integer,0:64/integer>>,
              []};
         anyPointer ->
@@ -3022,158 +2728,141 @@ encode_Value({VarDiscriminant,Var}, PtrOffsetWordsFromEnd0) ->
                     Ptr = 0,
                     PtrOffsetWordsFromEnd1 = PtrOffsetWordsFromEnd0
             end,
-            {281483566645248,
-             3,
+            {281483566645248, 3,
              PtrOffsetWordsFromEnd1 - PtrOffsetWordsFromEnd0,
              <<18:16/little-unsigned-integer,
                0:112/integer,
                Ptr:64/little-unsigned-integer>>,
-             [Data1,Extra1]}
+             [Data1, Extra1]}
     end.
 
 envelope_Annotation(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Annotation(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Brand(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Brand(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Brand_Binding(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Brand_Binding(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Brand_Scope(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Brand_Scope(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_CodeGeneratorRequest(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_CodeGeneratorRequest(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_CodeGeneratorRequest_RequestedFile(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_CodeGeneratorRequest_RequestedFile(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_CodeGeneratorRequest_RequestedFile_Import(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_CodeGeneratorRequest_RequestedFile_Import(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Enumerant(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Enumerant(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Field(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Field(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Method(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Method(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Node(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Node(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Node_NestedNode(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Node_NestedNode(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Node_Parameter(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Node_Parameter(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Superclass(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Superclass(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Type(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Type(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 envelope_Value(Input) ->
-    {ZeroOffsetPtrInt,MainDataLen,ExtraDataLen,MainData,ExtraData} =
+    {ZeroOffsetPtrInt, MainDataLen, ExtraDataLen, MainData, ExtraData} =
         encode_Value(Input, 0),
     list_to_binary([<<0:32/unsigned-little-integer,
                       (1 + MainDataLen + ExtraDataLen):32/unsigned-little-integer,
                       ZeroOffsetPtrInt:64/unsigned-little-integer>>,
-                    MainData,
-                    ExtraData]).
+                    MainData, ExtraData]).
 
 follow_data_pointer(PointerInt, MessageRef) ->
     follow_text_or_data_pointer(PointerInt, MessageRef, 0).
@@ -3216,10 +2905,7 @@ follow_struct_list_pointer(DecodeFun, PointerInt, MessageRef)
             LengthFromPointer = Length * (DWords + PWords),
             ListStartOffset = NewOffset + 1
     end,
-    decode_struct_list(DecodeFun,
-                       Length,
-                       DWords,
-                       PWords,
+    decode_struct_list(DecodeFun, Length, DWords, PWords,
                        MessageRef#message_ref{current_offset =
                                                   ListStartOffset});
 follow_struct_list_pointer(_DecodeFun, PointerInt, _MessageRef)
@@ -3230,11 +2916,10 @@ follow_struct_list_pointer(_DecodeFun, PointerInt, _MessageRef)
     error({not_supported,
            "cannot currently decode List(struct {}) which is stored as "
            "a list of subword values"});
-follow_struct_list_pointer(DecodeFun,
-                           PointerInt,
+follow_struct_list_pointer(DecodeFun, PointerInt,
                            MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    {NewPointerInt,NewMessageRef} =
+    {NewPointerInt, NewMessageRef} =
         decode_far_pointer(PointerInt, MessageRef),
     follow_struct_list_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
@@ -3260,11 +2945,10 @@ follow_struct_pointer(DecodeFun, PointerInt, MessageRef)
     <<_:SkipBits,Data:DBits/bitstring,Pointers:PBits/bitstring,_/binary>> =
         MessageRef#message_ref.current_segment,
     DecodeFun(Data, Pointers, NewMessageRef);
-follow_struct_pointer(DecodeFun,
-                      PointerInt,
+follow_struct_pointer(DecodeFun, PointerInt,
                       MessageRef = #message_ref{})
     when PointerInt band 3 == 2 ->
-    {NewPointerInt,NewMessageRef} =
+    {NewPointerInt, NewMessageRef} =
         decode_far_pointer(PointerInt, MessageRef),
     follow_struct_pointer(DecodeFun, NewPointerInt, NewMessageRef).
 
@@ -3293,7 +2977,7 @@ follow_text_or_data_pointer(PointerInt,
                             MessageRef = #message_ref{},
                             Trail)
     when PointerInt band 3 == 2 ->
-    {NewPointerInt,NewMessageRef} =
+    {NewPointerInt, NewMessageRef} =
         decode_far_pointer(PointerInt, MessageRef),
     follow_text_or_data_pointer(NewPointerInt, NewMessageRef, Trail).
 
@@ -3378,7 +3062,7 @@ internal_decode_Brand_Binding(<<_:0,
                               MessageRef) ->
     case Discriminant of
         0 ->
-            {unbound,undefined};
+            {unbound, undefined};
         1 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
@@ -3390,8 +3074,7 @@ internal_decode_Brand_Binding(<<_:0,
                                                               +
                                                               0})}
     end;
-internal_decode_Brand_Binding(Data,
-                              Pointers,
+internal_decode_Brand_Binding(Data, Pointers,
                               MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
@@ -3411,8 +3094,7 @@ internal_decode_Brand_Binding(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Brand_Binding(PaddedData,
-                                  PaddedPointers,
+    internal_decode_Brand_Binding(PaddedData, PaddedPointers,
                                   MessageRef).
 
 internal_decode_Brand_Scope(Data =
@@ -3422,8 +3104,7 @@ internal_decode_Brand_Scope(Data =
                             MessageRef) ->
     #'Brand_Scope'{scopeId = VarscopeId,
                    '' =
-                       'internal_decode_Brand_Scope.'(Data,
-                                                      Pointers,
+                       'internal_decode_Brand_Scope.'(Data, Pointers,
                                                       MessageRef)};
 internal_decode_Brand_Scope(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
@@ -3463,10 +3144,9 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef = #message_ref{}) ->
                                                                    +
                                                                    0})};
         1 ->
-            {inherit,undefined}
+            {inherit, undefined}
     end;
-'internal_decode_Brand_Scope.'(Data,
-                               Pointers,
+'internal_decode_Brand_Scope.'(Data, Pointers,
                                MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
     if
@@ -3486,8 +3166,7 @@ internal_decode_Brand_Scope(Data, Pointers, MessageRef = #message_ref{}) ->
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    'internal_decode_Brand_Scope.'(PaddedData,
-                                   PaddedPointers,
+    'internal_decode_Brand_Scope.'(PaddedData, PaddedPointers,
                                    MessageRef).
 
 internal_decode_CodeGeneratorRequest(<<>>,
@@ -3508,8 +3187,7 @@ internal_decode_CodeGeneratorRequest(<<>>,
                                                                                       MessageRef#message_ref.current_offset
                                                                                       +
                                                                                       1})};
-internal_decode_CodeGeneratorRequest(Data,
-                                     Pointers,
+internal_decode_CodeGeneratorRequest(Data, Pointers,
                                      MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
@@ -3529,8 +3207,7 @@ internal_decode_CodeGeneratorRequest(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:128/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_CodeGeneratorRequest(PaddedData,
-                                         PaddedPointers,
+    internal_decode_CodeGeneratorRequest(PaddedData, PaddedPointers,
                                          MessageRef).
 
 internal_decode_CodeGeneratorRequest_RequestedFile(<<Varid:64/little-unsigned-integer>>,
@@ -3551,8 +3228,7 @@ internal_decode_CodeGeneratorRequest_RequestedFile(<<Varid:64/little-unsigned-in
                                                                                                     MessageRef#message_ref.current_offset
                                                                                                     +
                                                                                                     1})};
-internal_decode_CodeGeneratorRequest_RequestedFile(Data,
-                                                   Pointers,
+internal_decode_CodeGeneratorRequest_RequestedFile(Data, Pointers,
                                                    MessageRef =
                                                        #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
@@ -3679,8 +3355,7 @@ internal_decode_Field(Data =
                                                                        1}),
              '' = 'internal_decode_Field.'(Data, Pointers, MessageRef),
              ordinal =
-                 internal_decode_Field_ordinal(Data,
-                                               Pointers,
+                 internal_decode_Field_ordinal(Data, Pointers,
                                                MessageRef)};
 internal_decode_Field(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
@@ -3715,7 +3390,7 @@ internal_decode_Field(Data, Pointers, MessageRef = #message_ref{}) ->
              internal_decode_Field_slot(Data, Pointers, MessageRef)};
         1 ->
             <<_:128,Var:64/little-unsigned-integer,_/bitstring>> = Data,
-            {group,Var}
+            {group, Var}
     end;
 'internal_decode_Field.'(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
@@ -3772,13 +3447,12 @@ internal_decode_Field_ordinal(Data =
                               _MessageRef) ->
     case Discriminant of
         0 ->
-            {implicit,undefined};
+            {implicit, undefined};
         1 ->
             <<_:96,Var:16/little-unsigned-integer,_/bitstring>> = Data,
-            {explicit,Var}
+            {explicit, Var}
     end;
-internal_decode_Field_ordinal(Data,
-                              Pointers,
+internal_decode_Field_ordinal(Data, Pointers,
                               MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
@@ -3798,8 +3472,7 @@ internal_decode_Field_ordinal(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:256/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Field_ordinal(PaddedData,
-                                  PaddedPointers,
+    internal_decode_Field_ordinal(PaddedData, PaddedPointers,
                                   MessageRef).
 
 internal_decode_Field_slot(<<_:32/integer,
@@ -4004,7 +3677,7 @@ internal_decode_Node(Data, Pointers, MessageRef = #message_ref{}) ->
                         MessageRef) ->
     case Discriminant of
         0 ->
-            {file,undefined};
+            {file, undefined};
         1 ->
             {struct,
              internal_decode_Node_struct(Data, Pointers, MessageRef)};
@@ -4059,8 +3732,7 @@ internal_decode_Node_NestedNode(<<Varid:64/little-unsigned-integer>>,
                                                                           MessageRef#message_ref.current_offset
                                                                           +
                                                                           0})};
-internal_decode_Node_NestedNode(Data,
-                                Pointers,
+internal_decode_Node_NestedNode(Data, Pointers,
                                 MessageRef = #message_ref{}) ->
     DataPadLength = 64 - bit_size(Data),
     if
@@ -4080,8 +3752,7 @@ internal_decode_Node_NestedNode(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Node_NestedNode(PaddedData,
-                                    PaddedPointers,
+    internal_decode_Node_NestedNode(PaddedData, PaddedPointers,
                                     MessageRef).
 
 internal_decode_Node_Parameter(<<>>,
@@ -4093,8 +3764,7 @@ internal_decode_Node_Parameter(<<>>,
                                                                          MessageRef#message_ref.current_offset
                                                                          +
                                                                          0})};
-internal_decode_Node_Parameter(Data,
-                               Pointers,
+internal_decode_Node_Parameter(Data, Pointers,
                                MessageRef = #message_ref{}) ->
     DataPadLength = 0 - bit_size(Data),
     if
@@ -4114,8 +3784,7 @@ internal_decode_Node_Parameter(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Node_Parameter(PaddedData,
-                                   PaddedPointers,
+    internal_decode_Node_Parameter(PaddedData, PaddedPointers,
                                    MessageRef).
 
 internal_decode_Node_annotation(<<_:112/integer,
@@ -4228,8 +3897,7 @@ internal_decode_Node_annotation(<<_:112/integer,
                                                                             MessageRef#message_ref.current_offset
                                                                             +
                                                                             3})};
-internal_decode_Node_annotation(Data,
-                                Pointers,
+internal_decode_Node_annotation(Data, Pointers,
                                 MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
@@ -4249,8 +3917,7 @@ internal_decode_Node_annotation(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Node_annotation(PaddedData,
-                                    PaddedPointers,
+    internal_decode_Node_annotation(PaddedData, PaddedPointers,
                                     MessageRef).
 
 internal_decode_Node_const(<<_:320/integer>>,
@@ -4347,8 +4014,7 @@ internal_decode_Node_interface(<<_:320/integer>>,
                                                                                 MessageRef#message_ref.current_offset
                                                                                 +
                                                                                 4})};
-internal_decode_Node_interface(Data,
-                               Pointers,
+internal_decode_Node_interface(Data, Pointers,
                                MessageRef = #message_ref{}) ->
     DataPadLength = 320 - bit_size(Data),
     if
@@ -4368,8 +4034,7 @@ internal_decode_Node_interface(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:384/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Node_interface(PaddedData,
-                                   PaddedPointers,
+    internal_decode_Node_interface(PaddedData, PaddedPointers,
                                    MessageRef).
 
 internal_decode_Node_struct(<<_:112/integer,
@@ -4391,14 +4056,8 @@ internal_decode_Node_struct(<<_:112/integer,
                    pointerCount = VarpointerCount,
                    preferredListEncoding =
                        element(VarpreferredListEncoding + 1,
-                               {empty,
-                                bit,
-                                byte,
-                                twoBytes,
-                                fourBytes,
-                                eightBytes,
-                                pointer,
-                                inlineComposite}),
+                               {empty, bit, byte, twoBytes, fourBytes,
+                                eightBytes, pointer, inlineComposite}),
                    isGroup =
                        case VarisGroup of
                            0 ->
@@ -4476,33 +4135,33 @@ internal_decode_Type(Data =
                      MessageRef) ->
     case Discriminant of
         0 ->
-            {void,undefined};
+            {void, undefined};
         1 ->
-            {bool,undefined};
+            {bool, undefined};
         2 ->
-            {int8,undefined};
+            {int8, undefined};
         3 ->
-            {int16,undefined};
+            {int16, undefined};
         4 ->
-            {int32,undefined};
+            {int32, undefined};
         5 ->
-            {int64,undefined};
+            {int64, undefined};
         6 ->
-            {uint8,undefined};
+            {uint8, undefined};
         7 ->
-            {uint16,undefined};
+            {uint16, undefined};
         8 ->
-            {uint32,undefined};
+            {uint32, undefined};
         9 ->
-            {uint64,undefined};
+            {uint64, undefined};
         10 ->
-            {float32,undefined};
+            {float32, undefined};
         11 ->
-            {float64,undefined};
+            {float64, undefined};
         12 ->
-            {text,undefined};
+            {text, undefined};
         13 ->
-            {data,undefined};
+            {data, undefined};
         14 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
@@ -4514,7 +4173,8 @@ internal_decode_Type(Data =
                                                               +
                                                               0})};
         15 ->
-            {enum,internal_decode_Type_enum(Data, Pointers, MessageRef)};
+            {enum,
+             internal_decode_Type_enum(Data, Pointers, MessageRef)};
         16 ->
             {struct,
              internal_decode_Type_struct(Data, Pointers, MessageRef)};
@@ -4554,18 +4214,16 @@ internal_decode_Type_anyPointer(Data =
                                 MessageRef) ->
     case Discriminant of
         0 ->
-            {unconstrained,undefined};
+            {unconstrained, undefined};
         1 ->
             {parameter,
-             internal_decode_Type_anyPointer_parameter(Data,
-                                                       Pointers,
+             internal_decode_Type_anyPointer_parameter(Data, Pointers,
                                                        MessageRef)};
         2 ->
             <<_:80,Var:16/little-unsigned-integer,_/bitstring>> = Data,
-            {implicitMethodParameter,Var}
+            {implicitMethodParameter, Var}
     end;
-internal_decode_Type_anyPointer(Data,
-                                Pointers,
+internal_decode_Type_anyPointer(Data, Pointers,
                                 MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
@@ -4585,8 +4243,7 @@ internal_decode_Type_anyPointer(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Type_anyPointer(PaddedData,
-                                    PaddedPointers,
+    internal_decode_Type_anyPointer(PaddedData, PaddedPointers,
                                     MessageRef).
 
 internal_decode_Type_anyPointer_implicitMethodParameter(<<_:80/integer,
@@ -4596,8 +4253,7 @@ internal_decode_Type_anyPointer_implicitMethodParameter(<<_:80/integer,
                                                         _MessageRef) ->
     #'Type_anyPointer_implicitMethodParameter'{parameterIndex =
                                                    VarparameterIndex};
-internal_decode_Type_anyPointer_implicitMethodParameter(Data,
-                                                        Pointers,
+internal_decode_Type_anyPointer_implicitMethodParameter(Data, Pointers,
                                                         MessageRef =
                                                             #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
@@ -4630,8 +4286,7 @@ internal_decode_Type_anyPointer_parameter(<<_:80/integer,
                                           _MessageRef) ->
     #'Type_anyPointer_parameter'{parameterIndex = VarparameterIndex,
                                  scopeId = VarscopeId};
-internal_decode_Type_anyPointer_parameter(Data,
-                                          Pointers,
+internal_decode_Type_anyPointer_parameter(Data, Pointers,
                                           MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
@@ -4702,8 +4357,7 @@ internal_decode_Type_interface(<<_:64/integer,
                                                                            MessageRef#message_ref.current_offset
                                                                            +
                                                                            0})};
-internal_decode_Type_interface(Data,
-                               Pointers,
+internal_decode_Type_interface(Data, Pointers,
                                MessageRef = #message_ref{}) ->
     DataPadLength = 192 - bit_size(Data),
     if
@@ -4723,8 +4377,7 @@ internal_decode_Type_interface(Data,
         PointerPadLength < 0 ->
             <<PaddedPointers:64/bitstring,_/bitstring>> = Pointers
     end,
-    internal_decode_Type_interface(PaddedData,
-                                   PaddedPointers,
+    internal_decode_Type_interface(PaddedData, PaddedPointers,
                                    MessageRef).
 
 internal_decode_Type_list(<<_:192/integer>>,
@@ -4800,7 +4453,7 @@ internal_decode_Value(Data =
                       MessageRef) ->
     case Discriminant of
         0 ->
-            {void,undefined};
+            {void, undefined};
         1 ->
             <<_:23,Var:1/integer,_/bitstring>> = Data,
             {bool,
@@ -4812,34 +4465,34 @@ internal_decode_Value(Data =
              end};
         2 ->
             <<_:16,Var:8/little-signed-integer,_/bitstring>> = Data,
-            {int8,Var};
+            {int8, Var};
         3 ->
             <<_:16,Var:16/little-signed-integer,_/bitstring>> = Data,
-            {int16,Var};
+            {int16, Var};
         4 ->
             <<_:32,Var:32/little-signed-integer,_/bitstring>> = Data,
-            {int32,Var};
+            {int32, Var};
         5 ->
             <<_:64,Var:64/little-signed-integer,_/bitstring>> = Data,
-            {int64,Var};
+            {int64, Var};
         6 ->
             <<_:16,Var:8/little-unsigned-integer,_/bitstring>> = Data,
-            {uint8,Var};
+            {uint8, Var};
         7 ->
             <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Data,
-            {uint16,Var};
+            {uint16, Var};
         8 ->
             <<_:32,Var:32/little-unsigned-integer,_/bitstring>> = Data,
-            {uint32,Var};
+            {uint32, Var};
         9 ->
             <<_:64,Var:64/little-unsigned-integer,_/bitstring>> = Data,
-            {uint64,Var};
+            {uint64, Var};
         10 ->
             <<_:32,Var:32/little-float,_/bitstring>> = Data,
-            {float32,Var};
+            {float32, Var};
         11 ->
             <<_:64,Var:64/little-float,_/bitstring>> = Data,
-            {float64,Var};
+            {float64, Var};
         12 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
@@ -4861,20 +4514,20 @@ internal_decode_Value(Data =
         14 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {list,undefined};
+            {list, undefined};
         15 ->
             <<_:16,Var:16/little-unsigned-integer,_/bitstring>> = Data,
-            {enum,Var};
+            {enum, Var};
         16 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {struct,undefined};
+            {struct, undefined};
         17 ->
-            {interface,undefined};
+            {interface, undefined};
         18 ->
             <<_:0,Var:64/little-unsigned-integer,_/bitstring>> =
                 Pointers,
-            {anyPointer,undefined}
+            {anyPointer, undefined}
     end;
 internal_decode_Value(Data, Pointers, MessageRef = #message_ref{}) ->
     DataPadLength = 128 - bit_size(Data),
@@ -4899,13 +4552,13 @@ internal_decode_Value(Data, Pointers, MessageRef = #message_ref{}) ->
 
 massage_bool_list(List) ->
     try lists:split(8, List) of
-        {First,Last} ->
+        {First, Last} ->
             lists:reverse(First) ++ massage_bool_list(Last)
     catch
         error:badarg ->
             lists:reverse(List
                           ++
-                          lists:duplicate(- length(List) band 7, 0))
+                          lists:duplicate(-length(List) band 7, 0))
     end.
 
 
