@@ -1261,6 +1261,12 @@ encoder(#native_type{type=float, width=32}, _Default=+0.0, Var, _Line) ->
 	ast(<<(quote(Var)):32/little-float>>);
 encoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line) ->
 	ast(<<(quote(Var)):64/little-float>>);
+encoder(#native_type{type=float, width=32}, Default, Var, Line) ->
+	<<DefaultInt:32>> = <<Default:32/little-float>>,
+	ast((fun () -> <<Raw:32>> = <<(quote(Var)):32/little-float>>, <<(quote({integer, Line, DefaultInt}) bxor Raw):32>> end)());
+encoder(#native_type{type=float, width=64}, Default, Var, Line) ->
+	<<DefaultInt:64>> = <<Default:64/little-float>>,
+	ast((fun () -> <<Raw:64>> = <<(quote(Var)):64/little-float>>, <<(quote({integer, Line, DefaultInt}) bxor Raw):64>> end)());
 encoder(#native_type{type=boolean}, false, Var, _Line) ->
 	ast(case quote(Var) of false -> 0; true -> 1 end);
 encoder(#native_type{type=boolean}, true, Var, _Line) ->
@@ -1288,6 +1294,16 @@ decoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line, _MessageR
 	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
 	% crash here with some kind of hopefully-useful function_clause.
 	ast((fun (<<Tmp:64/little-float>>) -> Tmp end)(quote(Var)));
+decoder(#native_type{type=float, width=32}, Default, Var, Line, _MessageRef, _Schema) ->
+	<<DefaultInt:32>> = <<Default:32/little-float>>,
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:32>>) -> <<PostXor:32/little-float>> = <<(Tmp bxor quote({integer, Line, DefaultInt})):32>>, PostXor end)(quote(Var)));
+decoder(#native_type{type=float, width=64}, Default, Var, Line, _MessageRef, _Schema) ->
+	<<DefaultInt:64>> = <<Default:64/little-float>>,
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:64>>) -> <<PostXor:64/little-float>> = <<(Tmp bxor quote({integer, Line, DefaultInt})):64>>, PostXor end)(quote(Var)));
 decoder(#native_type{type=boolean}, Default, Var, Line, _MessageRef, _Schema) ->
 	ZeroValue = {atom, Line, Default},
 	OneValue = {atom, Line, not Default},
