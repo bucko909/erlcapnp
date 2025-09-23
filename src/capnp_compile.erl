@@ -327,7 +327,11 @@ generate_decode_fun(Line, TypeId, SortedDataFields, SortedPtrFields, Groups, Sch
 		fun
 			({'$uberpt_quote', DataMatcher}, {'$uberpt_quote', PointerMatcher}, {'$uberpt_quote', MessageRefVar}) ->
 				quote(Decoder);
-			(Data, Pointers, MessageRef=#message_ref{}) ->
+			% It's important to check lengths here as if a mistake in the
+			% matches results in input data that falls through, the code will
+			% infinite loop. This clause _must_ only trigger on messages of
+			% unexpected pointer/data size.
+			(Data, Pointers, MessageRef=#message_ref{}) when byte_size(Data) /= quote({integer, Line, DWords * 8}); byte_size(Pointers) /= quote({integer, Line, PWords * 8}) ->
 				DataPadLength = quote({integer, Line, DWords * 64}) - bit_size(Data),
 				if
 					DataPadLength > 0 ->
@@ -1253,8 +1257,16 @@ encoder(#native_type{type=integer}, 0, Var, _Line) ->
 	Var;
 encoder(#native_type{type=integer}, Default, Var, Line) ->
 	ast(quote(Var) bxor quote({integer, Line, Default}));
-encoder(#native_type{type=float}, 0.0, Var, _Line) ->
-	Var;
+encoder(#native_type{type=float, width=32}, _Default=+0.0, Var, _Line) ->
+	ast(<<(quote(Var)):32/little-float>>);
+encoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line) ->
+	ast(<<(quote(Var)):64/little-float>>);
+encoder(#native_type{type=float, width=32}, Default, Var, Line) ->
+	<<DefaultInt:32>> = <<Default:32/little-float>>,
+	ast((fun () -> <<Raw:32>> = <<(quote(Var)):32/little-float>>, <<(quote({integer, Line, DefaultInt}) bxor Raw):32>> end)());
+encoder(#native_type{type=float, width=64}, Default, Var, Line) ->
+	<<DefaultInt:64>> = <<Default:64/little-float>>,
+	ast((fun () -> <<Raw:64>> = <<(quote(Var)):64/little-float>>, <<(quote({integer, Line, DefaultInt}) bxor Raw):64>> end)());
 encoder(#native_type{type=boolean}, false, Var, _Line) ->
 	ast(case quote(Var) of false -> 0; true -> 1 end);
 encoder(#native_type{type=boolean}, true, Var, _Line) ->
@@ -1274,9 +1286,24 @@ decoder(#native_type{type=integer}, 0, Var, _Line, _MessageRef, _Schema) ->
 	Var;
 decoder(#native_type{type=integer}, Default, Var, Line, _MessageRef, _Schema) ->
 	ast(quote(Var) bxor quote({integer, Line, Default}));
-decoder(#native_type{type=float}, 0.0, Var, _Line, _MessageRef, _Schema) ->
-	% TODO nonzero defaults. They are ugly!
-	Var;
+decoder(#native_type{type=float, width=32}, _Default=+0.0, Var, _Line, _MessageRef, _Schema) ->
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:32/little-float>>) -> Tmp end)(quote(Var)));
+decoder(#native_type{type=float, width=64}, _Default=+0.0, Var, _Line, _MessageRef, _Schema) ->
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:64/little-float>>) -> Tmp end)(quote(Var)));
+decoder(#native_type{type=float, width=32}, Default, Var, Line, _MessageRef, _Schema) ->
+	<<DefaultInt:32>> = <<Default:32/little-float>>,
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:32>>) -> <<PostXor:32/little-float>> = <<(Tmp bxor quote({integer, Line, DefaultInt})):32>>, PostXor end)(quote(Var)));
+decoder(#native_type{type=float, width=64}, Default, Var, Line, _MessageRef, _Schema) ->
+	<<DefaultInt:64>> = <<Default:64/little-float>>,
+	% Some floats (eg. inf/nan) don't decode properly in Erlang. We will
+	% crash here with some kind of hopefully-useful function_clause.
+	ast((fun (<<Tmp:64>>) -> <<PostXor:64/little-float>> = <<(Tmp bxor quote({integer, Line, DefaultInt})):64>>, PostXor end)(quote(Var)));
 decoder(#native_type{type=boolean}, Default, Var, Line, _MessageRef, _Schema) ->
 	ZeroValue = {atom, Line, Default},
 	OneValue = {atom, Line, not Default},

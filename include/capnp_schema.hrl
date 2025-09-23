@@ -29,7 +29,7 @@
 -record('Brand_Scope',{scopeId :: 0..18446744073709551615,
                        '' :: {bind, any()} | {inherit, undefined}}).
 
--record('CodeGeneratorRequest',{nodes :: any(),requestedFiles :: any()}).
+-record('CodeGeneratorRequest',{nodes :: any(), requestedFiles :: any()}).
 
 -record('CodeGeneratorRequest_RequestedFile',{id ::
                                                   0..
@@ -218,25 +218,19 @@
 
 -record('Node_enum',{enumerants :: any()}).
 
--record('Node_interface',{methods :: any(),superclasses :: any()}).
+-record('Node_interface',{methods :: any(), superclasses :: any()}).
 
 -record('Node_struct',{dataWordCount :: 0..65535,
                        pointerCount :: 0..65535,
                        preferredListEncoding ::
-                           empty |
-                           bit |
-                           byte |
-                           twoBytes |
-                           fourBytes |
-                           eightBytes |
-                           pointer |
-                           inlineComposite,
+                           empty | bit | byte | twoBytes | fourBytes |
+                           eightBytes | pointer | inlineComposite,
                        isGroup :: true | false,
                        discriminantCount :: 0..65535,
                        discriminantOffset :: 0..4294967295,
                        fields :: any()}).
 
--record('Superclass',{id :: 0..18446744073709551615,brand :: any()}).
+-record('Superclass',{id :: 0..18446744073709551615, brand :: any()}).
 
 -record('Type_anyPointer_implicitMethodParameter',{parameterIndex ::
                                                        0..65535}).
@@ -244,7 +238,7 @@
 -record('Type_anyPointer_parameter',{parameterIndex :: 0..65535,
                                      scopeId :: 0..18446744073709551615}).
 
--record('Type_enum',{typeId :: 0..18446744073709551615,brand :: any()}).
+-record('Type_enum',{typeId :: 0..18446744073709551615, brand :: any()}).
 
 -record('Type_interface',{typeId :: 0..18446744073709551615,
                           brand :: any()}).
@@ -273,9 +267,10 @@
                           {parameter, any()} |
                           {implicitMethodParameter, 0..65535}}}).
 
--record('Type_struct',{typeId :: 0..18446744073709551615,brand :: any()}).
+-record('Type_struct',{typeId :: 0..18446744073709551615,
+                       brand :: any()}).
 
--record(message_ref,{current_offset,current_segment,segments}).
+-record(message_ref,{current_offset, current_segment, segments}).
 
 
 
