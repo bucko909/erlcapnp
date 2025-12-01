@@ -33,7 +33,8 @@ fix_periods(String) ->
 
 load_raw(Filename, Prefix) ->
 	{ok, Raw} = file:read_file(Filename),
-	Base = filename:rootname(filename:basename(Filename)),
 	{Schema, <<>>} = capnp_schema:'decode_CodeGeneratorRequest'(Raw),
-	Renamed = massage_names(Schema, Base ++ ".capnp", Prefix),
+	% Should we strip filenames from nodes from all requested files or just the first?
+	[#'CodeGeneratorRequest_RequestedFile'{filename=Base}|Rest] = Schema#'CodeGeneratorRequest'.requestedFiles,
+	Renamed = massage_names(Schema, binary_to_list(Base), Prefix),
 	make_objdict(Renamed).
